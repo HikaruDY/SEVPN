@@ -4281,6 +4281,8 @@ void RUDPMainThread(THREAD *thread, void *param)
 // Generate a appropriate register host name from the IP address
 void RUDPGetRegisterHostNameByIP(char *dst, UINT size, IP *ip)
 {
+		return; //***
+/***
 	char tmp[16];
 	// Validate arguments
 	if (dst == NULL)
@@ -4315,6 +4317,7 @@ void RUDPGetRegisterHostNameByIP(char *dst, UINT size, IP *ip)
 			  ip,
 			  dst);
 	}
+***/
 }
 
 // Analyze the IP address and port number from the string

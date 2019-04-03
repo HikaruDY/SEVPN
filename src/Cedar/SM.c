@@ -3096,6 +3096,7 @@ UINT SmSetupStepDlg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *par
 // Setup procedure dialog
 void SmSetupStep(HWND hWnd, SM_SETUP *s)
 {
+	return; //***
 	// Validate arguments
 	if (s == NULL)
 	{
@@ -18943,6 +18944,9 @@ UINT SmServerDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *pa
 			break;
 
 		case 2:
+
+			break; //***
+
 			// Setup
 			KillTimer(hWnd, 2);
 
@@ -19263,7 +19267,8 @@ ENTER_PASSWORD:
 				p.PolicyVer = 2;
 			}
 
-			if (empty_password && s->ServerAdminMode)
+			//*** if (empty_password && s->ServerAdminMode)
+			if(false) //***
 			{
 				// Make the user set a password when a password empty (In the case of server management mode)
 				if (Dialog(hWnd, D_SM_CHANGE_PASSWORD, SmChangeServerPasswordDlg, &p) == 0)

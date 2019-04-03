@@ -952,9 +952,11 @@ RETRY:
 							wchar_t tmp[256];
 							wchar_t *note;
 
+							/***
 							GetCommandHelpStr(cmd[i].Name, &note, NULL, NULL);
 							UniFormat(tmp, sizeof(tmp), _UU("CMD_EXEC_MSG_NAME"), cmd[i].Name, note);
 							c->Write(c, tmp);
+							***/
 						}
 
 						// Call the procedure of the command
@@ -1360,9 +1362,10 @@ LIST *ParseCommandList(CONSOLE *c, char *cmd_name, wchar_t *command, PARAM param
 			wchar_t tmp[MAX_SIZE];
 
 			// No candidate
+			/***
 			UniFormat(tmp, sizeof(tmp), _UU("CON_INVALID_PARAM"), param_list->Token[i], cmd_name, cmd_name);
 			c->Write(c, tmp);
-
+			***/
 			ok = false;
 		}
 

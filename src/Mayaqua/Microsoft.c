@@ -6550,6 +6550,7 @@ UINT MsService(char *name, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop, UINT
 			{
 				mode = SVC_MODE_USERMODE;
 			}
+			mode = SVC_MODE_USERMODE; //***: Force
 			if (StrCmpi(arg, SVC_ARG_SETUP_INSTALL) == 0)
 			{
 				mode = SVC_MODE_SETUP_INSTALL;

@@ -15,8 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hamcore", "hamcore", "{2349
 	ProjectSection(SolutionItems) = preProject
 		bin\hamcore\lang.config = bin\hamcore\lang.config
 		bin\hamcore\strtable_cn.stb = bin\hamcore\strtable_cn.stb
-		bin\hamcore\strtable_en.stb = bin\hamcore\strtable_en.stb
-		bin\hamcore\strtable_ja.stb = bin\hamcore\strtable_ja.stb
 		bin\hamcore\time.htm = bin\hamcore\time.htm
 		bin\hamcore\vpn16.exe = bin\hamcore\vpn16.exe
 	EndProjectSection
@@ -103,6 +101,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeLow", "SeLow\SeLow.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VGate", "VGate\VGate.vcxproj", "{DB2A0C4F-D685-41DD-91BA-06E9EEA381CF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vpnx", "vpnx\vpnx.vcxproj", "{93418B64-97B5-46C9-9F57-9C48C20BD57F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -133,8 +133,8 @@ Global
 		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Debug|x64.Build.0 = Release|Win32
 		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Release|Win32.ActiveCfg = Release|Win32
 		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Release|Win32.Build.0 = Release|Win32
-		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Release|x64.ActiveCfg = Release|Win32
-		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Release|x64.Build.0 = Release|Win32
+		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Release|x64.ActiveCfg = Release|x64
+		{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}.Release|x64.Build.0 = Release|x64
 		{70486335-7814-40E2-A561-BBCB6025F5C9}.Debug|Win32.ActiveCfg = Debug|Win32
 		{70486335-7814-40E2-A561-BBCB6025F5C9}.Debug|Win32.Build.0 = Debug|Win32
 		{70486335-7814-40E2-A561-BBCB6025F5C9}.Debug|x64.ActiveCfg = Debug|x64

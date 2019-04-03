@@ -918,7 +918,8 @@ void *UnixNewSingleInstance(char *instance_name)
 	GetExeDir(dir, sizeof(dir));
 
 	// File name generation
-	Format(name, sizeof(name), "%s/.%s", dir, tmp);
+//	Format(name, sizeof(name), "%s/.%s", dir, tmp);
+	Format(name, sizeof(name), "%s/.%s", "/tmp", tmp); //Use '/tmp' for RO disk system
 
 	fd = open(name, O_WRONLY);
 	if (fd == -1)
