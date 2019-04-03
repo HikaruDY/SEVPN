@@ -1,0 +1,231 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AF16335D-DBC2-4879-9E9A-89E2A61A4B30}</ProjectGuid>
+    <RootNamespace>PenCore</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)bin\hamcore\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)_$(Configuration)\</IntDir>
+    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</IgnoreImportLibrary>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</GenerateManifest>
+    <EmbedManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</EmbedManifest>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>$(SolutionDir)Mayaqua\win32_inc;.;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;VPN_SPEED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>false</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <PreLinkEvent>
+      <Command>$(SolutionDir)bin\BuildUtil.exe /CMD:GenerateVersionResource "$(TargetPath)" /OUT:"$(SolutionDir)tmp\VersionResources\$(ProjectName)_$(Platform).res"</Command>
+    </PreLinkEvent>
+    <Link>
+      <AdditionalDependencies>$(SolutionDir)\tmp\lib\$(Platform)_$(Configuration)\Mayaqua.lib;$(SolutionDir)\tmp\lib\$(Platform)_$(Configuration)\Cedar.lib;%(AdditionalDependencies);setupapi.lib;advapi32.lib;user32.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)\PenCore.dll</OutputFile>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Microsoft Visual Studio 8\VC\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)DebugFiles\pdb\$(Platform)_$(Configuration)\$(ProjectName).pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(SolutionDir)DebugFiles\map\$(Platform)_$(Configuration)\$(ProjectName).map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>100000</StackReserveSize>
+      <OptimizeReferences>false</OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <ImportLibrary>$(SolutionDir)tmp\lib\$(Platform)_$(Configuration)\$(ProjectName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)bin\BuildUtil.exe /CMD:SetPE4 "$(TargetPath)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="PenCore.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PenCore.def" />
+    <None Include="AboutBox.bmp" />
+    <None Include="Azure.bmp" />
+    <None Include="Azure.ico" />
+    <None Include="AzureCn.bmp" />
+    <None Include="AzureJa.bmp" />
+    <None Include="bitmap1.bmp" />
+    <None Include="BMP_SW_TSUKUBA.bmp" />
+    <None Include="BMP_UT.bmp" />
+    <None Include="Bridge.ico" />
+    <None Include="Cascade.ico" />
+    <None Include="CascadeOffline.ico" />
+    <None Include="CascadeOffline2.ico" />
+    <None Include="Cert.ico" />
+    <None Include="CertX.ico" />
+    <None Include="ClientBanner.bmp" />
+    <None Include="Coins.bmp" />
+    <None Include="DateTime.ico" />
+    <None Include="DDNS.ico" />
+    <None Include="Discard.ico" />
+    <None Include="DiscardDisable.ico" />
+    <None Include="Display.ico" />
+    <None Include="Dummy.bin" />
+    <None Include="EasyInstaller.ico" />
+    <None Include="EtherIP.bmp" />
+    <None Include="Farm.ico" />
+    <None Include="Group.ico" />
+    <None Include="GroupDeny.ico" />
+    <None Include="Hub.ico" />
+    <None Include="Hub_Offline.ico" />
+    <None Include="Ibaraki.bmp" />
+    <None Include="Information.ico" />
+    <None Include="Installer.ico" />
+    <None Include="Internet.ico" />
+    <None Include="InternetX.ico" />
+    <None Include="IPsec.ico" />
+    <None Include="IX2015.bmp" />
+    <None Include="Key.ico" />
+    <None Include="L2TP.bmp" />
+    <None Include="LANG_CHINESE.ico" />
+    <None Include="LANG_ENGLISH.ico" />
+    <None Include="LANG_JAPANESE.ico" />
+    <None Include="Language.ico" />
+    <None Include="License.ico" />
+    <None Include="Link.ico" />
+    <None Include="Link2.ico" />
+    <None Include="Log.ico" />
+    <None Include="Log2.ico" />
+    <None Include="Machine.ico" />
+    <None Include="ManagerLogo.bmp" />
+    <None Include="Memory.ico" />
+    <None Include="New.ico" />
+    <None Include="NIC.ico" />
+    <None Include="NIC_Offline.ico" />
+    <None Include="Null.ico" />
+    <None Include="OpenVPN.bmp" />
+    <None Include="OpenVPN.ico" />
+    <None Include="Pass.ico" />
+    <None Include="PassDisable.ico" />
+    <None Include="Penguin.ico" />
+    <None Include="PKCS12.ico" />
+    <None Include="Police.ico" />
+    <None Include="Progress.avi" />
+    <None Include="Protocol.ico" />
+    <None Include="Protocol2.ico" />
+    <None Include="ProtocolDhcp.ico" />
+    <None Include="ProtocolOffline.ico" />
+    <None Include="Research.ico" />
+    <None Include="Router.ico" />
+    <None Include="RouterBanner.bmp" />
+    <None Include="RouterLogo.bmp" />
+    <None Include="Secure.bmp" />
+    <None Include="Secure.ico" />
+    <None Include="Secure2.bmp" />
+    <None Include="Secure3.bmp" />
+    <None Include="SELOGO49x49.bmp" />
+    <None Include="Server.ico" />
+    <None Include="Server_Delete.ico" />
+    <None Include="Server_Offline.ico" />
+    <None Include="Server_Offline_Ex.ico" />
+    <None Include="Server_Online_Ex.ico" />
+    <None Include="ServerCert.ico" />
+    <None Include="SessionBridge.ico" />
+    <None Include="SessionMonitor.ico" />
+    <None Include="Setup.ico" />
+    <None Include="setup_1.bmp" />
+    <None Include="setup_2.bmp" />
+    <None Include="SpecialListener.bmp" />
+    <None Include="SpecialListener.ico" />
+    <None Include="SplashClient.bmp" />
+    <None Include="SplashLogger.bmp" />
+    <None Include="SplashManager.bmp" />
+    <None Include="SplashRouter.bmp" />
+    <None Include="SSTP.bmp" />
+    <None Include="Stop.ico" />
+    <None Include="SW_LANG_1.bmp" />
+    <None Include="SW_LANG_2.bmp" />
+    <None Include="SW_LANG_3.bmp" />
+    <None Include="SW_SPLASH.bmp" />
+    <None Include="Switch.ico" />
+    <None Include="SwitchOffline.ico" />
+    <None Include="Test.bmp" />
+    <None Include="Test.ico" />
+    <None Include="Tower.ico" />
+    <None Include="Tray0.ico" />
+    <None Include="Tray1.ico" />
+    <None Include="Tray2.ico" />
+    <None Include="Tray3.ico" />
+    <None Include="Tray4.ico" />
+    <None Include="Tsukuba.bmp" />
+    <None Include="UnivTsukuba.bmp" />
+    <None Include="Update.bmp" />
+    <None Include="User.ico" />
+    <None Include="UserAdmin.ico" />
+    <None Include="UserDeny.ico" />
+    <None Include="VLan.ico" />
+    <None Include="VMBridge.bmp" />
+    <None Include="VPN.ico" />
+    <None Include="VPNGateBanner.bmp" />
+    <None Include="VPNGateEN.bmp" />
+    <None Include="VPNGateJA.bmp" />
+    <None Include="VPNServerFigure.bmp" />
+    <None Include="VPNSvr.ico" />
+    <None Include="Warning.ico" />
+    <None Include="WinPC.bmp" />
+    <None Include="X.ico" />
+    <None Include="ZuruHam.ico" />
+    <None Include="Zurukko.bmp" />
+    <None Include="Zurukko.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PenCore.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BuildUtil\BuildUtil.csproj">
+      <Project>{384815c3-333c-4cec-9dcd-b6ab2602ebb9}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

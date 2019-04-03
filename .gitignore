@@ -1,0 +1,30 @@
+# Release
+*_Release
+*.exe
+*.dll
+
+# Generated
+obj/
+src/tmp
+*.config
+*.obj
+*.exp
+*.pdb
+*.cache
+
+# VisualStudio
+*.suo
+*.csproj.user
+*.vcxproj.user
+*.vcxproj.filters
+*.sdf
+*.opensdf
+*.ipch
+*.log
+*.tlog
+
+# OS related extra files
+Git.cmd
+Thumbs.db
+.DS_Store
+
