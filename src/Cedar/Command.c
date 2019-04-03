@@ -23678,7 +23678,7 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 	{
 
 		printf("E: VPNX: Specify \"/Server <host:ip>\" or \"/Client <host:ip>\" to select target of configuration!\n"); //***
-
+		return ERR_USER_CANCEL;
 		/***
 		wchar_t *ret;
 		UINT code;

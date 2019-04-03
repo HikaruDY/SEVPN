@@ -3,7 +3,7 @@
 
 #define	VPN_EXE
 
-#ifdef	WIN32
+#ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
 #include <wincrypt.h>
@@ -23,46 +23,17 @@
 #include <Cedar/Cedar.h>
 
 
-void StartServer(){
-	InitCedar();
-	StInit();
-	StStartServer(false);
-}
-void StartServerBridge(){
-	InitCedar();
-	StInit();
-	StStartServer(true);
-}
-void StopServer(){
-	StStopServer();
-	StFree();
-	FreeCedar();
-}
-void StartClient(){
-	InitCedar();
-	CtStartClient();
-}
-void StopClient(){
-	CtStopClient();
-	FreeCedar();
-}
-
-int CommandEx(int argc, char *argv[]){
-		wchar_t *s;
+int __stdcall CommandEx(int argc, char *argv[]){
+	wchar_t *s;
 	UINT ret = 0;
-
-	InitMayaqua(false, false, argc, argv);
-	InitCedar();
 
 	s = GetCommandLineUniStr();
 
-	if (s == NULL)
-	{
+	if (s == 0){
 		s = CopyUniStr(L"");
 	}
 
-	if (UniStrCmpi(s, L"exit") != 0)
-	{
+	if (UniStrCmpi(s, L"exit") != 0){
 		UINT size = UniStrSize(s) + 64;
 		wchar_t *tmp;
 
@@ -72,29 +43,84 @@ int CommandEx(int argc, char *argv[]){
 
 		Free(tmp);
 	}
+
+	return 0;
 }
+
+void __stdcall CtrlHandlerCommon(){
+	FreeCedar();
+	FreeMayaqua();
+	return;
+}
+int __stdcall CtrlHandlerServer(unsigned int Type){
+	printf("I: VPNX: Exiting...");
+	StStopServer();
+	CtrlHandlerCommon();
+	return 0;
+}
+int __stdcall CtrlHandlerClient(unsigned int Type){
+	printf("I: VPNX: Exiting...");
+	StStopServer();
+	StFree();
+	CtrlHandlerCommon();
+	return 0;
+}
+
+void __stdcall WaitExit(){
+#ifdef WIN32
+	WaitForSingleObject(CreateEvent(0, TRUE, FALSE, 0), INFINITE); //Infinite pause
+#else
+	while(1){
+		sleep(10);
+	}
+#endif
+}
+
+void __stdcall StartServer(){
+	StInit();
+	StStartServer(false);
+	WaitExit();
+}
+void __stdcall StartServerBridge(){
+	StInit();
+	StStartServer(true);
+	WaitExit();
+}
+
+void __stdcall StartClient(){
+	CtStartClient();
+	WaitExit();
+}
+
 
 // WinMain function
 int main(int argc, char *argv[]){
 	int i = 0;
 
-	VgUseStaticLink();
 
 	printf("I: VPNX: Starting...\n");
+
+	InitMayaqua(false, false, 0, 0);
+	InitCedar();
 
 	for(i=0; i < argc; i++){
 		//printf("DEBUG: %i: %s\n", i, argv[i]);
 		if( !StrCmpi(argv[i], "/Server") ){
 			printf("I: VPNX: Server mode.\n");
-			return MsService(GC_SVC_NAME_VPNSERVER, StartServer, StopServer, ICO_CASCADE, argv[0]);
+			SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandlerServer, true);
+			StartServer();
+			return;
 		}
 		if( !StrCmpi(argv[i], "/Bridge") ){
-			printf("I: VPNX: Server mode.\n");
-			return MsService(GC_SVC_NAME_VPNSERVER, StartServerBridge, StopServer, ICO_CASCADE, argv[0]);
+			printf("I: VPNX: Bridge mode.\n");
+			SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandlerServer, true);
+			StartServerBridge();
+			return;	
 		}
 		if( !StrCmpi(argv[i], "/Client") ){
 			printf("I: VPNX: Client mode.\n");
-			return MsService(GC_SVC_NAME_VPNSERVER, StartClient, StopClient, ICO_CASCADE, argv[0]);
+			StartClient();
+			return;	
 		}
 		if( !StrCmpi(argv[i], "/Config") ){
 			printf("I: VPNX: Configuration mode.\n");
@@ -102,10 +128,24 @@ int main(int argc, char *argv[]){
 		}
 
 		if( !StrCmpi(argv[i], "/GUI") ){
+			int Client = 0;
 			printf("I: VPNX: Configuration GUI mode.\n");
-			InitMayaqua(false, false, 0, NULL);
-			InitCedar();
-			SMExec();
+
+			{
+				int n = i;
+				for(n; n < argc; n++){
+					if(!StrCmpi(argv[n], "/Client")){
+						Client = 1;
+					}
+				}
+			}
+
+			if(!Client){
+				SMExec();
+			} else {
+				CMExec();
+			}
+
 			FreeCedar();
 			FreeMayaqua();
 			return 0;
@@ -113,7 +153,12 @@ int main(int argc, char *argv[]){
 
 	}
 
-	printf("E: VPNX: vpnx [/Server|/Client|/Config|/GUI]\n");
+	printf("E: VPNX: Run as Server	: vpnx [/Server|/Client]\n");
+	printf("E: VPNX: Config Utility	: vpnx /Config [/Server|Client]\n");
+	printf("E: VPNX: GUI Config	: vpnx /GUI [/Server|/Client] [/Remote]\n");
+
+	FreeCedar();
+	FreeMayaqua();
 
 	return 0;
 }
