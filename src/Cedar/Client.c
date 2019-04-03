@@ -8998,7 +8998,7 @@ void CiLoadIniSettings(CLIENT *c)
 		c->NoSaveConfig = true;
 	}*/
 
-	c->NoSaveLog = ToBool(IniStrValue(o, "NoSaveLog"));
+	c->NoSaveLog = 1; //*** ToBool(IniStrValue(o, "NoSaveLog"));
 	c->NoSaveConfig = ToBool(IniStrValue(o, "NoSaveConfig"));
 	
 	CiFreeIni(o);
@@ -10614,8 +10614,8 @@ CLIENT *CiNewClient()
 	// Log Settings
 	if(c->NoSaveLog == false)
 	{
-		MakeDir(CLIENT_LOG_DIR_NAME);
-		c->Logger = NewLog(CLIENT_LOG_DIR_NAME, CLIENT_LOG_PREFIX, LOG_SWITCH_DAY);
+		//*** MakeDir(CLIENT_LOG_DIR_NAME);
+		//*** c->Logger = NewLog(CLIENT_LOG_DIR_NAME, CLIENT_LOG_PREFIX, LOG_SWITCH_DAY);
 	}
 
 	CLog(c, "L_LINE");
