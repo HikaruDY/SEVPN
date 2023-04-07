@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mayaqua", "Mayaqua.vcxproj", "{F18DB391-9631-7DF7-A954-C53F350D381A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cedar", "Cedar.vcxproj", "{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vpnx", "vpnx.vcxproj", "{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A} = {A235C5A3-61A6-E59A-7734-3B6C721A5C5A}
+		{F18DB391-9631-7DF7-A954-C53F350D381A} = {F18DB391-9631-7DF7-A954-C53F350D381A}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vpnx_GUI", "vpnx_GUI.vcxproj", "{C539F285-4BB4-19DB-A550-CDE6502B5397}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F} = {ACB993EF-6064-27BD-728F-CE3FA03D9B1F}
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A} = {A235C5A3-61A6-E59A-7734-3B6C721A5C5A}
+		{F18DB391-9631-7DF7-A954-C53F350D381A} = {F18DB391-9631-7DF7-A954-C53F350D381A}
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C} = {277533DC-073E-16B4-91D7-3D1E4BA0718C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUIResources", "GUIResources.vcxproj", "{277533DC-073E-16B4-91D7-3D1E4BA0718C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|x86.ActiveCfg = Release|Win32
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|x86.Build.0 = Release|Win32
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|x86.ActiveCfg = Release|Win32
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|x86.Build.0 = Release|Win32
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|x86.ActiveCfg = Release|Win32
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|x86.Build.0 = Release|Win32
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|x86.ActiveCfg = Release|Win32
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|x86.Build.0 = Release|Win32
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|x86.ActiveCfg = Release|Win32
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
