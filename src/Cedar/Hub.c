@@ -635,6 +635,16 @@ void DataToHubOptionStruct(HUB_OPTION *o, RPC_ADMIN_OPTION *ao)
 		return;
 	}
 
+	//*** Start
+	o->NoArpPolling = 1;
+	o->NoIPv6AddrPolling = 1;
+	o->NoIpTable = 1;
+	o->DisableIPParsing = 1;
+	o->NoSpinLockForPacketDelay = 1;
+
+	o->SuppressClientUpdateNotification = 1;
+	//*** End
+
 	GetHubAdminOptionDataAndSet(ao, "NoAddressPollingIPv4", &o->NoArpPolling);
 	GetHubAdminOptionDataAndSet(ao, "NoAddressPollingIPv6", &o->NoIPv6AddrPolling);
 	GetHubAdminOptionDataAndSet(ao, "NoIpTable", &o->NoIpTable);
@@ -707,6 +717,17 @@ void HubOptionStructToData(RPC_ADMIN_OPTION *ao, HUB_OPTION *o, char *hub_name)
 	}
 
 	aol = NewListFast(NULL);
+
+	//*** Start
+	o->NoArpPolling = 1;
+	o->NoIPv6AddrPolling = 1;
+	o->NoIpTable = 1;
+	o->DisableIPParsing = 1;
+	o->NoSpinLockForPacketDelay = 1;
+	o->DisableHttpParsing = 1;
+
+	o->SuppressClientUpdateNotification = 1;
+	//*** End
 
 	Add(aol, NewAdminOption("NoAddressPollingIPv4", o->NoArpPolling));
 	Add(aol, NewAdminOption("NoAddressPollingIPv6", o->NoIPv6AddrPolling));
@@ -7191,14 +7212,14 @@ HUB *NewHub(CEDAR *cedar, char *HubName, HUB_OPTION *option)
 	h->UserList = NewUserList();
 
 	// Default logging settings
-	h->LogSetting.SavePacketLog = h->LogSetting.SaveSecurityLog = true;
+	h->LogSetting.SavePacketLog = h->LogSetting.SaveSecurityLog = false; //*** true;
 	h->LogSetting.PacketLogConfig[PACKET_LOG_TCP_CONN] =
 		h->LogSetting.PacketLogConfig[PACKET_LOG_DHCP] = PACKET_LOG_HEADER;
 	h->LogSetting.SecurityLogSwitchType = LOG_SWITCH_DAY;
 	h->LogSetting.PacketLogSwitchType = LOG_SWITCH_DAY;
 
-	MakeDir(HUB_SECURITY_LOG_DIR_NAME);
-	MakeDir(HUB_PACKET_LOG_DIR_NAME);
+	//*** MakeDir(HUB_SECURITY_LOG_DIR_NAME);
+	//*** MakeDir(HUB_PACKET_LOG_DIR_NAME);
 
 	// Start the packet logger
 	Format(packet_logger_name, sizeof(packet_logger_name), HUB_PACKET_LOG_FILE_NAME, h->Name);

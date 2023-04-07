@@ -113,7 +113,9 @@
 #ifdef	OS_WIN32
 
 // For Win32
-#include "VLanWin32.c"
+//*** #include "VLanWin32.c"
+#include "VLanDummy.c"
+
 
 #else
 

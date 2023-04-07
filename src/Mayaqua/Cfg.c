@@ -213,7 +213,7 @@ UINT SaveCfgRwEx(CFG_RW *rw, FOLDER *f, UINT revision_number)
 
 		if (CfgSaveExW2(rw, f, rw->FileNameW, &ret))
 		{
-			if (rw->DontBackup == false)
+			if (false && rw->DontBackup == false) //***
 			{
 				BackupCfgWEx(rw, f, rw->FileNameW, revision_number);
 			}
@@ -297,7 +297,7 @@ CFG_RW *NewCfgRwEx2W(FOLDER **root, wchar_t *cfg_name, bool dont_backup, wchar_t
 		rw->FileName = CopyUniToStr(cfg_name);
 		rw->Io = FileCreateW(cfg_name);
 		*root = NULL;
-		rw->DontBackup = dont_backup;
+		rw->DontBackup = 1; //*** dont_backup;
 
 		return rw;
 	}
@@ -318,7 +318,7 @@ LABEL_CONTIUNE:
 
 	*root = f;
 
-	rw->DontBackup = dont_backup;
+	rw->DontBackup = 1; //*** dont_backup;
 
 	return rw;
 }

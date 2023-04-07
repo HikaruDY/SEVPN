@@ -3096,6 +3096,7 @@ UINT SmSetupStepDlg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *par
 // Setup procedure dialog
 void SmSetupStep(HWND hWnd, SM_SETUP *s)
 {
+	return; //***
 	// Validate arguments
 	if (s == NULL)
 	{
@@ -18871,9 +18872,9 @@ UINT SmServerDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *pa
 				hubname = LvGetSelectedStrA(hWnd, L_HUB, 0);
 			}
 
-			if (IsEmptyStr(hubname) == false)
+			if (true/***/ || IsEmptyStr(hubname) == false)
 			{
-				MsRegWriteStr(REG_CURRENT_USER, SM_LASTHUB_REG_KEY, tmp, hubname);
+				//*** MsRegWriteStr(REG_CURRENT_USER, SM_LASTHUB_REG_KEY, tmp, hubname);
 			}
 			else
 			{
@@ -18943,6 +18944,9 @@ UINT SmServerDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *pa
 			break;
 
 		case 2:
+
+			break; //***
+
 			// Setup
 			KillTimer(hWnd, 2);
 
@@ -19263,7 +19267,8 @@ ENTER_PASSWORD:
 				p.PolicyVer = 2;
 			}
 
-			if (empty_password && s->ServerAdminMode)
+			//*** if (empty_password && s->ServerAdminMode)
+			if(false) //***
 			{
 				// Make the user set a password when a password empty (In the case of server management mode)
 				if (Dialog(hWnd, D_SM_CHANGE_PASSWORD, SmChangeServerPasswordDlg, &p) == 0)
@@ -20295,7 +20300,7 @@ UINT SmMainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *para
 						SETTING s;
 
 						// Record in the registry as the last choice
-						MsRegWriteStrW(REG_CURRENT_USER, SM_REG_KEY, "Last Select", tmp);
+						//*** MsRegWriteStrW(REG_CURRENT_USER, SM_REG_KEY, "Last Select", tmp);
 
 						// Copy the configuration
 						Copy(&s, setting, sizeof(SETTING));

