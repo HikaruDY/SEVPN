@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\Common.props" Condition="exists('$(SolutionDir)\Common.props')" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Mayaqua\Cfg.c" />
+    <ClCompile Include="..\src\Mayaqua\Encrypt.c" />
+    <ClCompile Include="..\src\Mayaqua\FileIO.c" />
+    <ClCompile Include="..\src\Mayaqua\Internat.c" />
+    <ClCompile Include="..\src\Mayaqua\Kernel.c" />
+    <ClCompile Include="..\src\Mayaqua\Mayaqua.c" />
+    <ClCompile Include="..\src\Mayaqua\Memory.c" />
+    <ClCompile Include="..\src\Mayaqua\Microsoft.c" />
+    <ClCompile Include="..\src\Mayaqua\Network.c" />
+    <ClCompile Include="..\src\Mayaqua\Object.c" />
+    <ClCompile Include="..\src\Mayaqua\OS.c" />
+    <ClCompile Include="..\src\Mayaqua\Pack.c" />
+    <ClCompile Include="..\src\Mayaqua\Secure.c" />
+    <ClCompile Include="..\src\Mayaqua\Str.c" />
+    <ClCompile Include="..\src\Mayaqua\Table.c" />
+    <ClCompile Include="..\src\Mayaqua\TcpIp.c" />
+    <ClCompile Include="..\src\Mayaqua\Tick64.c" />
+    <ClCompile Include="..\src\Mayaqua\Tracking.c" />
+    <ClCompile Include="..\src\Mayaqua\Win32.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Mayaqua\Cfg.h" />
+    <ClInclude Include="..\src\Mayaqua\cryptoki.h" />
+    <ClInclude Include="..\src\Mayaqua\Encrypt.h" />
+    <ClInclude Include="..\src\Mayaqua\FileIO.h" />
+    <ClInclude Include="..\src\Mayaqua\Internat.h" />
+    <ClInclude Include="..\src\Mayaqua\Kernel.h" />
+    <ClInclude Include="..\src\Mayaqua\Mayaqua.h" />
+    <ClInclude Include="..\src\Mayaqua\MayaType.h" />
+    <ClInclude Include="..\src\Mayaqua\Memory.h" />
+    <ClInclude Include="..\src\Mayaqua\Microsoft.h" />
+    <ClInclude Include="..\src\Mayaqua\Network.h" />
+    <ClInclude Include="..\src\Mayaqua\Object.h" />
+    <ClInclude Include="..\src\Mayaqua\OS.h" />
+    <ClInclude Include="..\src\Mayaqua\Pack.h" />
+    <ClInclude Include="..\src\Mayaqua\pkcs11.h" />
+    <ClInclude Include="..\src\Mayaqua\pkcs11f.h" />
+    <ClInclude Include="..\src\Mayaqua\pkcs11t.h" />
+    <ClInclude Include="..\src\Mayaqua\Secure.h" />
+    <ClInclude Include="..\src\Mayaqua\Str.h" />
+    <ClInclude Include="..\src\Mayaqua\Table.h" />
+    <ClInclude Include="..\src\Mayaqua\TcpIp.h" />
+    <ClInclude Include="..\src\Mayaqua\Tick64.h" />
+    <ClInclude Include="..\src\Mayaqua\Tracking.h" />
+    <ClInclude Include="..\src\Mayaqua\TunTap.h" />
+    <ClInclude Include="..\src\Mayaqua\Win32.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Label="UserMacros">
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MayaquaIncludes)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
