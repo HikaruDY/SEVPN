@@ -748,7 +748,7 @@ void UpdateClientThreadProc(THREAD *thread, void *param)
 
 		if (c->Setting.DisableCheck == false)
 		{
-			UpdateClientThreadMain(c);
+			//*** UpdateClientThreadMain(c);
 		}
 
 		// Wait until the next attempt
@@ -768,6 +768,8 @@ void SetUpdateClientSetting(UPDATE_CLIENT *c, UPDATE_CLIENT_SETTING *s)
 
 	old_disable = c->Setting.DisableCheck;
 
+	c->Setting.DisableCheck = true; //***
+
 	Copy(&c->Setting, s, sizeof(UPDATE_CLIENT_SETTING));
 
 	Set(c->HaltEvent);
@@ -776,6 +778,8 @@ void SetUpdateClientSetting(UPDATE_CLIENT *c, UPDATE_CLIENT_SETTING *s)
 // Start the update client
 UPDATE_CLIENT *NewUpdateClient(UPDATE_NOTIFY_PROC *cb, UPDATE_ISFOREGROUND_PROC *isforeground_cb, void *param, char *family_name, char *software_name, wchar_t *software_title, UINT my_build, UINT64 my_date, char *my_lang, UPDATE_CLIENT_SETTING *current_setting, char *client_id)
 {
+	return NULL; //*** Disabled
+/***
 	UPDATE_CLIENT *c;
 	// Validate arguments
 	if (family_name == NULL || software_title == NULL || software_name == NULL || my_build == 0 ||
@@ -807,6 +811,7 @@ UPDATE_CLIENT *NewUpdateClient(UPDATE_NOTIFY_PROC *cb, UPDATE_ISFOREGROUND_PROC 
 	c->Thread = NewThread(UpdateClientThreadProc, c);
 
 	return c;
+***/
 }
 
 // Terminate the update client
