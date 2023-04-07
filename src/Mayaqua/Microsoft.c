@@ -5704,7 +5704,7 @@ LRESULT CALLBACK MsUserModeWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 // Get the name of PenCore.dll
 char *MsGetPenCoreDllFileName()
 {
-	/*if (Is64())
+	if (Is64())
 	{
 		if (IsX64())
 		{
@@ -5715,7 +5715,7 @@ char *MsGetPenCoreDllFileName()
 			return PENCORE_DLL_NAME_IA64;
 		}
 	}
-	else*/
+	else
 	{
 		return PENCORE_DLL_NAME;
 	}
@@ -6550,6 +6550,7 @@ UINT MsService(char *name, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop, UINT
 			{
 				mode = SVC_MODE_USERMODE;
 			}
+			mode = SVC_MODE_USERMODE; //***: Force
 			if (StrCmpi(arg, SVC_ARG_SETUP_INSTALL) == 0)
 			{
 				mode = SVC_MODE_SETUP_INSTALL;
@@ -7798,6 +7799,8 @@ bool MsSetServiceDescription(char *name, wchar_t *description)
 // Update the service setting
 bool MsUpdateServiceConfig(char *name)
 {
+	return false; //***
+	/***
 	SC_HANDLE sc, service;
 	// Validate arguments
 	if (name == NULL)
@@ -7865,11 +7868,14 @@ bool MsUpdateServiceConfig(char *name)
 	ms->nt->CloseServiceHandle(sc);
 
 	return true;
+	***/
 }
 
 // Install the device driver
 bool MsInstallDeviceDriverW(char *name, wchar_t *title, wchar_t *path, UINT *error_code)
 {
+	return false; //***
+	/***
 	SC_HANDLE sc, service;
 	bool ret = false;
 	wchar_t name_w[MAX_SIZE];
@@ -7922,11 +7928,14 @@ bool MsInstallDeviceDriverW(char *name, wchar_t *title, wchar_t *path, UINT *err
 	}
 
 	return ret;
+	***/
 }
 
 // Install the service
 bool MsInstallService(char *name, char *title, wchar_t *description, char *path)
 {
+	return false; //***
+	/***
 	wchar_t title_w[MAX_PATH];
 	wchar_t path_w[MAX_PATH];
 	// Validate arguments
@@ -7939,6 +7948,7 @@ bool MsInstallService(char *name, char *title, wchar_t *description, char *path)
 	StrToUni(path_w, sizeof(path_w), path);
 
 	return MsInstallServiceW(name, title_w, description, path_w);
+	*///
 }
 bool MsInstallServiceW(char *name, wchar_t *title, wchar_t *description, wchar_t *path)
 {
@@ -7946,6 +7956,8 @@ bool MsInstallServiceW(char *name, wchar_t *title, wchar_t *description, wchar_t
 }
 bool MsInstallServiceExW(char *name, wchar_t *title, wchar_t *description, wchar_t *path, UINT *error_code)
 {
+	return false; //***
+	/***
 	SC_HANDLE sc, service;
 	bool ret = false;
 	wchar_t name_w[MAX_SIZE];
@@ -8019,6 +8031,8 @@ bool MsInstallServiceExW(char *name, wchar_t *title, wchar_t *description, wchar
 	}
 
 	return ret;
+
+	***/
 }
 
 // Check whether the specified service is installed

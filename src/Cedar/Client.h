@@ -117,7 +117,7 @@
 
 // Constants
 #define	CLIENT_CONFIG_FILE_NAME				"@vpn_client.config"
-#define	CLIENT_DEFAULT_KEEPALIVE_HOST		"keepalive.softether.org"
+#define	CLIENT_DEFAULT_KEEPALIVE_HOST		"" //***
 #define	CLIENT_DEFAULT_KEEPALIVE_PORT		80
 #define	CLIENT_DEFAULT_KEEPALIVE_INTERVAL	KEEP_INTERVAL_DEFAULT
 
