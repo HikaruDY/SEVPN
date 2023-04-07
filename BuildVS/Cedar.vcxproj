@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\Common.props" Condition="exists('$(SolutionDir)\Common.props')" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Cedar\Account.c" />
+    <ClCompile Include="..\src\Cedar\Admin.c" />
+    <ClCompile Include="..\src\Cedar\AzureClient.c" />
+    <ClCompile Include="..\src\Cedar\AzureServer.c" />
+    <ClCompile Include="..\src\Cedar\Bridge.c" />
+    <ClCompile Include="..\src\Cedar\BridgeDummy.c" />
+    <ClCompile Include="..\src\Cedar\Cedar.c" />
+    <ClCompile Include="..\src\Cedar\CedarPch.c" />
+    <ClCompile Include="..\src\Cedar\Client.c" />
+    <ClCompile Include="..\src\Cedar\CM.c" />
+    <ClCompile Include="..\src\Cedar\Command.c" />
+    <ClCompile Include="..\src\Cedar\Connection.c" />
+    <ClCompile Include="..\src\Cedar\Console.c" />
+    <ClCompile Include="..\src\Cedar\Database.c" />
+    <ClCompile Include="..\src\Cedar\DDNS.c" />
+    <ClCompile Include="..\src\Cedar\EM.c" />
+    <ClCompile Include="..\src\Cedar\EtherLog.c" />
+    <ClCompile Include="..\src\Cedar\Hub.c" />
+    <ClCompile Include="..\src\Cedar\Interop_OpenVPN.c" />
+    <ClCompile Include="..\src\Cedar\Interop_SSTP.c" />
+    <ClCompile Include="..\src\Cedar\IPsec.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_EtherIP.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_IKE.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_IkePacket.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_IPC.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_L2TP.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_PPP.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_WinDummy.c" />
+    <ClCompile Include="..\src\Cedar\Layer3.c" />
+    <ClCompile Include="..\src\Cedar\Link.c" />
+    <ClCompile Include="..\src\Cedar\Listener.c" />
+    <ClCompile Include="..\src\Cedar\Logging.c" />
+    <ClCompile Include="..\src\Cedar\Nat.c" />
+    <ClCompile Include="..\src\Cedar\NativeStack.c" />
+    <ClCompile Include="..\src\Cedar\NM.c" />
+    <ClCompile Include="..\src\Cedar\NullLan.c" />
+    <ClCompile Include="..\src\Cedar\Protocol.c" />
+    <ClCompile Include="..\src\Cedar\Radius.c" />
+    <ClCompile Include="..\src\Cedar\Remote.c" />
+    <ClCompile Include="..\src\Cedar\Sam.c" />
+    <ClCompile Include="..\src\Cedar\SecureInfo.c" />
+    <ClCompile Include="..\src\Cedar\SecureNAT.c" />
+    <ClCompile Include="..\src\Cedar\Server.c" />
+    <ClCompile Include="..\src\Cedar\Session.c" />
+    <ClCompile Include="..\src\Cedar\SM.c" />
+    <ClCompile Include="..\src\Cedar\UdpAccel.c" />
+    <ClCompile Include="..\src\Cedar\UT.c" />
+    <ClCompile Include="..\src\Cedar\VG.c" />
+    <ClCompile Include="..\src\Cedar\Virtual.c" />
+    <ClCompile Include="..\src\Cedar\VLan.c" />
+    <ClCompile Include="..\src\Cedar\VLanDummy.c" />
+    <ClCompile Include="..\src\Cedar\WaterMark.c" />
+    <ClCompile Include="..\src\Cedar\WebUI.c" />
+    <ClCompile Include="..\src\Cedar\Win32Com.cpp" />
+    <ClCompile Include="..\src\Cedar\WinJumpList.cpp" />
+    <ClCompile Include="..\src\Cedar\WinUi.c" />
+    <ClCompile Include="..\src\Cedar\Wpc.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Cedar\Account.h" />
+    <ClInclude Include="..\src\Cedar\Admin.h" />
+    <ClInclude Include="..\src\Cedar\AzureClient.h" />
+    <ClInclude Include="..\src\Cedar\AzureServer.h" />
+    <ClInclude Include="..\src\Cedar\Bridge.h" />
+    <ClInclude Include="..\src\Cedar\BridgeWin32.h" />
+    <ClInclude Include="..\src\Cedar\Cedar.h" />
+    <ClInclude Include="..\src\Cedar\CedarPch.h" />
+    <ClInclude Include="..\src\Cedar\CedarType.h" />
+    <ClInclude Include="..\src\Cedar\Client.h" />
+    <ClInclude Include="..\src\Cedar\CM.h" />
+    <ClInclude Include="..\src\Cedar\CMInner.h" />
+    <ClInclude Include="..\src\Cedar\Command.h" />
+    <ClInclude Include="..\src\Cedar\Connection.h" />
+    <ClInclude Include="..\src\Cedar\Console.h" />
+    <ClInclude Include="..\src\Cedar\Database.h" />
+    <ClInclude Include="..\src\Cedar\DDNS.h" />
+    <ClInclude Include="..\src\Cedar\EM.h" />
+    <ClInclude Include="..\src\Cedar\EMInner.h" />
+    <ClInclude Include="..\src\Cedar\EtherLog.h" />
+    <ClInclude Include="..\src\Cedar\Hub.h" />
+    <ClInclude Include="..\src\Cedar\Interop_OpenVPN.h" />
+    <ClInclude Include="..\src\Cedar\Interop_SSTP.h" />
+    <ClInclude Include="..\src\Cedar\IPsec.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_EtherIP.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_IKE.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_IkePacket.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_IPC.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_L2TP.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_PPP.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_Win7.h" />
+    <ClInclude Include="..\src\Cedar\IPsec_Win7Inner.h" />
+    <ClInclude Include="..\src\Cedar\Layer3.h" />
+    <ClInclude Include="..\src\Cedar\Link.h" />
+    <ClInclude Include="..\src\Cedar\Listener.h" />
+    <ClInclude Include="..\src\Cedar\Logging.h" />
+    <ClInclude Include="..\src\Cedar\Nat.h" />
+    <ClInclude Include="..\src\Cedar\NativeStack.h" />
+    <ClInclude Include="..\src\Cedar\netcfgn.h" />
+    <ClInclude Include="..\src\Cedar\netcfgx.h" />
+    <ClInclude Include="..\src\Cedar\NM.h" />
+    <ClInclude Include="..\src\Cedar\NMInner.h" />
+    <ClInclude Include="..\src\Cedar\NullLan.h" />
+    <ClInclude Include="..\src\Cedar\Protocol.h" />
+    <ClInclude Include="..\src\Cedar\Radius.h" />
+    <ClInclude Include="..\src\Cedar\Remote.h" />
+    <ClInclude Include="..\src\Cedar\Sam.h" />
+    <ClInclude Include="..\src\Cedar\SecureInfo.h" />
+    <ClInclude Include="..\src\Cedar\SecureNAT.h" />
+    <ClInclude Include="..\src\Cedar\Server.h" />
+    <ClInclude Include="..\src\Cedar\Session.h" />
+    <ClInclude Include="..\src\Cedar\SM.h" />
+    <ClInclude Include="..\src\Cedar\SMInner.h" />
+    <ClInclude Include="..\src\Cedar\UdpAccel.h" />
+    <ClInclude Include="..\src\Cedar\UT.h" />
+    <ClInclude Include="..\src\Cedar\VG.h" />
+    <ClInclude Include="..\src\Cedar\Virtual.h" />
+    <ClInclude Include="..\src\Cedar\VLan.h" />
+    <ClInclude Include="..\src\Cedar\VLanWin32.h" />
+    <ClInclude Include="..\src\Cedar\WaterMark.h" />
+    <ClInclude Include="..\src\Cedar\WebUI.h" />
+    <ClInclude Include="..\src\Cedar\Win32Com.h" />
+    <ClInclude Include="..\src\Cedar\WinUi.h" />
+    <ClInclude Include="..\src\Cedar\Wpc.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Label="UserMacros">
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CedarIncludes);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

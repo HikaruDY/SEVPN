@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup Label="UserMacros">
+		<root>$(SolutionDir)/../src</root>
+		<CedarIncludes>$(root)/;$(root)/Cedar/winpcap</CedarIncludes>
+		<MayaquaIncludes>$(root)/Mayaqua;$(root)/Mayaqua/win32_inc;</MayaquaIncludes>
+	</PropertyGroup>
+
+	<!-- $(PlatformID) macro -->
+	<PropertyGroup Label="UserMacros">
+		<PlatformID>unknown</PlatformID>
+	</PropertyGroup>
+
+	<PropertyGroup Label="UserMacros" Condition="('$(Platform)'=='Win32')">
+		<PlatformID>x86</PlatformID>
+	</PropertyGroup>
+	<PropertyGroup Label="UserMacros" Condition="('$(Platform)'=='x64')">
+		<PlatformID>x64</PlatformID>
+	</PropertyGroup>
+	<PropertyGroup Label="UserMacros" Condition="('$(Platform)'=='Itanium')">
+		<PlatformID>ia64</PlatformID>
+	</PropertyGroup>
+	<PropertyGroup Label="UserMacros" Condition="('$(Platform)'=='ARM')">
+		<PlatformID>a32</PlatformID>
+	</PropertyGroup>
+	<PropertyGroup Label="UserMacros" Condition="('$(Platform)'=='ARM64')">
+		<PlatformID>a64</PlatformID>
+	</PropertyGroup>
+	<PropertyGroup Label="UserMacros" Condition="('$(Platform)'=='ARM64EC')">
+		<PlatformID>a64ec</PlatformID>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Configuration">
+		<IntDir>$(SolutionDir)\TEMP\$(Configuration)_$(PlatformID)\</IntDir>
+		<OutDir>$(SolutionDir)\TEMP\$(Configuration)_$(PlatformID)\</OutDir>
+		<UseDebugLibraries>false</UseDebugLibraries>
+		<CharacterSet>MultiByte</CharacterSet>
+		<GenerateManifest>false</GenerateManifest>
+		<LinkIncremental>false</LinkIncremental>
+	</PropertyGroup>
+
+	<ItemDefinitionGroup>
+		<ClCompile>
+			<WarningLevel>Level3</WarningLevel>
+			<PreprocessorDefinitions>WIN32;NDEBUG;VPN_SPEED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<MultiProcessorCompilation>true</MultiProcessorCompilation>
+			<Optimization>MaxSpeed</Optimization>
+			<InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+			<IntrinsicFunctions>true</IntrinsicFunctions>
+			<FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+			<RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+			<BufferSecurityCheck>false</BufferSecurityCheck>
+			<EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+			<StructMemberAlignment>8Bytes</StructMemberAlignment>
+			<FunctionLevelLinking>false</FunctionLevelLinking>
+			<AdditionalIncludeDirectories>$(root)/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+		</ClCompile>
+		<Link>
+			<GenerateDebugInformation>false</GenerateDebugInformation>
+			<AdditionalDependencies>
+				$(IntDir)\Cedar.lib;
+				$(IntDir)\Mayaqua.lib;
+				$(SolutionDir)\libs\$(PlatformID)\libcrypto_static.lib;
+				$(SolutionDir)\libs\$(PlatformID)\libssl_static.lib;
+				$(SolutionDir)\libs\$(PlatformID)\zlibstat.lib;
+			</AdditionalDependencies>
+			<LargeAddressAware>true</LargeAddressAware>
+			<TerminalServerAware>true</TerminalServerAware>
+			<SetChecksum>false</SetChecksum>
+			<RandomizedBaseAddress>false</RandomizedBaseAddress>
+			<FixedBaseAddress>false</FixedBaseAddress>
+		</Link>
+	</ItemDefinitionGroup>
+</Project>
