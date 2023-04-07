@@ -522,7 +522,7 @@ bool SaveCertsAndKeyToDir(CERTS_AND_KEY* c, wchar_t* dir)
 
 	MakeDirExW(dir);
 
-	// ã‚µãƒ¼ãƒãƒ¼ã‹ã‚‰å—ä¿¡ã—ãŸè¨¼æ˜æ›¸æƒ…å ±ã® websocket_certs_cache ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¸ã®æ›¸ãè¾¼ã¿
+	// ƒT[ƒo[‚©‚çóM‚µ‚½Ø–¾‘î•ñ‚Ì websocket_certs_cache ƒfƒBƒŒƒNƒgƒŠ‚Ö‚Ì‘‚«‚İ
 	count = LIST_NUM(c->CertList);
 
 	if (count >= 1)
@@ -566,7 +566,7 @@ bool SaveCertsAndKeyToDir(CERTS_AND_KEY* c, wchar_t* dir)
 		ret = false;
 	}
 
-	// websocket_certs_cache ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹ä¸è¦ãƒ•ã‚¡ã‚¤ãƒ«ã®å‰Šé™¤
+	// websocket_certs_cache ƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚é•s—vƒtƒ@ƒCƒ‹‚Ìíœ
 	if (LIST_NUM(filename_list) >= 1)
 	{
 		DIRLIST* dirlist = EnumDirW(dir);
@@ -755,14 +755,14 @@ void CleanupCertsAndKey(CERTS_AND_KEY* c)
 	Free(c);
 }
 
-// è¨¼æ˜æ›¸ãŒç‰¹å®šã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã® CRL ã«ã‚ˆã£ã¦ç„¡åŠ¹åŒ–ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ç¢ºèªã™ã‚‹
+// Ø–¾‘‚ª“Á’è‚ÌƒfƒBƒŒƒNƒgƒŠ‚Ì CRL ‚É‚æ‚Á‚Ä–³Œø‰»‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©Šm”F‚·‚é
 bool IsXRevoked(X *x)
 {
 	char dirname[MAX_PATH];
 	UINT i;
 	bool ret = false;
 	DIRLIST *t;
-	// å¼•æ•°ãƒã‚§ãƒƒã‚¯
+	// ˆø”ƒ`ƒFƒbƒN
 	if (x == NULL)
 	{
 		return false;
@@ -770,7 +770,7 @@ bool IsXRevoked(X *x)
 
 	GetExeDir(dirname, sizeof(dirname));
 
-	// CRL ãƒ•ã‚¡ã‚¤ãƒ«ã®æ¤œç´¢
+	// CRL ƒtƒ@ƒCƒ‹‚ÌŒŸõ
 	t = EnumDir(dirname);
 
 	for (i = 0;i < t->NumFiles;i++)
@@ -805,17 +805,17 @@ bool IsXRevoked(X *x)
 	return ret;
 }
 
-// è¨¼æ˜æ›¸ãŒ CRL ã«ã‚ˆã£ã¦ç„¡åŠ¹åŒ–ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ç¢ºèªã™ã‚‹
+// Ø–¾‘‚ª CRL ‚É‚æ‚Á‚Ä–³Œø‰»‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©Šm”F‚·‚é
 bool IsXRevokedByXCrl(X *x, X_CRL *r)
 {
-	// æ‰‹æŠœãã•ã‚“
+	// è”²‚«‚³‚ñ
 	return false;
 }
 
-// CRL ã®è§£æ”¾
+// CRL ‚Ì‰ğ•ú
 void FreeXCrl(X_CRL *r)
 {
-	// å¼•æ•°ãƒã‚§ãƒƒã‚¯
+	// ˆø”ƒ`ƒFƒbƒN
 	if (r == NULL)
 	{
 		return;
@@ -826,7 +826,7 @@ void FreeXCrl(X_CRL *r)
 	Free(r);
 }
 
-// ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ CRL ã«å¤‰æ›
+// ƒtƒ@ƒCƒ‹‚ğ CRL ‚É•ÏŠ·
 X_CRL *FileToXCrl(char *filename)
 {
 	wchar_t *filename_w = CopyStrToUni(filename);
@@ -840,7 +840,7 @@ X_CRL *FileToXCrlW(wchar_t *filename)
 {
 	BUF *b;
 	X_CRL *r;
-	// å¼•æ•°ãƒã‚§ãƒƒã‚¯
+	// ˆø”ƒ`ƒFƒbƒN
 	if (filename == NULL)
 	{
 		return NULL;
@@ -859,13 +859,13 @@ X_CRL *FileToXCrlW(wchar_t *filename)
 	return r;
 }
 
-// ãƒãƒƒãƒ•ã‚¡ã‚’ CRL ã«å¤‰æ›
+// ƒoƒbƒtƒ@‚ğ CRL ‚É•ÏŠ·
 X_CRL *BufToXCrl(BUF *b)
 {
 	X_CRL *r;
 	X509_CRL *x509crl;
 	BIO *bio;
-	// å¼•æ•°ãƒã‚§ãƒƒã‚¯
+	// ˆø”ƒ`ƒFƒbƒN
 	if (b == NULL)
 	{
 		return NULL;
