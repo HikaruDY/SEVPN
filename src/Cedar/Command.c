@@ -23181,6 +23181,8 @@ UINT PsAbout(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 		return ERR_INVALID_PARAMETER;
 	}
 
+	/***
+
 	b = ReadDump("|legal.txt");
 
 	CmdPrintAbout(c);
@@ -23209,6 +23211,8 @@ UINT PsAbout(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 	c->Write(c, L"\r\n");
 	CmdPrintAbout(c);
 	c->Write(c, L"\r\n");
+
+	***/
 
 	FreeParamValueList(o);
 
@@ -23402,6 +23406,8 @@ void CmdPrintAbout(CONSOLE *c)
 	{
 		return;
 	}
+
+	return;//***
 
 	cedar = NewCedar(NULL, NULL);
 
@@ -23627,6 +23633,7 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 		{"CMD", NULL, NULL, NULL, NULL},
 		{"CSV", NULL, NULL, NULL, NULL},
 		{"PROGRAMMING", NULL, NULL, NULL, NULL},
+		{"CONFIG", NULL, NULL, NULL, NULL}, //***
 	};
 
 #ifdef	OS_WIN32
@@ -23650,11 +23657,13 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 		VpnCmdInitBootPath();
 	}
 
+	/***
 	if(c->ConsoleType != CONSOLE_CSV)
 	{
 		CmdPrintAbout(c);
 		c->Write(c, L"");
 	}
+	***/
 
 	o = ParseCommandList(c, cmd_name, str, args, sizeof(args) / sizeof(args[0]));
 
@@ -23667,6 +23676,10 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 	if ((GetParamStr(o, "CLIENT") == NULL && GetParamStr(o, "SERVER") == NULL && GetParamStr(o, "TOOLS") == NULL) ||
 		(GetParamStr(o, "CLIENT") != NULL && GetParamStr(o, "SERVER") != NULL && GetParamStr(o, "TOOLS") != NULL))
 	{
+
+		printf("E: VPNX: Specify \"/Server <host:ip>\" or \"/Client <host:ip>\" to select target of configuration!\n"); //***
+		return ERR_USER_CANCEL;
+		/***
 		wchar_t *ret;
 		UINT code;
 		// The mode of Tools or Server or Client is not specified
@@ -23701,6 +23714,8 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 		}
 
 		c->Write(c, L"");
+
+		***/
 	}
 	else
 	{
@@ -23723,6 +23738,11 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 
 	if (target == NULL && tools == false)
 	{
+
+		printf("E: VPNX: Specify \"/Server <host:ip>\" or \"/Client <host:ip>\" to select target of configuration!\n"); //***
+		return ERR_USER_CANCEL; //***
+
+		/***
 		wchar_t *str;
 		// Input a host name
 		if (server)
@@ -23746,10 +23766,12 @@ UINT VpnCmdProc(CONSOLE *c, char *cmd_name, wchar_t *str, void *param)
 			return ERR_USER_CANCEL;
 		}
 
+		***/
+
 		if (IsEmptyStr(target))
 		{
 			Free(target);
-			target = CopyStr("localhost");
+			target = CopyStr("127.0.0.1"); //***
 		}
 	}
 	else
