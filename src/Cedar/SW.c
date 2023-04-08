@@ -954,6 +954,7 @@ UINT SwEasy2(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, WIZARD *wizard, 
 	case WM_COMMAND:
 		switch (wParam)
 		{
+		case B_EASYMODE:
 		case B_DELETE_SENSITIVE:
 			sw->Easy_EraseSensitive = IsChecked(hWnd, B_DELETE_SENSITIVE);
 			sw->Easy_EasyMode = IsChecked(hWnd, B_EASYMODE);
@@ -1051,6 +1052,7 @@ UINT SwWeb2(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, WIZARD *wizard, W
 	case WM_COMMAND:
 		switch (wParam)
 		{
+		case B_EASYMODE:
 		case B_DELETE_SENSITIVE:
 			sw->Web_EraseSensitive = IsChecked(hWnd, B_DELETE_SENSITIVE);
 			sw->Web_EasyMode = IsChecked(hWnd, B_EASYMODE);
@@ -5730,6 +5732,15 @@ UINT SwWelcomeDlg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, WIZARD *wiz
 			// Vpnsetup.exe is launched from other than the installation source
 			MsgBoxEx(hWnd, MB_ICONSTOP, _UU("SW_NOT_INSTALL_SRC"));
 			break;
+		}
+
+		if (MsIsKB3033929RequiredAndMissing())
+		{
+			// KB3033929 is missing
+			if (MsgBoxEx(hWnd, MB_ICONINFORMATION | MB_OKCANCEL, _UU("SW_KB3033929_REQUIRED")) == IDCANCEL)
+			{
+				break;
+			}
 		}
 
 		if (sw->DoubleClickBlocker)

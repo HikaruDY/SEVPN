@@ -252,6 +252,7 @@ struct BLOCK
 	UINT Ttl;						// TTL value (Used only in ICMP NAT of Virtual.c)
 	UINT Param1;					// Parameter 1
 	bool IsFlooding;				// Is flooding packet
+	UCHAR RawFlagRetUdpAccel;		// Raw flag returned by UDP accel
 };
 
 // Connection structure
@@ -299,12 +300,14 @@ struct CONNECTION
 	char *CipherName;				// Encryption algorithm name
 	UINT64 ConnectedTick;			// Time it is connected
 	IP ClientIp;					// Client IP address
+	UINT ClientPort;				// Client Port number
 	char ClientHostname[MAX_HOST_NAME_LEN + 1];	// Client host name
 	UINT Type;						// Type
 	bool DontUseTls1;				// Do not use TLS 1.0
 	void *hWndForUI;				// Parent window
 	bool IsInProc;					// In-process
 	char InProcPrefix[64];			// Prefix
+	UINT InProcLayer;				// InProc layer
 	UINT AdditionalConnectionFailedCounter;		// Additional connection failure counter
 	UINT64 LastCounterResetTick;	// Time the counter was reset finally
 	bool WasSstp;					// Processed the SSTP
@@ -314,6 +317,9 @@ struct CONNECTION
 	UINT LastPacketQueueSize;		// The last queue size of packets
 	UINT LastRecvFifoTotalSize;		// The last RecvFifo total size
 	UINT LastRecvBlocksNum;			// The last ReceivedBlocks num
+	bool IsJsonRpc;					// Is JSON-RPC
+	bool JsonRpcAuthed;				// JSON-RPC Authed
+	LISTENER *Listener;				// Listener ref
 };
 
 

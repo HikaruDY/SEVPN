@@ -185,6 +185,7 @@ struct SESSION
 	THREAD *Thread;					// Management thread
 	CONNECTION *Connection;			// Connection
 	char ClientIP[64];				// Client IP
+	UINT ClientPort;				// Client Port
 	CLIENT_OPTION *ClientOption;	// Client connection options
 	CLIENT_AUTH *ClientAuth;		// Client authentication data
 	volatile bool Halt;				// Halting flag
@@ -256,6 +257,7 @@ struct SESSION
 	UINT NumDisconnected;			// Number of socket disconnection
 	bool NoReconnectToSession;		// Disable to reconnect to the session
 	char UnderlayProtocol[64];		// Physical communication protocol
+	char ProtocolDetails[256];		// Protocol Details
 	UINT64 FirstConnectionEstablisiedTime;	// Connection completion time of the first connection
 	UINT64 CurrentConnectionEstablishTime;	// Completion time of this connection
 	UINT NumConnectionsEatablished;	// Number of connections established so far
@@ -265,10 +267,12 @@ struct SESSION
 	bool IsRUDPSession;				// Whether R-UDP session
 	UINT RUdpMss;					// The value of the MSS should be applied while the R-UDP is used
 	bool EnableBulkOnRUDP;			// Allow the bulk transfer in the R-UDP session
+	UINT BulkOnRUDPVersion;			// RUDP Bulk Version
 	bool EnableHMacOnBulkOfRUDP;	// Use the HMAC to sign the bulk transfer of R-UDP session
 	bool EnableUdpRecovery;			// Enable the R-UDP recovery
 
 	bool UseUdpAcceleration;		// Use of UDP acceleration mode
+	UINT UdpAccelerationVersion;		// UDP acceleration version
 	bool UseHMacOnUdpAcceleration;	// Use the HMAC in the UDP acceleration mode
 	UDP_ACCEL *UdpAccel;			// UDP acceleration
 	bool IsUsingUdpAcceleration;	// Flag of whether the UDP acceleration is used
@@ -308,6 +312,11 @@ struct SESSION
 	char FirstTimeHttpRedirectUrl[128];	// URL for redirection only the first time
 	UINT FirstTimeHttpAccessCheckIp;	// IP address for access checking
 
+	UCHAR BulkSendKey[RUDP_BULK_KEY_SIZE_MAX];	// RUDP Bulk Send Key
+	UINT BulkSendKeySize;						// RUDP Bulk Send Key size
+	UCHAR BulkRecvKey[RUDP_BULK_KEY_SIZE_MAX];	// RUDP Bulk Recv Key
+	UINT BulkRecvKeySize;						// RUDP Bulk Recv Key size
+
 	// To examine the maximum number of alowed logging target packets per minute
 	UINT64 MaxLoggedPacketsPerMinuteStartTick;	// Inspection start time
 	UINT CurrentNumPackets;				// Current number of packets
@@ -315,6 +324,15 @@ struct SESSION
 	// Measures for D-Link bug
 	UINT64 LastDLinkSTPPacketSendTick;	// Last D-Link STP packet transmission time
 	UCHAR LastDLinkSTPPacketDataHash[MD5_SIZE];	// Last D-Link STP packet hash
+
+	SHARED_BUFFER *IpcSessionSharedBuffer;	// A shared buffer between IPC and Session
+	IPC_SESSION_SHARED_BUFFER_DATA *IpcSessionShared;	// A shared data between IPC and Session
+
+
+	bool EnableLightRecvFilter;		// Enable light receive filter
+	UINT LightRecvFilterMac;		// Light receive filter MAC address
+	UINT LightRecvFilterIPv4_1;		// Light receive filter IPv4 address #1
+	UINT LightRecvFilterIPv4_2;		// Light receive filter IPv4 address #2
 };
 
 // Password dialog
@@ -396,7 +414,7 @@ SESSION *NewRpcSession(CEDAR *cedar, CLIENT_OPTION *option);
 SESSION *NewRpcSessionEx(CEDAR *cedar, CLIENT_OPTION *option, UINT *err, char *client_str);
 SESSION *NewRpcSessionEx2(CEDAR *cedar, CLIENT_OPTION *option, UINT *err, char *client_str, void *hWnd);
 SESSION *NewServerSession(CEDAR *cedar, CONNECTION *c, HUB *h, char *username, POLICY *policy);
-SESSION *NewServerSessionEx(CEDAR *cedar, CONNECTION *c, HUB *h, char *username, POLICY *policy, bool inproc_mode);
+SESSION *NewServerSessionEx(CEDAR *cedar, CONNECTION *c, HUB *h, char *username, POLICY *policy, bool inproc_mode, UCHAR *ipc_mac_address);
 void ClientThread(THREAD *t, void *param);
 void ReleaseSession(SESSION *s);
 void CleanupSession(SESSION *s);

@@ -1147,11 +1147,23 @@ bool PacketLog(HUB *hub, SESSION *src_session, SESSION *dest_session, PKT *packe
 		if (src_session != NULL && src_session->NormalClient)
 		{
 			StrCpy(pl->SrcPhysicalIP, sizeof(pl->SrcPhysicalIP), src_session->ClientIP);
+			if (src_session->ClientPort != 0)
+			{
+				char tmp[32] = {0};
+				Format(tmp, sizeof(tmp), "(port=%u)", src_session->ClientPort);
+				StrCat(pl->SrcPhysicalIP, sizeof(pl->SrcPhysicalIP), tmp);
+			}
 		}
 
 		if (dest_session != NULL && dest_session->NormalClient)
 		{
 			StrCpy(pl->DestPhysicalIP, sizeof(pl->DestPhysicalIP), dest_session->ClientIP);
+			if (dest_session->ClientPort != 0)
+			{
+				char tmp[32] = {0};
+				Format(tmp, sizeof(tmp), "(port=%u)", dest_session->ClientPort);
+				StrCat(pl->DestPhysicalIP, sizeof(pl->DestPhysicalIP), tmp);
+			}
 		}
 
 		pl->WritePhysicalIP = true;
@@ -1430,6 +1442,7 @@ char *BuildHttpLogStr(HTTPLOG *h)
 	AddLogBufToStr(b, "HttpProtocol", h->Protocol);
 	AddLogBufToStr(b, "HttpReferer", h->Referer);
 	AddLogBufToStr(b, "HttpUserAgent", h->UserAgent);
+	AddLogBufToStr(b, "HttpAcceptLanguage", h->AcceptLanguage);
 
 	WriteBuf(b, &nullchar, 1);
 
@@ -1478,10 +1491,17 @@ void AddLogBufToStr(BUF *b, char *name, char *value)
 void MakeSafeLogStr(char *str)
 {
 	UINT i, len;
+	bool is_http = false;
 	// Validate arguments
 	if (str == NULL)
 	{
 		return;
+	}
+
+	if (str[0] == 'h' && str[1] == 't' && str[2] == 't' && str[3] == 'p' &&
+		((str[4] == 's' && str[5] == ':') || (str[4] == ':')))
+	{
+		is_http = true;
 	}
 
 	EnPrintableAsciiStr(str, '?');
@@ -1495,7 +1515,10 @@ void MakeSafeLogStr(char *str)
 		}
 		else if (str[i] == ' ')
 		{
-			str[i] = '_';
+			if (is_http == false)
+			{
+				str[i] = '_';
+			}
 		}
 	}
 }
@@ -2242,8 +2265,6 @@ void ReplaceForCsv(char *str)
 		return;
 	}
 
-	// If there are blanks, trim it
-	Trim(str);
 	len = StrLen(str);
 
 	for (i = 0;i < len;i++)
