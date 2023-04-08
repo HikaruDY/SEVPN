@@ -4637,6 +4637,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+1			ICON			"..\vpnx\VPNX.ico"
 ICO_TEST                ICON                    "Test.ico"
 ICO_KEY                 ICON                    "Key.ico"
 ICO_CERT                ICON                    "Cert.ico"
