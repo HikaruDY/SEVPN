@@ -204,6 +204,8 @@ struct OPENVPN_CONTROL_PACKET
 	UINT DataSize;										// Data size
 	UCHAR *Data;										// Data body
 	UINT64 NextSendTime;								// Scheduled next transmission time
+	bool NoResend;										// Disable re-sending
+	UINT NumSent;										// How many times we have sent this packet
 };
 
 // OpenVPN packet
@@ -248,6 +250,7 @@ struct OPENVPN_CHANNEL
 	bool IsInitiatorServer;								// Whether the channel was started from the server side
 	bool RekeyInitiated;								// Whether re-keying has already started
 	UINT64 NextRekey;
+	struct SslClientCertInfo ClientCert;                // Client certificate and verification data
 };
 
 // OpenVPN session
@@ -342,6 +345,7 @@ void OvsSendPacketRawNow(OPENVPN_SERVER *s, OPENVPN_SESSION *se, void *data, UIN
 
 void OvsProcessRecvControlPacket(OPENVPN_SERVER *s, OPENVPN_SESSION *se, OPENVPN_CHANNEL *c, OPENVPN_PACKET *p);
 void OvsSendControlPacket(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *data, UINT data_size);
+void OvsSendControlPacketEx(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *data, UINT data_size, bool no_resend);
 void OvsSendControlPacketWithAutoSplit(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *data, UINT data_size);
 void OvsFreeControlPacket(OPENVPN_CONTROL_PACKET *p);
 void OvsDeleteFromSendingControlPacketList(OPENVPN_CHANNEL *c, UINT num_acks, UINT *acks);

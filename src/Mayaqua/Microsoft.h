@@ -1017,6 +1017,9 @@ bool MsIsInfCatalogRequired();
 bool MsCheckFileDigitalSignature(HWND hWnd, char *name, bool *danger);
 bool MsCheckFileDigitalSignatureW(HWND hWnd, wchar_t *name, bool *danger);
 
+bool MsIsKB3033929RequiredAndMissing();
+bool MsIsSha2KernelModeSignatureSupported();
+
 
 bool MsGetProcessExeName(char *path, UINT size, UINT id);
 bool MsGetProcessExeNameW(wchar_t *path, UINT size, UINT id);
@@ -1151,7 +1154,7 @@ void MsTest();
 
 bool MsSaveSystemInfo(wchar_t *dst_filename);
 bool MsCollectVpnInfo(BUF *bat, char *tmpdir, char *svc_name, wchar_t *config_name, wchar_t *logdir_name);
-void MsInitProcessCallOnce();
+void MsInitProcessCallOnce(bool restricted_mode);
 
 MS_SUSPEND_HANDLER *MsNewSuspendHandler();
 void MsFreeSuspendHandler(MS_SUSPEND_HANDLER *h);
