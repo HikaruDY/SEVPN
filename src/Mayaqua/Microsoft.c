@@ -6082,6 +6082,8 @@ void MsUserModeW(wchar_t *title, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop
 		return;
 	}
 
+	hDll = LoadLibrary(MsGetExeFileName());
+	/***
 	if (Is64())
 	{
 		hDll = MsLoadLibraryAsDataFile(MsGetPenCoreDllFileName());
@@ -6090,6 +6092,7 @@ void MsUserModeW(wchar_t *title, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop
 	{
 		hDll = MsLoadLibrary(MsGetPenCoreDllFileName());
 	}
+	*/
 
 	// Read icon
 	tray_icon = LoadImage(hDll, MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16,
