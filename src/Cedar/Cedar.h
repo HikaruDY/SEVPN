@@ -126,10 +126,10 @@
 
 
 // Version number
-#define	CEDAR_VER					429
+#define	CEDAR_VER					438
 
 // Build Number
-#define	CEDAR_BUILD					9680
+#define	CEDAR_BUILD					9760
 
 // Beta number
 //#define	BETA_NUMBER					3
@@ -139,21 +139,21 @@
 
 // Specify the name of the person in charge building
 #ifndef	BUILDER_NAME
-#define	BUILDER_NAME		"yagi"
+#define	BUILDER_NAME		"buildsan"
 #endif	// BUILDER_NAME
 
 // Specify the location to build
 #ifndef	BUILD_PLACE
-#define	BUILD_PLACE			"pc33"
+#define	BUILD_PLACE			"crosswin"
 #endif	// BUILD_PLACE
 
 // Specifies the build date
-#define	BUILD_DATE_Y		2019
-#define	BUILD_DATE_M		2
-#define	BUILD_DATE_D		28
-#define	BUILD_DATE_HO		18
-#define	BUILD_DATE_MI		39
-#define	BUILD_DATE_SE		47
+#define	BUILD_DATE_Y		2021
+#define	BUILD_DATE_M		8
+#define	BUILD_DATE_D		17
+#define	BUILD_DATE_HO		22
+#define	BUILD_DATE_MI		14
+#define	BUILD_DATE_SE		6
 
 // Tolerable time difference
 #define	ALLOW_TIMESTAMP_DIFF		(UINT64)(3 * 24 * 60 * 60 * 1000)
@@ -438,6 +438,7 @@
 #define	AUTHTYPE_ROOTCERT				3			// Root certificate which is issued by trusted Certificate Authority
 #define	AUTHTYPE_RADIUS					4			// Radius authentication
 #define	AUTHTYPE_NT						5			// Windows NT authentication
+#define	AUTHTYPE_OPENVPN_CERT    		98			// TLS client certificate authentication
 #define	AUTHTYPE_TICKET					99			// Ticket authentication
 
 // Constant of the client side
@@ -933,6 +934,7 @@
 #define	ERR_VPNGATE_INCLIENT_CANT_STOP	146	// Can not be stopped if operating within VPN Client mode
 #define	ERR_NOT_SUPPORTED_FUNCTION_ON_OPENSOURCE	147	// It is a feature that is not supported in the open source version
 #define	ERR_SUSPENDING					148	// System is suspending
+#define ERR_DHCP_SERVER_NOT_RUNNING		149	// DHCP server is not running
 
 
 ////////////////////////////

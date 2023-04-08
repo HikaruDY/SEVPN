@@ -234,6 +234,9 @@ typedef struct BLACK BLACK;
 typedef struct SEND_SIGNATURE_PARAM SEND_SIGNATURE_PARAM;
 typedef struct UPDATE_CLIENT UPDATE_CLIENT;
 typedef struct UPDATE_CLIENT_SETTING UPDATE_CLIENT_SETTING;
+typedef struct HTTP_MIME_TYPE HTTP_MIME_TYPE;
+typedef struct WS WS;
+typedef struct WSP WSP;
 
 
 // ==============================================================
@@ -613,6 +616,7 @@ typedef struct IKE_SA_TRANSFORM_SETTING IKE_SA_TRANSFORM_SETTING;
 typedef struct IKE_CLIENT IKE_CLIENT;
 typedef struct IPSECSA IPSECSA;
 typedef struct IKE_CAPS IKE_CAPS;
+typedef struct IKE_INFOMSG_QUOTA_ENTRY IKE_INFOMSG_QUOTA_ENTRY;
 
 // ==============================================================
 //  IPSec Packet
@@ -673,6 +677,7 @@ typedef struct IPC_ASYNC IPC_ASYNC;
 typedef struct IPC_PARAM IPC_PARAM;
 typedef struct IPC_DHCP_RELESAE_QUEUE IPC_DHCP_RELESAE_QUEUE;
 typedef struct IPC_MSCHAP_V2_AUTHINFO IPC_MSCHAP_V2_AUTHINFO;
+typedef struct IPC_SESSION_SHARED_BUFFER_DATA IPC_SESSION_SHARED_BUFFER_DATA;
 
 
 // ==============================================================
