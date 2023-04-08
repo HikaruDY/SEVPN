@@ -234,7 +234,7 @@ void OvsProceccRecvPacket(OPENVPN_SERVER *s, UDPPACKET *p, UINT protocol)
 				}
 				se->Channels[recv_packet->KeyId] = c;
 				Debug("OpenVPN New Channel :%u\n", recv_packet->KeyId);
-				OvsLog(s, se, c, "LO_NEW_CHANNEL");
+				//OvsLog(s, se, c, "LO_NEW_CHANNEL");
 			}
 /*			else if (recv_packet->OpCode == OPENVPN_P_CONTROL_SOFT_RESET_V1)
 			{
@@ -433,7 +433,8 @@ void OvsProcessRecvControlPacket(OPENVPN_SERVER *s, OPENVPN_SESSION *se, OPENVPN
 			// Create an SSL pipe
 			Lock(s->Cedar->lock);
 			{
-				c->SslPipe = NewSslPipe(true, s->Cedar->ServerX, s->Cedar->ServerK, s->Dh);
+				bool cert_verify = true;
+				c->SslPipe = NewSslPipeEx(true, s->Cedar->ServerX, s->Cedar->ServerK, s->Dh, cert_verify, &c->ClientCert);
 			}
 			Unlock(s->Cedar->lock);
 
@@ -481,7 +482,7 @@ void OvsProcessRecvControlPacket(OPENVPN_SERVER *s, OPENVPN_SESSION *se, OPENVPN
 
 		case OPENVPN_P_CONTROL_HARD_RESET_CLIENT_V2:
 			// New connection (hard reset)
-			OvsSendControlPacket(c, OPENVPN_P_CONTROL_HARD_RESET_SERVER_V2, NULL, 0);
+			OvsSendControlPacketEx(c, OPENVPN_P_CONTROL_HARD_RESET_SERVER_V2, NULL, 0, true);
 
 			c->Status = OPENVPN_CHANNEL_STATUS_TLS_WAIT_CLIENT_KEY;
 			break;
@@ -703,7 +704,18 @@ void OvsBeginIPCAsyncConnectionIfEmpty(OPENVPN_SERVER *s, OPENVPN_SESSION *se, O
 			p.BridgeMode = true;
 		}
 
+		if (IsEmptyStr(c->ClientKey.Username) || IsEmptyStr(c->ClientKey.Password))
+		{
+			// OpenVPN X.509 certificate authentication is used only when no username / password is specified
+			if (c->ClientCert.X != NULL)
+			{
+				p.ClientCertificate = c->ClientCert.X;
+			}
+		}
+
 		p.IsOpenVPN = true;
+
+		p.Layer = (se->Mode == OPENVPN_MODE_L2) ? IPC_LAYER_2 : IPC_LAYER_3;
 
 		// Calculate the MSS
 		p.Mss = OvsCalcTcpMss(s, se, c);
@@ -770,6 +782,26 @@ void OvsSetupSessionParameters(OPENVPN_SERVER *s, OPENVPN_SESSION *se, OPENVPN_C
 	Debug("Parsing Option Str: %s\n", data->OptionString);
 
 	OvsLog(s, se, c, "LO_OPTION_STR_RECV", data->OptionString);
+
+	if (c->ClientCert.X != NULL)
+	{
+		if (c->ClientCert.X->subject_name != NULL)
+		{
+			OvsLog(s, se, c, "LO_CLIENT_CERT", c->ClientCert.X->subject_name->CommonName);
+		}
+		else
+		{
+			OvsLog(s, se, c, "LO_CLIENT_CERT", "(unknown CN)");
+		}
+	}
+	else if (!c->ClientCert.PreverifyErr)
+	{
+		OvsLog(s, se, c, "LO_CLIENT_NO_CERT");
+	}
+	else
+	{
+		OvsLog(s, se, c, "LO_CLIENT_UNVERIFIED_CERT", c->ClientCert.PreverifyErrMessage);
+	}
 
 	Zero(opt_str, sizeof(opt_str));
 	StrCpy(opt_str, sizeof(opt_str), data->OptionString);
@@ -1236,6 +1268,10 @@ void OvsSendControlPacketWithAutoSplit(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *
 // Send the control packet
 void OvsSendControlPacket(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *data, UINT data_size)
 {
+	OvsSendControlPacketEx(c, opcode, data, data_size, false);
+}
+void OvsSendControlPacketEx(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *data, UINT data_size, bool no_resend)
+{
 	OPENVPN_CONTROL_PACKET *p;
 	// Validate arguments
 	if (c == NULL || (data_size != 0 && data == NULL))
@@ -1244,6 +1280,8 @@ void OvsSendControlPacket(OPENVPN_CHANNEL *c, UCHAR opcode, UCHAR *data, UINT da
 	}
 
 	p = ZeroMalloc(sizeof(OPENVPN_CONTROL_PACKET));
+
+	p->NoResend = no_resend;
 
 	p->OpCode = opcode;
 	p->PacketId = c->NextSendPacketId++;
@@ -1349,6 +1387,11 @@ void OvsFreeChannel(OPENVPN_CHANNEL *c)
 
 	FreeMd(c->MdRecv);
 	FreeMd(c->MdSend);
+
+	if (c->ClientCert.X != NULL)
+	{
+		FreeX(c->ClientCert.X);
+	}
 
 	Free(c);
 }
@@ -1767,7 +1810,7 @@ OPENVPN_SESSION *OvsNewSession(OPENVPN_SERVER *s, IP *server_ip, UINT server_por
 	Debug("OpenVPN New Session: %s:%u -> %s:%u Proto=%u\n", server_ip_str, server_port,
 		client_ip_str, client_port, protocol);
 
-	OvsLog(s, se, NULL, "LO_NEW_SESSION", (protocol == OPENVPN_PROTOCOL_UDP ? "UDP" : "TCP"));
+	//OvsLog(s, se, NULL, "LO_NEW_SESSION", (protocol == OPENVPN_PROTOCOL_UDP ? "UDP" : "TCP"));
 
 	return se;
 }
@@ -2221,20 +2264,25 @@ void OvsRecvPacket(OPENVPN_SERVER *s, LIST *recv_packet_list, UINT protocol)
 
 					if (cp->NextSendTime <= s->Now)
 					{
-						OPENVPN_PACKET *p;
+						if (cp->NoResend == false || cp->NumSent == 0) // To address the UDP reflection amplification attack: https://github.com/SoftEtherVPN/SoftEtherVPN/issues/1001
+						{
+							OPENVPN_PACKET *p;
 
-						num = OvsGetAckReplyList(c, acks);
+							cp->NumSent++;
 
-						p = OvsNewControlPacket(cp->OpCode, j, se->ServerSessionId, num, acks,
-							se->ClientSessionId, cp->PacketId, cp->DataSize, cp->Data);
+							num = OvsGetAckReplyList(c, acks);
 
-						OvsSendPacketNow(s, se, p);
+							p = OvsNewControlPacket(cp->OpCode, j, se->ServerSessionId, num, acks,
+								se->ClientSessionId, cp->PacketId, cp->DataSize, cp->Data);
 
-						OvsFreePacket(p);
+							OvsSendPacketNow(s, se, p);
 
-						cp->NextSendTime = s->Now + (UINT64)OPENVPN_CONTROL_PACKET_RESEND_INTERVAL;
+							OvsFreePacket(p);
 
-						AddInterrupt(s->Interrupt, cp->NextSendTime);
+							cp->NextSendTime = s->Now + (UINT64)OPENVPN_CONTROL_PACKET_RESEND_INTERVAL;
+
+							AddInterrupt(s->Interrupt, cp->NextSendTime);
+						}
 					}
 				}
 
@@ -2386,7 +2434,7 @@ void OvsRecvPacket(OPENVPN_SERVER *s, LIST *recv_packet_list, UINT protocol)
 			OPENVPN_SESSION *se = LIST_DATA(delete_session_list, i);
 
 			Debug("Deleting Session %p\n", se);
-			OvsLog(s, se, NULL, "LO_DELETE_SESSION");
+			//OvsLog(s, se, NULL, "LO_DELETE_SESSION");
 
 			OvsFreeSession(se);
 

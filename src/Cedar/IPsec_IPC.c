@@ -179,6 +179,12 @@ IPC_ASYNC *NewIPCAsync(CEDAR *cedar, IPC_PARAM *param, SOCK_EVENT *sock_event)
 
 	Copy(&a->Param, param, sizeof(IPC_PARAM));
 
+	if (param->ClientCertificate != NULL)
+	{
+		// Client certificate must be copied for async processing
+		a->Param.ClientCertificate = CloneX(param->ClientCertificate);
+	}
+
 	if (sock_event != NULL)
 	{
 		a->SockEvent = sock_event;
@@ -297,6 +303,12 @@ void FreeIPCAsync(IPC_ASYNC *a)
 	ReleaseCedar(a->Cedar);
 
 	ReleaseTube(a->TubeForDisconnect);
+
+	if (a->Param.ClientCertificate != NULL)
+	{
+		FreeX(a->Param.ClientCertificate);
+	}
+
 	Free(a);
 }
 
@@ -314,7 +326,7 @@ IPC *NewIPCByParam(CEDAR *cedar, IPC_PARAM *param, UINT *error_code)
 		param->UserName, param->Password, error_code, &param->ClientIp,
 		param->ClientPort, &param->ServerIp, param->ServerPort,
 		param->ClientHostname, param->CryptName,
-		param->BridgeMode, param->Mss, NULL);
+		param->BridgeMode, param->Mss, NULL, param->ClientCertificate, param->Layer);
 
 	return ipc;
 }
@@ -323,7 +335,8 @@ IPC *NewIPCByParam(CEDAR *cedar, IPC_PARAM *param, UINT *error_code)
 IPC *NewIPC(CEDAR *cedar, char *client_name, char *postfix, char *hubname, char *username, char *password,
 			UINT *error_code, IP *client_ip, UINT client_port, IP *server_ip, UINT server_port,
 			char *client_hostname, char *crypt_name,
-			bool bridge_mode, UINT mss, EAP_CLIENT *eap_client)
+			bool bridge_mode, UINT mss, EAP_CLIENT *eap_client, X *client_certificate,
+			UINT layer)
 {
 	IPC *ipc;
 	UINT dummy_int = 0;
@@ -338,6 +351,7 @@ IPC *NewIPC(CEDAR *cedar, char *client_name, char *postfix, char *hubname, char 
 	NODE_INFO info;
 	BUF *b;
 	UCHAR mschap_v2_server_response_20[20];
+	UINT64 u64;
 	// Validate arguments
 	if (cedar == NULL || username == NULL || password == NULL || client_hostname == NULL)
 	{
@@ -370,6 +384,12 @@ IPC *NewIPC(CEDAR *cedar, char *client_name, char *postfix, char *hubname, char 
 
 	ipc->Cedar = cedar;
 	AddRef(cedar->ref);
+
+	ipc->Layer = layer;
+	if (ipc->Layer == 0)
+	{
+		ipc->Layer = IPC_LAYER_2;
+	}
 
 	ipc->FlushList = NewTubeFlushList();
 
@@ -416,7 +436,14 @@ IPC *NewIPC(CEDAR *cedar, char *client_name, char *postfix, char *hubname, char 
 	FreePack(p);
 
 	// Upload the authentication data
-	p = PackLoginWithPlainPassword(hubname, username, password);
+	if (client_certificate != NULL)
+	{
+		p = PackLoginWithOpenVPNCertificate(hubname, username, client_certificate);
+	}
+	else
+	{
+		p = PackLoginWithPlainPassword(hubname, username, password);
+	}
 	PackAddStr(p, "hello", client_name);
 	PackAddInt(p, "client_ver", cedar->Version);
 	PackAddInt(p, "client_build", cedar->Build);
@@ -451,6 +478,7 @@ IPC *NewIPC(CEDAR *cedar, char *client_name, char *postfix, char *hubname, char 
 
 	PackAddStr(p, "inproc_postfix", postfix);
 	PackAddStr(p, "inproc_cryptname", crypt_name);
+	PackAddInt(p, "inproc_layer", ipc->Layer);
 
 	// Node information
 	Zero(&info, sizeof(info));
@@ -531,6 +559,10 @@ IPC *NewIPC(CEDAR *cedar, char *client_name, char *postfix, char *hubname, char 
 	MacToStr(macstr, sizeof(macstr), ipc->MacAddress);
 
 	Debug("IPC: Session = %s, Connection = %s, Mac = %s\n", ipc->SessionName, ipc->ConnectionName, macstr);
+
+	u64 = PackGetInt64(p, "IpcSessionSharedBuffer");
+	ipc->IpcSessionSharedBuffer = (SHARED_BUFFER *)u64;
+	ipc->IpcSessionShared = ipc->IpcSessionSharedBuffer->Data;
 
 	FreePack(p);
 
@@ -665,6 +697,8 @@ void FreeIPC(IPC *ipc)
 	}
 
 	ReleaseQueue(ipc->IPv4RecviedQueue);
+	
+	ReleaseSharedBuffer(ipc->IpcSessionSharedBuffer);
 
 	Free(ipc);
 }

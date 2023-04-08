@@ -2156,6 +2156,10 @@ HTTPLOG *ParseHttpAccessLog(PKT *pkt)
 						{
 							StrCpy(h.UserAgent, sizeof(h.UserAgent), value);
 						}
+						else if (StrCmpi(name, "accept-language") == 0)
+						{
+							StrCpy(h.AcceptLanguage, sizeof(h.AcceptLanguage), value);
+						}
 					}
 
 					Free(line);
@@ -3638,8 +3642,8 @@ DHCP_OPTION *NewDhcpOption(UINT id, void *data, UINT size)
 	ret = ZeroMalloc(sizeof(DHCP_OPTION));
 	ret->Data = ZeroMalloc(size);
 	Copy(ret->Data, data, size);
-	ret->Size = (UCHAR)size;
-	ret->Id = (UCHAR)id;
+	ret->Size = size;
+	ret->Id = id;
 
 	return ret;
 }

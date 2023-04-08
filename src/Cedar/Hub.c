@@ -159,7 +159,7 @@ UINT num_admin_options = sizeof(admin_options) / sizeof(ADMIN_OPTION);
 
 
 // Create an EAP client for the specified Virtual Hub
-EAP_CLIENT *HubNewEapClient(CEDAR *cedar, char *hubname, char *client_ip_str, char *username)
+EAP_CLIENT *HubNewEapClient(CEDAR *cedar, char *hubname, char *client_ip_str, char *username, char *vpn_protocol_state_str)
 {
 	HUB *hub = NULL;
 	EAP_CLIENT *ret = NULL;
@@ -209,6 +209,11 @@ EAP_CLIENT *HubNewEapClient(CEDAR *cedar, char *hubname, char *client_ip_str, ch
 
 							if (eap != NULL)
 							{
+								if (IsEmptyStr(vpn_protocol_state_str) == false)
+								{
+									StrCpy(eap->In_VpnProtocolState, sizeof(eap->In_VpnProtocolState), vpn_protocol_state_str);
+								}
+
 								if (use_peap == false)
 								{
 									// EAP
@@ -798,6 +803,8 @@ void HubOptionStructToData(RPC_ADMIN_OPTION *ao, HUB_OPTION *o, char *hub_name)
 	for (i = 0;i < LIST_NUM(aol);i++)
 	{
 		ADMIN_OPTION *a = LIST_DATA(aol, i);
+
+		UniStrCpy(a->Descrption, sizeof(a->Descrption), GetHubAdminOptionHelpString(a->Name));
 
 		Copy(&ao->Items[i], a, sizeof(ADMIN_OPTION));
 
@@ -1674,12 +1681,14 @@ void HubWatchDogThread(THREAD *t, void *param)
 		o2 = NewListFast(NULL);
 
 		// Send an ARP packet
-		LockList(hub->IpTable);
+		LockHashList(hub->MacHashTable);
 		{
 			num = LIST_NUM(hub->IpTable);
 			for (i = 0;i < LIST_NUM(hub->IpTable);i++)
 			{
 				IP_TABLE_ENTRY *e = LIST_DATA(hub->IpTable, i);
+
+				if (e == NULL) continue;
 
 				if ((e->UpdatedTime + (UINT64)(IP_TABLE_EXPIRE_TIME)) > Tick64())
 				{
@@ -1756,7 +1765,7 @@ void HubWatchDogThread(THREAD *t, void *param)
 				}
 			}
 		}
-		UnlockList(hub->IpTable);
+		UnlockHashList(hub->MacHashTable);
 
 		if ((LIST_NUM(o) + LIST_NUM(o2)) != 0)
 		{
@@ -3920,6 +3929,7 @@ LABEL_TRY_AGAIN:
 	return true;
 }
 
+
 // VGS: Setting for embedding UA tag
 void VgsSetEmbTag(bool b)
 {
@@ -4130,6 +4140,17 @@ void StorePacket(HUB *hub, SESSION *s, PKT *packet)
 				{
 					s->LastCommTimeForDormant = now;
 				}
+			}
+		}
+	}
+
+	if (s != NULL)
+	{
+		if (s->EnableLightRecvFilter)
+		{
+			if (IsValidUnicastMacAddress(packet->MacAddressSrc))
+			{
+				s->LightRecvFilterMac = READ_UINT(packet->MacAddressSrc + 2);
 			}
 		}
 	}
@@ -4803,6 +4824,18 @@ UPDATE_FDB:
 
 									Insert(hub->IpTable, e);
 
+									if (s->EnableLightRecvFilter)
+									{
+										if (s->LightRecvFilterIPv4_1 == 0)
+										{
+											s->LightRecvFilterIPv4_1 = uint_ip;
+										}
+										else
+										{
+											s->LightRecvFilterIPv4_2 = uint_ip;
+										}
+									}
+
 									if (0)
 									{
 										char ip_address[64];
@@ -5050,6 +5083,7 @@ DISCARD_UNICAST_PACKET:
 				{
 					// Flooding as a broadcast packet
 					UINT current_tcp_queue_size = 0;
+					UINT bcast_mac_dst = READ_UINT(packet->MacAddressDest + 2);
 
 					// Take a packet log
 					if (s != NULL)
@@ -5075,9 +5109,60 @@ DISCARD_UNICAST_PACKET:
 							{
 								bool delete_default_router_in_ra = false;
 
+								if (dest_session->Policy != NULL && dest_session->Policy->DHCPNoServer)
+								{
+									if (packet->TypeL3 == L3_IPV4 &&
+										packet->TypeL4 == L4_UDP &&
+										packet->TypeL7 == L7_DHCPV4 &&
+										(packet->DhcpOpCode == DHCP_DISCOVER || packet->DhcpOpCode == DHCP_REQUEST || packet->DhcpOpCode == DHCP_RELEASE || packet->DhcpOpCode == DHCP_INFORM))
+									{
+										discard = true;
+										goto L_SKIP_TO_DISCARD;
+									}
+								}
+
+								if (dest_session->EnableLightRecvFilter)
+								{
+									if (packet->BroadcastPacket == false &&
+										dest_session->LightRecvFilterMac != 0 &&
+										dest_session->LightRecvFilterMac != bcast_mac_dst)
+									{
+										discard = true;
+										goto L_SKIP_TO_DISCARD;
+									}
+
+									if (packet->BroadcastPacket &&
+										packet->TypeL3 == L3_ARPV4 &&
+										packet->L3.ARPv4Header->HardwareSize == 6 &&
+										Endian16(packet->L3.ARPv4Header->HardwareType) == ARP_HARDWARE_TYPE_ETHERNET &&
+										packet->L3.ARPv4Header->ProtocolSize == 4 &&
+										Endian16(packet->L3.ARPv4Header->ProtocolType) == MAC_PROTO_IPV4)
+									{
+										if (Endian16(packet->L3.ARPv4Header->Operation) == ARP_OPERATION_REQUEST)
+										{
+											bool ok = false;
+
+											if (dest_session->LightRecvFilterIPv4_1 != 0)
+												if (dest_session->LightRecvFilterIPv4_1 == packet->L3.ARPv4Header->TargetIP)
+													ok = true;
+
+											if (dest_session->LightRecvFilterIPv4_2 != 0)
+												if (dest_session->LightRecvFilterIPv4_2 == packet->L3.ARPv4Header->TargetIP)
+													ok = true;
+
+											if (ok == false)
+											{
+												discard = true;
+												goto L_SKIP_TO_DISCARD;
+											}
+										}
+									}
+								}
+
 								if (dest_session->IsMonitorMode)
 								{
 									discard = true;
+									goto L_SKIP_TO_DISCARD;
 								}
 
 								if (dest_session->NormalClient)
@@ -5089,6 +5174,7 @@ DISCARD_UNICAST_PACKET:
 										{
 											// This is dormant session
 											discard = true;
+											goto L_SKIP_TO_DISCARD;
 										}
 									}
 								}
@@ -5104,6 +5190,7 @@ DISCARD_UNICAST_PACKET:
 											dest_session->Connection->Protocol == CONNECTION_TCP)
 										{
 											discard = true;
+											goto L_SKIP_TO_DISCARD;
 										}
 
 										if (dest_session->LinkModeServer)
@@ -5111,6 +5198,7 @@ DISCARD_UNICAST_PACKET:
 											LINK *k = dest_session->Link;
 
 											discard = true;
+											goto L_SKIP_TO_DISCARD;
 										}
 									}
 								}
@@ -5119,6 +5207,7 @@ DISCARD_UNICAST_PACKET:
 									packet->VlanId != dest_session->VLanId)
 								{
 									discard = true;
+									goto L_SKIP_TO_DISCARD;
 								}
 
 								if (dest_session->Policy->NoIPv6DefaultRouterInRA ||
@@ -5142,6 +5231,7 @@ DISCARD_UNICAST_PACKET:
 										 packet->ICMPv6HeaderPacketInfo.Type == ICMPV6_TYPE_ROUTER_ADVERTISEMENT))
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5152,6 +5242,7 @@ DISCARD_UNICAST_PACKET:
 										packet->TypeL7 == L7_DHCPV4)
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5162,6 +5253,7 @@ DISCARD_UNICAST_PACKET:
 										(Endian16(packet->L4.UDPHeader->DstPort) == 546 || Endian16(packet->L4.UDPHeader->DstPort) == 547))
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5205,6 +5297,7 @@ DISCARD_UNICAST_PACKET:
 									if (packet->TypeL3 == L3_IPV4 || packet->TypeL3 == L3_ARPV4)
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 								if (dest_session->Policy->FilterIPv6)
@@ -5212,6 +5305,7 @@ DISCARD_UNICAST_PACKET:
 									if (packet->TypeL3 == L3_IPV6)
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 								if (dest_session->Policy->FilterNonIP)
@@ -5219,6 +5313,7 @@ DISCARD_UNICAST_PACKET:
 									if (packet->TypeL3 != L3_IPV4 && packet->TypeL3 != L3_ARPV4 && packet->TypeL3 != L3_IPV6)
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5232,6 +5327,7 @@ DISCARD_UNICAST_PACKET:
 									if (drop_arp_packet_privacy || packet->TypeL3 != L3_ARPV4)
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5241,8 +5337,11 @@ DISCARD_UNICAST_PACKET:
 										memcmp(packet->MacAddressDest, s->Hub->HubMacAddr, 6) == 0)
 									{
 										discard = true;
+										goto L_SKIP_TO_DISCARD;
 									}
 								}
+
+L_SKIP_TO_DISCARD:
 
 								if (discard == false && dest_pa != NULL)
 								{
@@ -5912,6 +6011,21 @@ bool StorePacketFilterByPolicy(SESSION *s, PKT *p)
 							bool new_entry = true;
 							UINTToIP(&ip, ip_uint);
 							Copy(&t.Ip, &ip, sizeof(IP));
+
+							if (mac_table->Session != NULL)
+							{
+								if (mac_table->Session->EnableLightRecvFilter)
+								{
+									if (mac_table->Session->LightRecvFilterIPv4_1 == 0)
+									{
+										mac_table->Session->LightRecvFilterIPv4_1 = ip_uint;
+									}
+									else
+									{
+										mac_table->Session->LightRecvFilterIPv4_2 = ip_uint;
+									}
+								}
+							}
 
 							e = Search(hub->IpTable, &t);
 							if (e == NULL)

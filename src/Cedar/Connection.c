@@ -1267,6 +1267,8 @@ void ConnectionSend(CONNECTION *c, UINT64 now)
 										s->TotalSendSizeReal += b->Size;
 
 										c->CurrentSendQueueSize -= b->Size;
+
+										Free(new_buf);
 									}
 
 									FreeBlock(b);
@@ -1707,7 +1709,7 @@ void ConnectionReceive(CONNECTION *c, CANCEL *c1, CANCEL *c2)
 				num = LIST_NUM(tcp->TcpSockList);
 				if (num >= s->MaxConnection)
 				{
-					TCPSOCK *ts;
+					TCPSOCK *ts = NULL;
 					for (i = 0;i < num;i++)
 					{
 						ts = LIST_DATA(tcp->TcpSockList, i);
@@ -1720,11 +1722,14 @@ void ConnectionReceive(CONNECTION *c, CANCEL *c1, CANCEL *c2)
 							c2s++;
 						}
 					}
-					if (s2c == 0 || c2s == 0)
+					if (ts != NULL)
 					{
-						// Disconnect the last socket
-						Disconnect(ts->Sock);
-						Debug("Disconnect (s2c=%u, c2s=%u)\n", s2c, c2s);
+						if (s2c == 0 || c2s == 0)
+						{
+							// Disconnect the last socket
+							Disconnect(ts->Sock);
+							Debug("Disconnect (s2c=%u, c2s=%u)\n", s2c, c2s);
+						}
 					}
 				}
 			}
@@ -1860,6 +1865,18 @@ void ConnectionReceive(CONNECTION *c, CANCEL *c1, CANCEL *c2)
 			if (s->IsRUDPSession)
 			{
 				TUBE *t = sock->BulkRecvTube;
+
+				//for testing purpose
+				//if (sock->test_tmp1 == 0) sock->test_tmp1 = now;
+				//if ((sock->test_tmp1 + 5000ULL) <= now)
+				//{
+				//	// bugbug
+				//	if (c->ServerMode == false)
+				//	{
+				//		WHERE;
+				//		Disconnect(sock);
+				//	}
+				//}
 
 				if (s->EnableBulkOnRUDP)
 				{
@@ -2789,6 +2806,8 @@ BLOCK *NewBlock(void *data, UINT size, int compress)
 
 	b = MallocFast(sizeof(BLOCK));
 
+	b->RawFlagRetUdpAccel = 0;
+
 	b->IsFlooding = false;
 
 	b->PriorityQoS = b->Ttl = b->Param1 = 0;
@@ -3552,6 +3571,7 @@ CONNECTION *NewServerConnection(CEDAR *cedar, SOCK *s, THREAD *t)
 	{
 		AddRef(c->FirstSock->ref);
 		Copy(&c->ClientIp, &s->RemoteIP, sizeof(IP));
+		c->ClientPort = s->RemotePort;
 		StrCpy(c->ClientHostname, sizeof(c->ClientHostname), s->RemoteHostname);
 	}
 	c->Tcp = ZeroMalloc(sizeof(TCP));

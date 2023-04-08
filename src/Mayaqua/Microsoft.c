@@ -265,7 +265,7 @@ typedef struct MS_MSCHAPV2_PARAMS
 } MS_MSCHAPV2_PARAMS;
 
 // The function which should be called once as soon as possible after the process is started
-void MsInitProcessCallOnce()
+void MsInitProcessCallOnce(bool restricted_mode)
 {
 	// Mitigate the DLL injection attack
 	char system_dir[MAX_PATH];
@@ -288,13 +288,34 @@ void MsInitProcessCallOnce()
 	if (hKernel32 != NULL)
 	{
 		BOOL (WINAPI *_SetDllDirectoryA)(LPCTSTR);
+		BOOL (WINAPI *_SetDllDirectoryW)(LPCWSTR);
 
 		_SetDllDirectoryA = (BOOL (WINAPI *)(LPCTSTR))
 			GetProcAddress(hKernel32, "SetDllDirectoryA");
 
+		_SetDllDirectoryW = (BOOL (WINAPI *)(LPCWSTR))
+			GetProcAddress(hKernel32, "SetDllDirectoryW");
+
 		if (_SetDllDirectoryA != NULL)
 		{
 			_SetDllDirectoryA("");
+		}
+
+		if (_SetDllDirectoryW != NULL)
+		{
+			_SetDllDirectoryW(L"");
+		}
+
+		if (restricted_mode)
+		{
+			BOOL (WINAPI *_SetDefaultDllDirectories)(DWORD) =
+				(BOOL (WINAPI *)(DWORD))
+				GetProcAddress(hKernel32, "SetDefaultDllDirectories");
+
+			if (_SetDefaultDllDirectories != NULL)
+			{
+				_SetDefaultDllDirectories(0x00000800); // LOAD_LIBRARY_SEARCH_SYSTEM32
+			}
 		}
 
 		FreeLibrary(hKernel32);
@@ -3412,6 +3433,60 @@ HANDLE MsCreateUserToken()
 	return hNewToken;
 }
 
+
+// Check whether SHA-2 kernel mode signature is supported
+bool MsIsSha2KernelModeSignatureSupported()
+{
+	HINSTANCE hDll;
+	bool ret = false;
+
+	if (MsIsWindows8())
+	{
+		return true;
+	}
+
+	hDll = LoadLibrary("Wintrust.dll");
+	if (hDll == NULL)
+	{
+		return false;
+	}
+
+	if (GetProcAddress(hDll, "CryptCATAdminAcquireContext2") != NULL)
+	{
+		ret = true;
+	}
+
+	FreeLibrary(hDll);
+
+	return ret;
+}
+
+// Check whether KB3033929 is required
+bool MsIsKB3033929RequiredAndMissing()
+{
+	OS_INFO *info = GetOsInfo();
+
+	if (info == NULL)
+	{
+		return false;
+	}
+
+	if (OS_IS_WINDOWS_NT(info->OsType))
+	{
+		if (GET_KETA(info->OsType, 100) == 6)
+		{
+			if (MsIsX64())
+			{
+				if (MsIsSha2KernelModeSignatureSupported() == false)
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
 
 // Check the digital signature of the file
 bool MsCheckFileDigitalSignature(HWND hWnd, char *name, bool *danger)
