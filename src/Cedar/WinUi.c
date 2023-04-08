@@ -11335,6 +11335,9 @@ void InitWinUi(wchar_t *software_name, char *font, UINT fontsize)
 
 	WinUiDebugInit();
 
+	hDll = LoadLibrary(MsGetExeFileName());
+
+	/***
 	if (MayaquaIsMinimalMode() == false)
 	{
 		if (Is64())
@@ -11365,6 +11368,7 @@ void InitWinUi(wchar_t *software_name, char *font, UINT fontsize)
 			exit(0);
 		}
 	}
+	*/
 
 	if (software_name != NULL)
 	{
