@@ -106,12 +106,12 @@
 #define	FILEIO_H
 
 // Constant
-#define	HAMCORE_DIR_NAME			"Data"
-#define	HAMCORE_FILE_NAME			"Data.bin"
-#define	HAMCORE_FILE_NAME_2			"_Data.bin"
-#define	HAMCORE_TEXT_NAME			"Data.txt"
-#define	HAMCORE_HEADER_DATA			"Data"
-#define	HAMCORE_HEADER_SIZE			4
+#define	HAMCORE_DIR_NAME			"hamcore"
+#define	HAMCORE_FILE_NAME			"hamcore.se2"
+#define	HAMCORE_FILE_NAME_2			"_hamcore.se2"
+#define	HAMCORE_TEXT_NAME			"hamcore.txt"
+#define	HAMCORE_HEADER_DATA			"HamCore"
+#define	HAMCORE_HEADER_SIZE			7
 #define	HAMCORE_CACHE_EXPIRES		(5 * 60 * 1000)
 
 // IO structure

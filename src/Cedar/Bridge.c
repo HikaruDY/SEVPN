@@ -113,8 +113,7 @@
 #ifdef	OS_WIN32
 
 // Win32
-//*** #include "BridgeWin32.c"
-#include "BridgeDummy.c"
+#include "BridgeWin32.c"
 
 #else
 

@@ -504,9 +504,6 @@ void DCUpdateNow(DDNS_CLIENT *c)
 // Execution of registration
 UINT DCRegister(DDNS_CLIENT *c, bool ipv6, DDNS_REGISTER_PARAM *p, char *replace_v6)
 {
-	return ERR_NO_ERROR; //***
-
-/***
 	char *url;
 	char url2[MAX_SIZE];
 	char url3[MAX_SIZE];
@@ -787,7 +784,6 @@ UINT DCRegister(DDNS_CLIENT *c, bool ipv6, DDNS_REGISTER_PARAM *p, char *replace
 	}
 
 	return err;
-	***/
 }
 
 // Get the self IP address

@@ -11068,7 +11068,7 @@ void CmMainWindowOnInit(HWND hWnd)
 	InitMenuInternational(GetMenu(hWnd), "CM_MENU");
 
 	cm->HideStatusBar = MsRegReadInt(REG_CURRENT_USER, CM_REG_KEY, "HideStatusBar");
-	cm->HideTrayIcon = true; //*** MsRegReadInt(REG_CURRENT_USER, CM_REG_KEY, "HideTrayIcon");
+	cm->HideTrayIcon = MsRegReadInt(REG_CURRENT_USER, CM_REG_KEY, "HideTrayIcon");
 	cm->IconView = MsRegReadInt(REG_CURRENT_USER, CM_REG_KEY, "IconView");
 	cm->ShowGrid = MsRegReadInt(REG_CURRENT_USER, CM_REG_KEY, "ShowGrid");
 
@@ -11512,7 +11512,7 @@ void CmSaveMainWindowPos(HWND hWnd)
 
 	// Save settings
 	MsRegWriteInt(REG_CURRENT_USER, CM_REG_KEY, "HideStatusBar", cm->HideStatusBar);
-	MsRegWriteInt(REG_CURRENT_USER, CM_REG_KEY, "HideTrayIcon", true); //*** cm->HideTrayIcon);
+	MsRegWriteInt(REG_CURRENT_USER, CM_REG_KEY, "HideTrayIcon", cm->HideTrayIcon);
 	MsRegWriteInt(REG_CURRENT_USER, CM_REG_KEY, "IconView", cm->IconView);
 	MsRegWriteInt(REG_CURRENT_USER, CM_REG_KEY, "ShowGrid", cm->ShowGrid);
 	MsRegWriteInt(REG_CURRENT_USER, CM_REG_KEY, "DisableVoice", cm->DisableVoice);
