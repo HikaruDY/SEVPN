@@ -32,7 +32,6 @@
     <ClCompile Include="..\src\Cedar\AzureClient.c" />
     <ClCompile Include="..\src\Cedar\AzureServer.c" />
     <ClCompile Include="..\src\Cedar\Bridge.c" />
-    <ClCompile Include="..\src\Cedar\BridgeDummy.c" />
     <ClCompile Include="..\src\Cedar\Cedar.c" />
     <ClCompile Include="..\src\Cedar\CedarPch.c" />
     <ClCompile Include="..\src\Cedar\Client.c" />
@@ -54,7 +53,7 @@
     <ClCompile Include="..\src\Cedar\IPsec_IPC.c" />
     <ClCompile Include="..\src\Cedar\IPsec_L2TP.c" />
     <ClCompile Include="..\src\Cedar\IPsec_PPP.c" />
-    <ClCompile Include="..\src\Cedar\IPsec_WinDummy.c" />
+    <ClCompile Include="..\src\Cedar\IPsec_Win7.c" />
     <ClCompile Include="..\src\Cedar\Layer3.c" />
     <ClCompile Include="..\src\Cedar\Link.c" />
     <ClCompile Include="..\src\Cedar\Listener.c" />
@@ -69,6 +68,7 @@
     <ClCompile Include="..\src\Cedar\Sam.c" />
     <ClCompile Include="..\src\Cedar\SecureInfo.c" />
     <ClCompile Include="..\src\Cedar\SecureNAT.c" />
+    <ClCompile Include="..\src\Cedar\SeLowUser.c" />
     <ClCompile Include="..\src\Cedar\Server.c" />
     <ClCompile Include="..\src\Cedar\Session.c" />
     <ClCompile Include="..\src\Cedar\SM.c" />
@@ -77,7 +77,6 @@
     <ClCompile Include="..\src\Cedar\VG.c" />
     <ClCompile Include="..\src\Cedar\Virtual.c" />
     <ClCompile Include="..\src\Cedar\VLan.c" />
-    <ClCompile Include="..\src\Cedar\VLanDummy.c" />
     <ClCompile Include="..\src\Cedar\WaterMark.c" />
     <ClCompile Include="..\src\Cedar\WebUI.c" />
     <ClCompile Include="..\src\Cedar\Win32Com.cpp" />
