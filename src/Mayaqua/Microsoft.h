@@ -929,6 +929,8 @@ bool MsStopIPsecService();
 char *MsGetIPsecServiceName();
 bool MsStartIPsecService();
 
+UINT64 MsGetCurrentFileTime();
+
 void MsGenerateUserModeSvcGlobalPulseName(char *name, UINT size, char *svc_name);
 void *MsCreateUserModeSvcGlocalPulse(char *svc_name);
 void MsStopUserModeSvc(char *svc_name);
@@ -1008,6 +1010,7 @@ bool MsIsIA64();
 void *MsDisableWow64FileSystemRedirection();
 void MsRestoreWow64FileSystemRedirection(void *p);
 void MsSetWow64FileSystemRedirectionEnable(bool enable);
+bool MsIsWindows11();
 bool MsIsWindows10();
 bool MsIsWindows81();
 bool MsIsWindows8();

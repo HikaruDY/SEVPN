@@ -23423,7 +23423,7 @@ void CmdPrintAbout(CONSOLE *c)
 	GetExeName(exe, sizeof(exe));
 
 	UniFormat(tmp, sizeof(tmp), _UU("CMD_VPNCMD_ABOUT"),
-		cedar->VerString, cedar->BuildInfo);
+		cedar->VerString, cedar->BuildInfo, BUILD_DATE_Y);
 
 	c->Write(c, tmp);
 
