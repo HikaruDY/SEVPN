@@ -1,102 +1,5 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Mayaqua Kernel
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // TcpIp.h
@@ -104,6 +7,9 @@
 
 #ifndef	TCPIP_H
 #define	TCPIP_H
+
+#include "Mayaqua.h"
+#include "Network.h"
 
 #ifdef	OS_WIN32
 #pragma pack(push, 1)
@@ -191,7 +97,7 @@ struct IPV4_HEADER
 	UCHAR	TypeOfService;				// Service Type
 	USHORT	TotalLength;				// Total size
 	USHORT	Identification;				// Identifier
-	UCHAR	FlagsAndFlagmentOffset[2];	// Flag and Fragment offset
+	UCHAR	FlagsAndFragmentOffset[2];	// Flag and Fragment offset
 	UCHAR	TimeToLive;					// TTL
 	UCHAR	Protocol;					// Protocol
 	USHORT	Checksum;					// Checksum
@@ -206,10 +112,10 @@ struct IPV4_HEADER
 #define	IPV4_SET_HEADER_LEN(h, v)	((h)->VersionAndHeaderLength |= ((v) & 0x0f))
 
 // Macro for IPv4 fragment related operation
-#define	IPV4_GET_FLAGS(h)			(((h)->FlagsAndFlagmentOffset[0] >> 5) & 0x07)
-#define	IPV4_SET_FLAGS(h, v)		((h)->FlagsAndFlagmentOffset[0] |= (((v) & 0x07) << 5))
-#define	IPV4_GET_OFFSET(h)			(((h)->FlagsAndFlagmentOffset[0] & 0x1f) * 256 + ((h)->FlagsAndFlagmentOffset[1]))
-#define	IPV4_SET_OFFSET(h, v)		{(h)->FlagsAndFlagmentOffset[0] |= (UCHAR)((v) / 256); (h)->FlagsAndFlagmentOffset[1] = (UCHAR)((v) % 256);}
+#define	IPV4_GET_FLAGS(h)			(((h)->FlagsAndFragmentOffset[0] >> 5) & 0x07)
+#define	IPV4_SET_FLAGS(h, v)		((h)->FlagsAndFragmentOffset[0] |= (((v) & 0x07) << 5))
+#define	IPV4_GET_OFFSET(h)			(((h)->FlagsAndFragmentOffset[0] & 0x1f) * 256 + ((h)->FlagsAndFragmentOffset[1]))
+#define	IPV4_SET_OFFSET(h, v)		{(h)->FlagsAndFragmentOffset[0] |= (UCHAR)((v) / 256); (h)->FlagsAndFragmentOffset[1] = (UCHAR)((v) % 256);}
 
 // IPv4 / IPv6 common protocol
 #define	IP_PROTO_TCP		0x06	// TCP protocol
@@ -350,7 +256,7 @@ struct DNSV4_HEADER
 struct NBTDG_HEADER
 {
 	UCHAR MessageType;
-	UCHAR MoreFlagments;
+	UCHAR MoreFragments;
 	USHORT DatagramId;
 	UINT SrcIP;
 	USHORT SrcPort;
@@ -432,17 +338,17 @@ struct IPV6_FRAGMENT_HEADER
 {
 	UCHAR NextHeader;					// Next header
 	UCHAR Reserved;						// Reserved
-	UCHAR FlagmentOffset1;				// Fragment offset 1 (/8, 8 bit)
-	UCHAR FlagmentOffset2AndFlags;		// Fragment offset 2 (/8, 5 bit) + Reserved (2 bit) + More flag (1 bit)
+	UCHAR FragmentOffset1;				// Fragment offset 1 (/8, 8 bit)
+	UCHAR FragmentOffset2AndFlags;		// Fragment offset 2 (/8, 5 bit) + Reserved (2 bit) + More flag (1 bit)
 	UINT Identification;				// ID
 } GCC_PACKED;
 
 // Macro for IPv6 fragment header operation
-#define IPV6_GET_FRAGMENT_OFFSET(h)		(((((h)->FlagmentOffset1) << 5) & 0x1fe0) | (((h)->FlagmentOffset2AndFlags >> 3) & 0x1f))
-#define IPV6_SET_FRAGMENT_OFFSET(h, v)	((h)->FlagmentOffset1 = (v / 32) & 0xff,	\
-	((h)->FlagmentOffset2AndFlags = ((v % 256) << 3) & 0xf8) | ((h)->FlagmentOffset2AndFlags & 0x07))
-#define IPV6_GET_FLAGS(h)				((h)->FlagmentOffset2AndFlags & 0x0f)
-#define IPV6_SET_FLAGS(h, v)				((h)->FlagmentOffset2AndFlags = (((h)->FlagmentOffset2AndFlags & 0xf8) | (v & 0x07)))
+#define IPV6_GET_FRAGMENT_OFFSET(h)		(((((h)->FragmentOffset1) << 5) & 0x1fe0) | (((h)->FragmentOffset2AndFlags >> 3) & 0x1f))
+#define IPV6_SET_FRAGMENT_OFFSET(h, v)	((h)->FragmentOffset1 = (v / 32) & 0xff,	\
+	((h)->FragmentOffset2AndFlags = ((v % 256) << 3) & 0xf8) | ((h)->FragmentOffset2AndFlags & 0x07))
+#define IPV6_GET_FLAGS(h)				((h)->FragmentOffset2AndFlags & 0x0f)
+#define IPV6_SET_FLAGS(h, v)				((h)->FragmentOffset2AndFlags = (((h)->FragmentOffset2AndFlags & 0xf8) | (v & 0x07)))
 
 // Flag
 #define IPV6_FRAGMENT_HEADER_FLAG_MORE_FRAGMENTS		0x01	// There are more fragments
@@ -496,12 +402,14 @@ struct ICMPV6_NEIGHBOR_ADVERTISEMENT_HEADER
 #define ICMPV6_NEIGHBOR_ADVERTISEMENT_FLAG_SOLICITED	0x40	// Solicited flag
 #define ICMPV6_NEIGHBOR_ADVERTISEMENT_FLAG_OVERWRITE	0x20	// Overwrite flag
 
+#define ICMPV6_OPTION_PREFIXES_MAX_COUNT				10
+
 // ICMPv6 option list
 struct ICMPV6_OPTION_LIST
 {
 	ICMPV6_OPTION_LINK_LAYER *SourceLinkLayer;		// Source link-layer address
 	ICMPV6_OPTION_LINK_LAYER *TargetLinkLayer;		// Target link-layer address
-	ICMPV6_OPTION_PREFIX *Prefix;					// Prefix Information
+	ICMPV6_OPTION_PREFIX *Prefix[ICMPV6_OPTION_PREFIXES_MAX_COUNT];	// Prefix Information - may be multiple in one request
 	ICMPV6_OPTION_MTU *Mtu;							// MTU
 } GCC_PACKED;
 
@@ -642,7 +550,6 @@ struct HTTPLOG
 	char Protocol[64];						// Protocol
 	char UserAgent[MAX_SIZE];				// User Agent value
 	char Referer[MAX_SIZE];					// Referer
-	char AcceptLanguage[MAX_SIZE];			// Accept Language value
 	bool IsSsl;								// Is SSL
 };
 
@@ -836,113 +743,6 @@ struct DHCP_MODIFY_OPTION
 #define	SPECIAL_UDP_PORT_WSD				3702	// WS-Discovery
 #define	SPECIAL_UDP_PORT_SSDP				1900	// SSDP
 
-#define NTLM_MESSAGE_TYPE_NEGOTIATE			1
-#define NTLM_MESSAGE_TYPE_CHALLENGE			2
-#define NTLM_MESSAGE_TYPE_AUTH				3
-
-// NTLM Negotiate
-struct NTLM_NEGOTIATE
-{
-	UCHAR Signature[8];
-	UINT MessageType;
-	UINT NegotiateFlags;
-	USHORT DomainNameLen;
-	USHORT DomainNameMaxLen;
-	UINT DomainNameBufferOffset;
-	USHORT WorkstationLen;
-	USHORT WorkstationMaxLen;
-	UINT WorkstationBufferOffset;
-
-	UCHAR ProductMajorVersion;
-	UCHAR ProductMinorVersion;
-	USHORT ProductBuild;
-	UCHAR Reserved[3];
-	UCHAR NTLMRevisionCurrent;
-} GCC_PACKED;
-
-struct NTLM_CHALLENGE
-{
-	UCHAR Signature[8];
-	UINT MessageType;
-
-	USHORT TargetNameLen;
-	USHORT TargetNameMaxLen;
-	UINT TargetNameBufferOffset;
-
-	UINT NegotiateFlags;
-
-	UCHAR ServerChallenge[8];
-
-	UCHAR Reserved[8];
-
-	USHORT TargetInfoLen;
-	USHORT TargetInfoMaxLen;
-	UINT TargetInfoBufferOffset;
-
-	UCHAR ProductMajorVersion;
-	UCHAR ProductMinorVersion;
-	USHORT ProductBuild;
-	UCHAR Reserved2[3];
-	UCHAR NTLMRevisionCurrent;
-} GCC_PACKED;
-
-struct NTLM_AUTH
-{
-	UCHAR Signature[8];
-	UINT MessageType;
-
-	USHORT LmChallengeResponseLen;
-	USHORT LmChallengeResponseMaxLen;
-	UINT LmChallengeResponseBufferOffset;
-
-	USHORT NtChallengeResponseLen;
-	USHORT NtChallengeResponseMaxLen;
-	UINT NtChallengeResponseBufferOffset;
-
-	USHORT DomainNameLen;
-	USHORT DomainNameMaxLen;
-	UINT DomainNameBufferOffset;
-
-	USHORT UserNameLen;
-	USHORT UserNameMaxLen;
-	UINT UserNameBufferOffset;
-
-	USHORT WorkstationLen;
-	USHORT WorkstationMaxLen;
-	UINT WorkstationBufferOffset;
-
-	USHORT EncryptedRandomSessionKeyLen;
-	USHORT EncryptedRandomSessionKeyMaxLen;
-	UINT EncryptedRandomSessionKeyBufferOffset;
-
-	UINT NegotiateFlags;
-
-	UCHAR ProductMajorVersion;
-	UCHAR ProductMinorVersion;
-	USHORT ProductBuild;
-	UCHAR Reserved[3];
-	UCHAR NTLMRevisionCurrent;
-
-	//UCHAR Mic[16];
-} GCC_PACKED;
-
-struct NTLM_CLIENT_CHALLENGE
-{
-	UCHAR RespType;
-	UCHAR HiRespType;
-	USHORT Reserved1;
-	UINT Reserved2;
-	UINT64 TimeStamp;
-	UCHAR ChallengeFromClient[8];
-	UINT Reserved3;
-} GCC_PACKED;
-
-
-void NTOWFv2(UCHAR *dst_md5, char *username, char *password, char *domain);
-BUF *NtlmGenerateNegotiate();
-BUF *NtlmGenerateAuthenticate(BUF *svr_challenge_data, char *username, char *password, char *hostname);
-void GenerateNtPasswordHash(UCHAR *dst, char *password);
-BUF *GenerateUnicodeFromAnsi(char *ansi);
 
 PKT *ParsePacketIPv4WithDummyMacHeader(UCHAR *buf, UINT size);
 PKT *ParsePacket(UCHAR *buf, UINT size);
@@ -950,6 +750,8 @@ PKT *ParsePacketEx(UCHAR *buf, UINT size, bool no_l3);
 PKT *ParsePacketEx2(UCHAR *buf, UINT size, bool no_l3, UINT vlan_type_id);
 PKT *ParsePacketEx3(UCHAR *buf, UINT size, bool no_l3, UINT vlan_type_id, bool bridge_id_as_mac_address);
 PKT *ParsePacketEx4(UCHAR *buf, UINT size, bool no_l3, UINT vlan_type_id, bool bridge_id_as_mac_address, bool no_http, bool correct_checksum);
+PKT *ParsePacketEx5(UCHAR *buf, UINT size, bool no_l3, UINT vlan_type_id, bool bridge_id_as_mac_address, bool no_http, bool correct_checksum, bool no_l3_l4_except_icmpv6);
+PKT *ParsePacketUpToICMPv6(UCHAR *buf, UINT size);
 void FreePacket(PKT *p);
 void FreePacketWithData(PKT *p);
 void FreePacketIPv4(PKT *p);
@@ -959,8 +761,7 @@ void FreePacketUDPv4(PKT *p);
 void FreePacketTCPv4(PKT *p);
 void FreePacketICMPv4(PKT *p);
 void FreePacketDHCPv4(PKT *p);
-bool ParsePacketL2(PKT *p, UCHAR *buf, UINT size);
-bool ParsePacketL2Ex(PKT *p, UCHAR *buf, UINT size, bool no_l3);
+bool ParsePacketL2Ex(PKT *p, UCHAR *buf, UINT size, bool no_l3, bool no_l3_l4_except_icmpv6);
 bool ParsePacketARPv4(PKT *p, UCHAR *buf, UINT size);
 bool ParsePacketIPv4(PKT *p, UCHAR *buf, UINT size);
 bool ParsePacketBPDU(PKT *p, UCHAR *buf, UINT size);
@@ -976,7 +777,7 @@ void FreeClonePacket(PKT *p);
 
 void CorrectChecksum(PKT *p);
 
-bool ParsePacketIPv6(PKT *p, UCHAR *buf, UINT size);
+bool ParsePacketIPv6(PKT *p, UCHAR *buf, UINT size, bool no_l3_l4_except_icmpv6);
 bool ParsePacketIPv6Header(IPV6_HEADER_PACKET_INFO *info, UCHAR *buf, UINT size);
 bool ParseIPv6ExtHeader(IPV6_HEADER_PACKET_INFO *info, UCHAR next_header, UCHAR *buf, UINT size);
 bool ParseICMPv6Options(ICMPV6_OPTION_LIST *o, UCHAR *buf, UINT size);
@@ -987,11 +788,12 @@ USHORT CalcChecksumForIPv6(IPV6_ADDR *src_ip, IPV6_ADDR *dest_ip, UCHAR protocol
 BUF *BuildICMPv6Options(ICMPV6_OPTION_LIST *o);
 void BuildICMPv6OptionValue(BUF *b, UCHAR type, void *header_pointer, UINT total_size);
 BUF *BuildIPv6(IPV6_ADDR *dest_ip, IPV6_ADDR *src_ip, UINT id, UCHAR protocol, UCHAR hop_limit, void *data,
-			   UINT size);
+               UINT size);
 BUF *BuildIPv6PacketHeader(IPV6_HEADER_PACKET_INFO *info, UINT *bytes_before_payload);
 UCHAR IPv6GetNextHeaderFromQueue(QUEUE *q);
 void BuildAndAddIPv6PacketOptionHeader(BUF *b, IPV6_OPTION_HEADER *opt, UCHAR next_header, UINT size);
-BUF *BuildICMPv6NeighborSoliciation(IPV6_ADDR *src_ip, IPV6_ADDR *target_ip, UCHAR *my_mac_address, UINT id);
+BUF *BuildICMPv6NeighborSoliciation(IPV6_ADDR *src_ip, IPV6_ADDR *target_ip, UCHAR *my_mac_address, UINT id, bool use_multicast);
+BUF *BuildICMPv6RouterSoliciation(IPV6_ADDR *src_ip, IPV6_ADDR *target_ip, UCHAR *my_mac_address, UINT id);
 BUF *BuildICMPv6(IPV6_ADDR *src_ip, IPV6_ADDR *dest_ip, UCHAR hop_limit, UCHAR type, UCHAR code, void *data, UINT size, UINT id);
 
 bool VLanRemoveTag(void **packet_data, UINT *packet_size, UINT vlan_id, UINT vlan_tpid);
@@ -1008,8 +810,6 @@ UCHAR GetNextByte(BUF *b);
 
 bool IsDhcpPacketForSpecificMac(UCHAR *data, UINT size, UCHAR *mac_address);
 
-ICMP_RESULT *IcmpEchoSendBySocket(IP *dest_ip, UCHAR ttl, UCHAR *data, UINT size, UINT timeout);
-ICMP_RESULT *IcmpEchoSend(IP *dest_ip, UCHAR ttl, UCHAR *data, UINT size, UINT timeout);
 ICMP_RESULT *IcmpParseResult(IP *dest_ip, USHORT src_id, USHORT src_seqno, UCHAR *recv_buffer, UINT recv_buffer_size);
 void IcmpFreeResult(ICMP_RESULT *r);
 

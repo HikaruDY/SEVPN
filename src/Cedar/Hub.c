@@ -1,108 +1,40 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Hub.c
 // Virtual HUB module
 
-#include "CedarPch.h"
+#include "Hub.h"
+
+#include "Admin.h"
+#include "Bridge.h"
+#include "Connection.h"
+#include "Link.h"
+#include "Nat.h"
+#include "NativeStack.h"
+#include "Protocol.h"
+#include "Radius.h"
+#include "SecureNAT.h"
+#include "Server.h"
+
+#include "Mayaqua/Cfg.h"
+#include "Mayaqua/DNS.h"
+#include "Mayaqua/FileIO.h"
+#include "Mayaqua/Internat.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Object.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/Table.h"
+#include "Mayaqua/TcpIp.h"
+#include "Mayaqua/Tick64.h"
+
+#define GetHubAdminOptionDataAndSet(ao, name, dest) \
+	value = GetHubAdminOptionData(ao, name);        \
+	if (value != INFINITE)                          \
+	{                                               \
+		dest = value;                               \
+	}
 
 static UCHAR broadcast[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 static char vgs_ua_str[9] = {0};
@@ -613,23 +545,6 @@ UINT GetHubAdminOptionData(RPC_ADMIN_OPTION *ao, char *name)
 
 	return INFINITE;
 }
-void GetHubAdminOptionDataAndSet(RPC_ADMIN_OPTION *ao, char *name, UINT *dest)
-{
-	UINT value;
-	// Validate arguments
-	if (ao == NULL || name == NULL || dest == NULL)
-	{
-		return;
-	}
-
-	value = GetHubAdminOptionData(ao, name);
-	if (value == INFINITE)
-	{
-		return;
-	}
-
-	*dest = value;
-}
 
 // Set the contents of the HUB_OPTION based on the data
 void DataToHubOptionStruct(HUB_OPTION *o, RPC_ADMIN_OPTION *ao)
@@ -639,6 +554,8 @@ void DataToHubOptionStruct(HUB_OPTION *o, RPC_ADMIN_OPTION *ao)
 	{
 		return;
 	}
+
+	UINT value;
 
 	//*** Start
 	o->NoArpPolling = 1;
@@ -650,64 +567,64 @@ void DataToHubOptionStruct(HUB_OPTION *o, RPC_ADMIN_OPTION *ao)
 	o->SuppressClientUpdateNotification = 1;
 	//*** End
 
-	GetHubAdminOptionDataAndSet(ao, "NoAddressPollingIPv4", &o->NoArpPolling);
-	GetHubAdminOptionDataAndSet(ao, "NoAddressPollingIPv6", &o->NoIPv6AddrPolling);
-	GetHubAdminOptionDataAndSet(ao, "NoIpTable", &o->NoIpTable);
-	GetHubAdminOptionDataAndSet(ao, "NoMacAddressLog", &o->NoMacAddressLog);
-	GetHubAdminOptionDataAndSet(ao, "ManageOnlyPrivateIP", &o->ManageOnlyPrivateIP);
-	GetHubAdminOptionDataAndSet(ao, "ManageOnlyLocalUnicastIPv6", &o->ManageOnlyLocalUnicastIPv6);
-	GetHubAdminOptionDataAndSet(ao, "DisableIPParsing", &o->DisableIPParsing);
-	GetHubAdminOptionDataAndSet(ao, "YieldAfterStorePacket", &o->YieldAfterStorePacket);
-	GetHubAdminOptionDataAndSet(ao, "NoSpinLockForPacketDelay", &o->NoSpinLockForPacketDelay);
-	GetHubAdminOptionDataAndSet(ao, "BroadcastStormDetectionThreshold", &o->BroadcastStormDetectionThreshold);
-	GetHubAdminOptionDataAndSet(ao, "ClientMinimumRequiredBuild", &o->ClientMinimumRequiredBuild);
-	GetHubAdminOptionDataAndSet(ao, "FilterPPPoE", &o->FilterPPPoE);
-	GetHubAdminOptionDataAndSet(ao, "FilterOSPF", &o->FilterOSPF);
-	GetHubAdminOptionDataAndSet(ao, "FilterIPv4", &o->FilterIPv4);
-	GetHubAdminOptionDataAndSet(ao, "FilterIPv6", &o->FilterIPv6);
-	GetHubAdminOptionDataAndSet(ao, "FilterNonIP", &o->FilterNonIP);
-	GetHubAdminOptionDataAndSet(ao, "NoIPv4PacketLog", &o->NoIPv4PacketLog);
-	GetHubAdminOptionDataAndSet(ao, "NoIPv6PacketLog", &o->NoIPv6PacketLog);
-	GetHubAdminOptionDataAndSet(ao, "FilterBPDU", &o->FilterBPDU);
-	GetHubAdminOptionDataAndSet(ao, "NoIPv6DefaultRouterInRAWhenIPv6", &o->NoIPv6DefaultRouterInRAWhenIPv6);
-	GetHubAdminOptionDataAndSet(ao, "NoLookBPDUBridgeId", &o->NoLookBPDUBridgeId);
-	GetHubAdminOptionDataAndSet(ao, "NoManageVlanId", &o->NoManageVlanId);
-	GetHubAdminOptionDataAndSet(ao, "VlanTypeId", &o->VlanTypeId);
-	GetHubAdminOptionDataAndSet(ao, "FixForDLinkBPDU", &o->FixForDLinkBPDU);
-	GetHubAdminOptionDataAndSet(ao, "RequiredClientId", &o->RequiredClientId);
-	GetHubAdminOptionDataAndSet(ao, "AdjustTcpMssValue", &o->AdjustTcpMssValue);
-	GetHubAdminOptionDataAndSet(ao, "DisableAdjustTcpMss", &o->DisableAdjustTcpMss);
-	GetHubAdminOptionDataAndSet(ao, "NoDhcpPacketLogOutsideHub", &o->NoDhcpPacketLogOutsideHub);
-	GetHubAdminOptionDataAndSet(ao, "DisableHttpParsing", &o->DisableHttpParsing);
-	GetHubAdminOptionDataAndSet(ao, "DisableUdpAcceleration", &o->DisableUdpAcceleration);
-	GetHubAdminOptionDataAndSet(ao, "DisableUdpFilterForLocalBridgeNic", &o->DisableUdpFilterForLocalBridgeNic);
-	GetHubAdminOptionDataAndSet(ao, "ApplyIPv4AccessListOnArpPacket", &o->ApplyIPv4AccessListOnArpPacket);
-	GetHubAdminOptionDataAndSet(ao, "RemoveDefGwOnDhcpForLocalhost", &o->RemoveDefGwOnDhcpForLocalhost);
-	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxTcpSessionsPerIp", &o->SecureNAT_MaxTcpSessionsPerIp);
-	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxTcpSynSentPerIp", &o->SecureNAT_MaxTcpSynSentPerIp);
-	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxUdpSessionsPerIp", &o->SecureNAT_MaxUdpSessionsPerIp);
-	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxDnsSessionsPerIp", &o->SecureNAT_MaxDnsSessionsPerIp);
-	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxIcmpSessionsPerIp", &o->SecureNAT_MaxIcmpSessionsPerIp);
-	GetHubAdminOptionDataAndSet(ao, "AccessListIncludeFileCacheLifetime", &o->AccessListIncludeFileCacheLifetime);
-	GetHubAdminOptionDataAndSet(ao, "DisableKernelModeSecureNAT", &o->DisableKernelModeSecureNAT);
-	GetHubAdminOptionDataAndSet(ao, "DisableIpRawModeSecureNAT", &o->DisableIpRawModeSecureNAT);
-	GetHubAdminOptionDataAndSet(ao, "DisableUserModeSecureNAT", &o->DisableUserModeSecureNAT);
-	GetHubAdminOptionDataAndSet(ao, "DisableCheckMacOnLocalBridge", &o->DisableCheckMacOnLocalBridge);
-	GetHubAdminOptionDataAndSet(ao, "DisableCorrectIpOffloadChecksum", &o->DisableCorrectIpOffloadChecksum);
-	GetHubAdminOptionDataAndSet(ao, "BroadcastLimiterStrictMode", &o->BroadcastLimiterStrictMode);
-	GetHubAdminOptionDataAndSet(ao, "MaxLoggedPacketsPerMinute", &o->MaxLoggedPacketsPerMinute);
-	GetHubAdminOptionDataAndSet(ao, "DoNotSaveHeavySecurityLogs", &o->DoNotSaveHeavySecurityLogs);
-	GetHubAdminOptionDataAndSet(ao, "DropBroadcastsInPrivacyFilterMode", &o->DropBroadcastsInPrivacyFilterMode);
-	GetHubAdminOptionDataAndSet(ao, "DropArpInPrivacyFilterMode", &o->DropArpInPrivacyFilterMode);
-	GetHubAdminOptionDataAndSet(ao, "SuppressClientUpdateNotification", &o->SuppressClientUpdateNotification);
-	GetHubAdminOptionDataAndSet(ao, "FloodingSendQueueBufferQuota", &o->FloodingSendQueueBufferQuota);
-	GetHubAdminOptionDataAndSet(ao, "AssignVLanIdByRadiusAttribute", &o->AssignVLanIdByRadiusAttribute);
-	GetHubAdminOptionDataAndSet(ao, "DenyAllRadiusLoginWithNoVlanAssign", &o->DenyAllRadiusLoginWithNoVlanAssign);
-	GetHubAdminOptionDataAndSet(ao, "SecureNAT_RandomizeAssignIp", &o->SecureNAT_RandomizeAssignIp);
-	GetHubAdminOptionDataAndSet(ao, "DetectDormantSessionInterval", &o->DetectDormantSessionInterval);
-	GetHubAdminOptionDataAndSet(ao, "NoPhysicalIPOnPacketLog", &o->NoPhysicalIPOnPacketLog);
-	GetHubAdminOptionDataAndSet(ao, "UseHubNameAsDhcpUserClassOption", &o->UseHubNameAsDhcpUserClassOption);
-	GetHubAdminOptionDataAndSet(ao, "UseHubNameAsRadiusNasId", &o->UseHubNameAsRadiusNasId);
+	GetHubAdminOptionDataAndSet(ao, "NoAddressPollingIPv4", o->NoArpPolling);
+	GetHubAdminOptionDataAndSet(ao, "NoAddressPollingIPv6", o->NoIPv6AddrPolling);
+	GetHubAdminOptionDataAndSet(ao, "NoIpTable", o->NoIpTable);
+	GetHubAdminOptionDataAndSet(ao, "NoMacAddressLog", o->NoMacAddressLog);
+	GetHubAdminOptionDataAndSet(ao, "ManageOnlyPrivateIP", o->ManageOnlyPrivateIP);
+	GetHubAdminOptionDataAndSet(ao, "ManageOnlyLocalUnicastIPv6", o->ManageOnlyLocalUnicastIPv6);
+	GetHubAdminOptionDataAndSet(ao, "DisableIPParsing", o->DisableIPParsing);
+	GetHubAdminOptionDataAndSet(ao, "YieldAfterStorePacket", o->YieldAfterStorePacket);
+	GetHubAdminOptionDataAndSet(ao, "NoSpinLockForPacketDelay", o->NoSpinLockForPacketDelay);
+	GetHubAdminOptionDataAndSet(ao, "BroadcastStormDetectionThreshold", o->BroadcastStormDetectionThreshold);
+	GetHubAdminOptionDataAndSet(ao, "ClientMinimumRequiredBuild", o->ClientMinimumRequiredBuild);
+	GetHubAdminOptionDataAndSet(ao, "FilterPPPoE", o->FilterPPPoE);
+	GetHubAdminOptionDataAndSet(ao, "FilterOSPF", o->FilterOSPF);
+	GetHubAdminOptionDataAndSet(ao, "FilterIPv4", o->FilterIPv4);
+	GetHubAdminOptionDataAndSet(ao, "FilterIPv6", o->FilterIPv6);
+	GetHubAdminOptionDataAndSet(ao, "FilterNonIP", o->FilterNonIP);
+	GetHubAdminOptionDataAndSet(ao, "NoIPv4PacketLog", o->NoIPv4PacketLog);
+	GetHubAdminOptionDataAndSet(ao, "NoIPv6PacketLog", o->NoIPv6PacketLog);
+	GetHubAdminOptionDataAndSet(ao, "FilterBPDU", o->FilterBPDU);
+	GetHubAdminOptionDataAndSet(ao, "NoIPv6DefaultRouterInRAWhenIPv6", o->NoIPv6DefaultRouterInRAWhenIPv6);
+	GetHubAdminOptionDataAndSet(ao, "NoLookBPDUBridgeId", o->NoLookBPDUBridgeId);
+	GetHubAdminOptionDataAndSet(ao, "NoManageVlanId", o->NoManageVlanId);
+	GetHubAdminOptionDataAndSet(ao, "VlanTypeId", o->VlanTypeId);
+	GetHubAdminOptionDataAndSet(ao, "FixForDLinkBPDU", o->FixForDLinkBPDU);
+	GetHubAdminOptionDataAndSet(ao, "RequiredClientId", o->RequiredClientId);
+	GetHubAdminOptionDataAndSet(ao, "AdjustTcpMssValue", o->AdjustTcpMssValue);
+	GetHubAdminOptionDataAndSet(ao, "DisableAdjustTcpMss", o->DisableAdjustTcpMss);
+	GetHubAdminOptionDataAndSet(ao, "NoDhcpPacketLogOutsideHub", o->NoDhcpPacketLogOutsideHub);
+	GetHubAdminOptionDataAndSet(ao, "DisableHttpParsing", o->DisableHttpParsing);
+	GetHubAdminOptionDataAndSet(ao, "DisableUdpAcceleration", o->DisableUdpAcceleration);
+	GetHubAdminOptionDataAndSet(ao, "DisableUdpFilterForLocalBridgeNic", o->DisableUdpFilterForLocalBridgeNic);
+	GetHubAdminOptionDataAndSet(ao, "ApplyIPv4AccessListOnArpPacket", o->ApplyIPv4AccessListOnArpPacket);
+	GetHubAdminOptionDataAndSet(ao, "RemoveDefGwOnDhcpForLocalhost", o->RemoveDefGwOnDhcpForLocalhost);
+	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxTcpSessionsPerIp", o->SecureNAT_MaxTcpSessionsPerIp);
+	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxTcpSynSentPerIp", o->SecureNAT_MaxTcpSynSentPerIp);
+	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxUdpSessionsPerIp", o->SecureNAT_MaxUdpSessionsPerIp);
+	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxDnsSessionsPerIp", o->SecureNAT_MaxDnsSessionsPerIp);
+	GetHubAdminOptionDataAndSet(ao, "SecureNAT_MaxIcmpSessionsPerIp", o->SecureNAT_MaxIcmpSessionsPerIp);
+	GetHubAdminOptionDataAndSet(ao, "AccessListIncludeFileCacheLifetime", o->AccessListIncludeFileCacheLifetime);
+	GetHubAdminOptionDataAndSet(ao, "DisableKernelModeSecureNAT", o->DisableKernelModeSecureNAT);
+	GetHubAdminOptionDataAndSet(ao, "DisableIpRawModeSecureNAT", o->DisableIpRawModeSecureNAT);
+	GetHubAdminOptionDataAndSet(ao, "DisableUserModeSecureNAT", o->DisableUserModeSecureNAT);
+	GetHubAdminOptionDataAndSet(ao, "DisableCheckMacOnLocalBridge", o->DisableCheckMacOnLocalBridge);
+	GetHubAdminOptionDataAndSet(ao, "DisableCorrectIpOffloadChecksum", o->DisableCorrectIpOffloadChecksum);
+	GetHubAdminOptionDataAndSet(ao, "BroadcastLimiterStrictMode", o->BroadcastLimiterStrictMode);
+	GetHubAdminOptionDataAndSet(ao, "MaxLoggedPacketsPerMinute", o->MaxLoggedPacketsPerMinute);
+	GetHubAdminOptionDataAndSet(ao, "DoNotSaveHeavySecurityLogs", o->DoNotSaveHeavySecurityLogs);
+	GetHubAdminOptionDataAndSet(ao, "DropBroadcastsInPrivacyFilterMode", o->DropBroadcastsInPrivacyFilterMode);
+	GetHubAdminOptionDataAndSet(ao, "DropArpInPrivacyFilterMode", o->DropArpInPrivacyFilterMode);
+	GetHubAdminOptionDataAndSet(ao, "SuppressClientUpdateNotification", o->SuppressClientUpdateNotification);
+	GetHubAdminOptionDataAndSet(ao, "FloodingSendQueueBufferQuota", o->FloodingSendQueueBufferQuota);
+	GetHubAdminOptionDataAndSet(ao, "AssignVLanIdByRadiusAttribute", o->AssignVLanIdByRadiusAttribute);
+	GetHubAdminOptionDataAndSet(ao, "DenyAllRadiusLoginWithNoVlanAssign", o->DenyAllRadiusLoginWithNoVlanAssign);
+	GetHubAdminOptionDataAndSet(ao, "SecureNAT_RandomizeAssignIp", o->SecureNAT_RandomizeAssignIp);
+	GetHubAdminOptionDataAndSet(ao, "DetectDormantSessionInterval", o->DetectDormantSessionInterval);
+	GetHubAdminOptionDataAndSet(ao, "NoPhysicalIPOnPacketLog", o->NoPhysicalIPOnPacketLog);
+	GetHubAdminOptionDataAndSet(ao, "UseHubNameAsDhcpUserClassOption", o->UseHubNameAsDhcpUserClassOption);
+	GetHubAdminOptionDataAndSet(ao, "UseHubNameAsRadiusNasId", o->UseHubNameAsRadiusNasId);
 }
 
 // Convert the contents of the HUB_OPTION to data
@@ -1737,7 +1654,7 @@ void HubWatchDogThread(THREAD *t, void *param)
 								{
 									buf = BuildICMPv6NeighborSoliciation(&hub->HubIpV6,
 										&ip6addr,
-										hub->HubMacAddr, ++hub->HubIP6Id);
+										hub->HubMacAddr, ++hub->HubIP6Id, false);
 
 									if (buf != NULL)
 									{
@@ -1856,7 +1773,7 @@ ESCAPE:
 	return;
 }
 
-// Eable / disable the SecureNAT
+// Enable / disable the SecureNAT
 void EnableSecureNAT(HUB *h, bool enable)
 {
 	EnableSecureNATEx(h, enable, false);
@@ -2740,7 +2657,7 @@ BUF *BuildRedirectToUrlPayload(HUB *hub, SESSION *s, char *redirect_url)
 			WriteBuf(b2, tmp, StrLen(tmp));
 			WriteBuf(b2, secret, StrLen(secret));
 
-			HashSha1(hash, b2->Buf, b2->Size);
+			Sha1(hash, b2->Buf, b2->Size);
 
 			BinToStr(hash_str, sizeof(hash_str), hash, sizeof(hash));
 
@@ -3044,7 +2961,7 @@ bool ApplyAccessListToStoredPacket(HUB *hub, SESSION *s, PKT *p)
 
 	if (pass)
 	{
-		if (s != NULL && s->FirstTimeHttpRedirect && s->FirstTimeHttpAccessCheckIp != 0)
+		if (s->FirstTimeHttpRedirect && s->FirstTimeHttpAccessCheckIp != 0)
 		{
 			if ((p->TypeL3 == L3_IPV4 || p->TypeL3 == L3_IPV6) &&
 				p->TypeL4 == L4_TCP)
@@ -3154,39 +3071,6 @@ bool IsTcpPacketNcsiHttpAccess(PKT *p)
 	}
 
 	return false;
-}
-
-// Set the URL to which to redirect first
-bool SetSessionFirstRedirectHttpUrl(SESSION *s, char *url)
-{
-	URL_DATA d;
-	IP ip;
-	// Validate arguments
-	if (s == NULL || url == NULL || IsEmptyStr(url))
-	{
-		return false;
-	}
-
-	if (ParseUrl(&d, url, false, NULL) == false)
-	{
-		return false;
-	}
-
-	if (StrToIP(&ip, d.HostName) == false)
-	{
-		return false;
-	}
-
-	if (IsIP4(&ip) == false)
-	{
-		return false;
-	}
-
-	s->FirstTimeHttpAccessCheckIp = IPToUINT(&ip);
-	StrCpy(s->FirstTimeHttpRedirectUrl, sizeof(s->FirstTimeHttpRedirectUrl), url);
-	s->FirstTimeHttpRedirect = true;
-
-	return true;
 }
 
 // Adding Access List
@@ -3398,39 +3282,10 @@ UINT64 UsernameToInt64(char *name)
 		return 0;
 	}
 
-	Hash(hash, tmp, StrLen(tmp), true);
+	Sha0(hash, tmp, StrLen(tmp));
 	Copy(&ret, hash, sizeof(ret));
 
 	return ret;
-}
-
-// Search the session from the session pointer
-SESSION *GetSessionByPtr(HUB *hub, void *ptr)
-{
-	// Validate arguments
-	if (hub == NULL || ptr == NULL)
-	{
-		return NULL;
-	}
-
-	LockList(hub->SessionList);
-	{
-		UINT i;
-		for (i = 0;i < LIST_NUM(hub->SessionList);i++)
-		{
-			SESSION *s = LIST_DATA(hub->SessionList, i);
-			if (s == (SESSION *)ptr)
-			{
-				// Found
-				AddRef(s->ref);
-				UnlockList(hub->SessionList);
-				return s;
-			}
-		}
-	}
-	UnlockList(hub->SessionList);
-
-	return NULL;
 }
 
 // Search the session from the session name
@@ -3800,9 +3655,12 @@ bool HubPaPutPacket(SESSION *s, void *data, UINT size)
 		CancelList(s->CancelList);
 
 		// Yield
-		if (hub != NULL && hub->Option != NULL && hub->Option->YieldAfterStorePacket)
+		if (hub != NULL)
 		{
-			YieldCpu();
+			if (hub->Option != NULL && hub->Option->YieldAfterStorePacket)
+			{
+				YieldCpu();
+			}
 		}
 
 		return true;
@@ -3929,27 +3787,6 @@ LABEL_TRY_AGAIN:
 	return true;
 }
 
-
-// VGS: Setting for embedding UA tag
-void VgsSetEmbTag(bool b)
-{
-	g_vgs_emb_tag = b;
-}
-
-// VGS: Setting for the User-Agent value
-void VgsSetUserAgentValue(char *str)
-{
-	// Validate arguments
-	if (str == NULL || StrLen(str) != 8)
-	{
-		Zero(vgs_ua_str, sizeof(vgs_ua_str));
-	}
-	else
-	{
-		StrCpy(vgs_ua_str, sizeof(vgs_ua_str), str);
-	}
-}
-
 // Checking algorithm to prevent broadcast-storm
 // If broadcast from a specific endpoint came frequently, filter it
 bool CheckBroadcastStorm(HUB *hub, SESSION *s, PKT *p)
@@ -3974,7 +3811,7 @@ bool CheckBroadcastStorm(HUB *hub, SESSION *s, PKT *p)
 		return true;
 	}
 
-	if (hub != NULL && hub->Option != NULL)
+	if (hub->Option != NULL)
 	{
 		strict = hub->Option->BroadcastLimiterStrictMode;
 		no_heavy = hub->Option->DoNotSaveHeavySecurityLogs;
@@ -4144,17 +3981,6 @@ void StorePacket(HUB *hub, SESSION *s, PKT *packet)
 		}
 	}
 
-	if (s != NULL)
-	{
-		if (s->EnableLightRecvFilter)
-		{
-			if (IsValidUnicastMacAddress(packet->MacAddressSrc))
-			{
-				s->LightRecvFilterMac = READ_UINT(packet->MacAddressSrc + 2);
-			}
-		}
-	}
-
 	// Lock the entire MAC address table
 	LockHashList(hub->MacHashTable);
 	{
@@ -4217,7 +4043,7 @@ DISCARD_PACKET:
 
 			if (forward_now)
 			{
-				if (memcmp(packet->MacAddressSrc, hub->HubMacAddr, 6) == 0)
+				if (Cmp(packet->MacAddressSrc, hub->HubMacAddr, 6) == 0)
 				{
 					if (s != NULL)
 					{
@@ -4225,7 +4051,7 @@ DISCARD_PACKET:
 						goto DISCARD_PACKET;
 					}
 				}
-				if (s != NULL && (memcmp(packet->MacAddressSrc, hub->HubMacAddr, 6) != 0))
+				if (s != NULL && (Cmp(packet->MacAddressSrc, hub->HubMacAddr, 6) != 0))
 				{
 					// Check whether the source MAC address is registered in the table
 					Copy(t.MacAddress, packet->MacAddressSrc, 6);
@@ -4384,7 +4210,7 @@ DISCARD_PACKET:
 							}
 
 							// It's already registered and it's in another session
-							if (check_mac && (memcmp(packet->MacAddressSrc, hub->HubMacAddr, 6) != 0) &&
+							if (check_mac && (Cmp(packet->MacAddressSrc, hub->HubMacAddr, 6) != 0) &&
 								((entry->UpdatedTime + MAC_TABLE_EXCLUSIVE_TIME) >= now))
 							{
 								UCHAR *mac = packet->MacAddressSrc;
@@ -4397,11 +4223,11 @@ DISCARD_PACKET:
 									UCHAR hash[MD5_SIZE];
 									UINT64 tick_diff = Tick64() - s->LastDLinkSTPPacketSendTick;
 
-									Hash(hash, packet->PacketData, packet->PacketSize, false);
+									Md5(hash, packet->PacketData, packet->PacketSize);
 
 									if ((s->LastDLinkSTPPacketSendTick != 0) &&
 										(tick_diff < 750ULL) &&
-										(memcmp(hash, s->LastDLinkSTPPacketDataHash, MD5_SIZE) == 0))
+										(Cmp(hash, s->LastDLinkSTPPacketDataHash, MD5_SIZE) == 0))
 									{
 										// Discard if the same packet sent before 750ms ago
 										Debug("D-Link Discard %u\n", (UINT)tick_diff);
@@ -4824,18 +4650,6 @@ UPDATE_FDB:
 
 									Insert(hub->IpTable, e);
 
-									if (s->EnableLightRecvFilter)
-									{
-										if (s->LightRecvFilterIPv4_1 == 0)
-										{
-											s->LightRecvFilterIPv4_1 = uint_ip;
-										}
-										else
-										{
-											s->LightRecvFilterIPv4_2 = uint_ip;
-										}
-									}
-
 									if (0)
 									{
 										char ip_address[64];
@@ -5053,8 +4867,8 @@ UPDATE_FDB:
 
 						if (s != NULL)
 						{
-							if (memcmp(packet->MacAddressSrc, s->Hub->HubMacAddr, 6) == 0 ||
-								memcmp(packet->MacAddressDest, s->Hub->HubMacAddr, 6) == 0)
+							if (Cmp(packet->MacAddressSrc, s->Hub->HubMacAddr, 6) == 0 ||
+								Cmp(packet->MacAddressDest, s->Hub->HubMacAddr, 6) == 0)
 							{
 								goto DISCARD_UNICAST_PACKET;
 							}
@@ -5083,7 +4897,6 @@ DISCARD_UNICAST_PACKET:
 				{
 					// Flooding as a broadcast packet
 					UINT current_tcp_queue_size = 0;
-					UINT bcast_mac_dst = READ_UINT(packet->MacAddressDest + 2);
 
 					// Take a packet log
 					if (s != NULL)
@@ -5109,60 +4922,9 @@ DISCARD_UNICAST_PACKET:
 							{
 								bool delete_default_router_in_ra = false;
 
-								if (dest_session->Policy != NULL && dest_session->Policy->DHCPNoServer)
-								{
-									if (packet->TypeL3 == L3_IPV4 &&
-										packet->TypeL4 == L4_UDP &&
-										packet->TypeL7 == L7_DHCPV4 &&
-										(packet->DhcpOpCode == DHCP_DISCOVER || packet->DhcpOpCode == DHCP_REQUEST || packet->DhcpOpCode == DHCP_RELEASE || packet->DhcpOpCode == DHCP_INFORM))
-									{
-										discard = true;
-										goto L_SKIP_TO_DISCARD;
-									}
-								}
-
-								if (dest_session->EnableLightRecvFilter)
-								{
-									if (packet->BroadcastPacket == false &&
-										dest_session->LightRecvFilterMac != 0 &&
-										dest_session->LightRecvFilterMac != bcast_mac_dst)
-									{
-										discard = true;
-										goto L_SKIP_TO_DISCARD;
-									}
-
-									if (packet->BroadcastPacket &&
-										packet->TypeL3 == L3_ARPV4 &&
-										packet->L3.ARPv4Header->HardwareSize == 6 &&
-										Endian16(packet->L3.ARPv4Header->HardwareType) == ARP_HARDWARE_TYPE_ETHERNET &&
-										packet->L3.ARPv4Header->ProtocolSize == 4 &&
-										Endian16(packet->L3.ARPv4Header->ProtocolType) == MAC_PROTO_IPV4)
-									{
-										if (Endian16(packet->L3.ARPv4Header->Operation) == ARP_OPERATION_REQUEST)
-										{
-											bool ok = false;
-
-											if (dest_session->LightRecvFilterIPv4_1 != 0)
-												if (dest_session->LightRecvFilterIPv4_1 == packet->L3.ARPv4Header->TargetIP)
-													ok = true;
-
-											if (dest_session->LightRecvFilterIPv4_2 != 0)
-												if (dest_session->LightRecvFilterIPv4_2 == packet->L3.ARPv4Header->TargetIP)
-													ok = true;
-
-											if (ok == false)
-											{
-												discard = true;
-												goto L_SKIP_TO_DISCARD;
-											}
-										}
-									}
-								}
-
 								if (dest_session->IsMonitorMode)
 								{
 									discard = true;
-									goto L_SKIP_TO_DISCARD;
 								}
 
 								if (dest_session->NormalClient)
@@ -5174,7 +4936,6 @@ DISCARD_UNICAST_PACKET:
 										{
 											// This is dormant session
 											discard = true;
-											goto L_SKIP_TO_DISCARD;
 										}
 									}
 								}
@@ -5190,7 +4951,6 @@ DISCARD_UNICAST_PACKET:
 											dest_session->Connection->Protocol == CONNECTION_TCP)
 										{
 											discard = true;
-											goto L_SKIP_TO_DISCARD;
 										}
 
 										if (dest_session->LinkModeServer)
@@ -5198,7 +4958,6 @@ DISCARD_UNICAST_PACKET:
 											LINK *k = dest_session->Link;
 
 											discard = true;
-											goto L_SKIP_TO_DISCARD;
 										}
 									}
 								}
@@ -5207,7 +4966,6 @@ DISCARD_UNICAST_PACKET:
 									packet->VlanId != dest_session->VLanId)
 								{
 									discard = true;
-									goto L_SKIP_TO_DISCARD;
 								}
 
 								if (dest_session->Policy->NoIPv6DefaultRouterInRA ||
@@ -5231,7 +4989,6 @@ DISCARD_UNICAST_PACKET:
 										 packet->ICMPv6HeaderPacketInfo.Type == ICMPV6_TYPE_ROUTER_ADVERTISEMENT))
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5242,7 +4999,6 @@ DISCARD_UNICAST_PACKET:
 										packet->TypeL7 == L7_DHCPV4)
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5253,7 +5009,6 @@ DISCARD_UNICAST_PACKET:
 										(Endian16(packet->L4.UDPHeader->DstPort) == 546 || Endian16(packet->L4.UDPHeader->DstPort) == 547))
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5297,7 +5052,6 @@ DISCARD_UNICAST_PACKET:
 									if (packet->TypeL3 == L3_IPV4 || packet->TypeL3 == L3_ARPV4)
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 								if (dest_session->Policy->FilterIPv6)
@@ -5305,7 +5059,6 @@ DISCARD_UNICAST_PACKET:
 									if (packet->TypeL3 == L3_IPV6)
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 								if (dest_session->Policy->FilterNonIP)
@@ -5313,7 +5066,6 @@ DISCARD_UNICAST_PACKET:
 									if (packet->TypeL3 != L3_IPV4 && packet->TypeL3 != L3_ARPV4 && packet->TypeL3 != L3_IPV6)
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
@@ -5327,21 +5079,17 @@ DISCARD_UNICAST_PACKET:
 									if (drop_arp_packet_privacy || packet->TypeL3 != L3_ARPV4)
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
 
 								if (s != NULL)
 								{
-									if (memcmp(packet->MacAddressSrc, s->Hub->HubMacAddr, 6) == 0 ||
-										memcmp(packet->MacAddressDest, s->Hub->HubMacAddr, 6) == 0)
+									if (Cmp(packet->MacAddressSrc, s->Hub->HubMacAddr, 6) == 0 ||
+										Cmp(packet->MacAddressDest, s->Hub->HubMacAddr, 6) == 0)
 									{
 										discard = true;
-										goto L_SKIP_TO_DISCARD;
 									}
 								}
-
-L_SKIP_TO_DISCARD:
 
 								if (discard == false && dest_pa != NULL)
 								{
@@ -5457,7 +5205,6 @@ bool IsIPManagementTargetForHUB(IP *ip, HUB *hub)
 void DeleteOldIpTableEntry(LIST *o)
 {
 	UINT i;
-	UINT64 oldest_time = 0xffffffffffffffffULL;
 	IP_TABLE_ENTRY *old = NULL;
 	// Validate arguments
 	if (o == NULL)
@@ -5468,12 +5215,7 @@ void DeleteOldIpTableEntry(LIST *o)
 	for (i = 0;i < LIST_NUM(o);i++)
 	{
 		IP_TABLE_ENTRY *e = LIST_DATA(o, i);
-
-		if (e->UpdatedTime <= oldest_time)
-		{
-			old = e;
-			oldest_time = e->UpdatedTime;
-		}
+		old = e;
 	}
 
 	if (old != NULL)
@@ -5602,7 +5344,7 @@ void StorePacketToHubPa(HUB_PA *dest, SESSION *src, void *data, UINT size, PKT *
 				if (session->Policy != NULL && session->Policy->CheckMac)
 				{
 					UCHAR hash[MD5_SIZE];
-					Hash(hash, packet->PacketData, packet->PacketSize, false);
+					Md5(hash, packet->PacketData, packet->PacketSize);
 
 					Copy(session->LastDLinkSTPPacketDataHash, hash, MD5_SIZE);
 					session->LastDLinkSTPPacketSendTick = Tick64();
@@ -5626,7 +5368,7 @@ void StorePacketToHubPa(HUB_PA *dest, SESSION *src, void *data, UINT size, PKT *
 		}
 	}
 
-	if (dest != NULL && src != NULL && dest->Session != NULL && src->Hub != NULL && src->Hub->Option != NULL)
+	if (src != NULL && dest->Session != NULL && src->Hub != NULL && src->Hub->Option != NULL)
 	{
 		if (dest->Session->AdjustMss != 0 ||
 			(dest->Session->IsUsingUdpAcceleration && dest->Session->UdpAccelMss != 0) ||
@@ -6012,21 +5754,6 @@ bool StorePacketFilterByPolicy(SESSION *s, PKT *p)
 							UINTToIP(&ip, ip_uint);
 							Copy(&t.Ip, &ip, sizeof(IP));
 
-							if (mac_table->Session != NULL)
-							{
-								if (mac_table->Session->EnableLightRecvFilter)
-								{
-									if (mac_table->Session->LightRecvFilterIPv4_1 == 0)
-									{
-										mac_table->Session->LightRecvFilterIPv4_1 = ip_uint;
-									}
-									else
-									{
-										mac_table->Session->LightRecvFilterIPv4_2 = ip_uint;
-									}
-								}
-							}
-
 							e = Search(hub->IpTable, &t);
 							if (e == NULL)
 							{
@@ -6049,10 +5776,8 @@ UPDATE_DHCP_ALLOC_ENTRY:
 										DeleteOldIpTableEntry(hub->IpTable);
 									}
 									Insert(hub->IpTable, e);
-								}
 
-								if (new_entry)
-								{
+								
 									if ((hub->Option != NULL && hub->Option->NoDhcpPacketLogOutsideHub == false) || mac_table->Session != s)
 									{
 										char dhcp_mac_addr[64];
@@ -6786,45 +6511,6 @@ void SetRadiusServerEx(HUB *hub, char *name, UINT port, char *secret, UINT inter
 	Unlock(hub->RadiusOptionLock);
 }
 
-// Get the difference between the traffic data
-void CalcTrafficEntryDiff(TRAFFIC_ENTRY *diff, TRAFFIC_ENTRY *old, TRAFFIC_ENTRY *current)
-{
-	// Validate arguments
-	Zero(diff, sizeof(TRAFFIC_ENTRY));
-	if (old == NULL || current == NULL || diff == NULL)
-	{
-		return;
-	}
-
-	if (current->BroadcastCount >= old->BroadcastCount)
-	{
-		diff->BroadcastCount = current->BroadcastCount - old->BroadcastCount;
-	}
-	if (current->BroadcastBytes >= old->BroadcastBytes)
-	{
-		diff->BroadcastBytes = current->BroadcastBytes - old->BroadcastBytes;
-	}
-	if (current->UnicastCount >= old->UnicastCount)
-	{
-		diff->UnicastCount = current->UnicastCount - old->UnicastCount;
-	}
-	if (current->UnicastBytes >= old->UnicastBytes)
-	{
-		diff->UnicastBytes = current->UnicastBytes - old->UnicastBytes;
-	}
-}
-void CalcTrafficDiff(TRAFFIC *diff, TRAFFIC *old, TRAFFIC *current)
-{
-	Zero(diff, sizeof(TRAFFIC));
-	if (old == NULL || current == NULL || diff == NULL)
-	{
-		return;
-	}
-
-	CalcTrafficEntryDiff(&diff->Send, &old->Send, &current->Send);
-	CalcTrafficEntryDiff(&diff->Recv, &old->Recv, &current->Recv);
-}
-
 // Add the traffic information for Virtual HUB
 void IncrementHubTraffic(HUB *h)
 {
@@ -7021,7 +6707,7 @@ int CompareMacTable(void *p1, void *p2)
 	{
 		return 0;
 	}
-	r = memcmp(e1->MacAddress, e2->MacAddress, 6);
+	r = Cmp(e1->MacAddress, e2->MacAddress, 6);
 	if (r != 0)
 	{
 		return r;
@@ -7088,11 +6774,13 @@ bool IsHubIpAddress(IP *ip)
 		return false;
 	}
 
-	if (ip->addr[0] == 172 && ip->addr[1] == 31)
+	const BYTE *ipv4 = IPV4(ip->address);
+
+	if (ipv4[0] == 172 && ipv4[1] == 31)
 	{
-		if (ip->addr[2] >= 1 && ip->addr[2] <= 254)
+		if (ipv4[2] >= 1 && ipv4[2] <= 254)
 		{
-			if (ip->addr[3] >= 1 && ip->addr[3] <= 254)
+			if (ipv4[3] >= 1 && ipv4[3] <= 254)
 			{
 				return true;
 			}
@@ -7144,13 +6832,9 @@ void GenHubIpAddress(IP *ip, char *name)
 	StrCat(tmp2, sizeof(tmp2), tmp1);
 	StrUpper(tmp2);
 
-	Hash(hash, tmp2, StrLen(tmp2), true);
+	Sha0(hash, tmp2, StrLen(tmp2));
 
-	Zero(ip, sizeof(IP));
-	ip->addr[0] = 172;
-	ip->addr[1] = 31;
-	ip->addr[2] = hash[0] % 254 + 1;
-	ip->addr[3] = hash[1] % 254 + 1;
+	SetIP(ip, 172, 31, hash[0] % 254 + 1, hash[0] % 254 + 1);
 }
 
 // Generate a MAC address for the Virtual HUB
@@ -7172,7 +6856,7 @@ void GenHubMacAddress(UCHAR *mac, char *name)
 	StrCat(tmp2, sizeof(tmp2), tmp1);
 	StrUpper(tmp2);
 
-	Hash(hash, tmp2, StrLen(tmp2), true);
+	Sha0(hash, tmp2, StrLen(tmp2));
 
 	mac[0] = 0x00;
 	mac[1] = SE_HUB_MAC_ADDR_SIGN;
@@ -7245,7 +6929,7 @@ HUB *NewHub(CEDAR *cedar, char *HubName, HUB_OPTION *option)
 	}
 
 	h = ZeroMalloc(sizeof(HUB));
-	Hash(h->HashedPassword, "", 0, true);
+	Sha0(h->HashedPassword, "", 0);
 	HashPassword(h->SecurePassword, ADMINISTRATOR_USERNAME, "");
 	h->lock = NewLock();
 	h->lock_online = NewLock();

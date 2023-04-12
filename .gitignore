@@ -61,12 +61,14 @@ Thumbs.db
 /src/*.sln
 /src/*.cmd
 /src/bin/*
+/version.py
 
 # Legacy projects / codes
 /src/BuildFiles
 /src/BuildUtil
 /src/Ham
 /src/hamcorebuilder
+/src/libhamcore
 /src/Neo
 /src/Neo6
 /src/See
@@ -85,5 +87,6 @@ Thumbs.db
 /src/vpnserver
 /src/vpnsetup
 /src/vpnsmgr
+/src/vpntest
 /src/vpnweb
 /src/Wfp

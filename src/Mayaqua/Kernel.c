@@ -1,119 +1,31 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Mayaqua Kernel
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// Contributors:
-// - nattoheaven (https://github.com/nattoheaven)
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Kernel.c
 // System service processing routine
 
-#include <GlobalConst.h>
+#include "Kernel.h"
 
-#include <stdio.h>
+#include "Encrypt.h"
+#include "Internat.h"
+#include "Mayaqua.h"
+#include "Memory.h"
+#include "Microsoft.h"
+#include "Object.h"
+#include "Str.h"
+#include "Table.h"
+#include "Tracking.h"
+#include "Unix.h"
+#include "Win32.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include <wchar.h>
-#include <stdarg.h>
 #include <time.h>
-#include <errno.h>
-#include <Mayaqua/Mayaqua.h>
+
+#ifdef OS_UNIX
+#include <sys/time.h>
+#endif
 
 #ifndef TM_YEAR_MAX
 #define TM_YEAR_MAX         2106
@@ -162,7 +74,6 @@ L"- - $ : : $ Sun Mon Tue Wed Thu Fri Sat : : : $ (None)";
 
 static LOCALE current_locale;
 LOCK *tick_manual_lock = NULL;
-UINT g_zero = 0;
 
 #define MONSPERYEAR 12
 #define DAYSPERNYEAR 365
@@ -320,7 +231,7 @@ UINT64 TickGetRealtimeTickValue64()
 	}
 	else
 	{
-		ret = (UINT64)((UINT64)((UINT32)tv.tv_sec)) * 1000ULL + (UINT64)tv.tv_usec / 1000ULL;
+		ret = (UINT64)((UINT64)((UINT)tv.tv_sec)) * 1000ULL + (UINT64)tv.tv_usec / 1000ULL;
 	}
 
 	return ret;
@@ -373,25 +284,6 @@ LIST *NewThreadList()
 	return o;
 }
 
-// Remove the thread from the thread list
-void DelThreadFromThreadList(LIST *o, THREAD *t)
-{
-	// Validate arguments
-	if (o == NULL || t == NULL)
-	{
-		return;
-	}
-
-	LockList(o);
-	{
-		if (Delete(o, t))
-		{
-			ReleaseThread(t);
-		}
-	}
-	UnlockList(o);
-}
-
 // Add the thread to the thread list
 void AddThreadToThreadList(LIST *o, THREAD *t)
 {
@@ -414,7 +306,7 @@ void AddThreadToThreadList(LIST *o, THREAD *t)
 }
 
 // Maintain thread list
-void MainteThreadList(LIST *o)
+void MaintainThreadList(LIST *o)
 {
 	UINT i;
 	LIST *delete_list = NULL;
@@ -456,21 +348,6 @@ void MainteThreadList(LIST *o)
 		}
 	}
 	UnlockList(o);
-}
-
-// Wait until all threads in the thread list will be stopped
-void WaitAllThreadsWillBeStopped(LIST *o)
-{
-	// Validate arguments
-	if (o == NULL)
-	{
-		return;
-	}
-
-	while (LIST_NUM(o) != 0)
-	{
-		SleepThread(100);
-	}
 }
 
 // Stop all the threads in the thread list
@@ -547,33 +424,6 @@ void GetHomeDirW(wchar_t *path, UINT size)
 			Win32GetCurrentDirW(path, size);
 #else	// OS_WIN32
 			UnixGetCurrentDirW(path, size);
-#endif	// OS_WIN32
-		}
-	}
-}
-void GetHomeDir(char *path, UINT size)
-{
-	// Validate arguments
-	if (path == NULL)
-	{
-		return;
-	}
-
-	if (GetEnv("HOME", path, size) == false)
-	{
-		char drive[MAX_SIZE];
-		char hpath[MAX_SIZE];
-		if (GetEnv("HOMEDRIVE", drive, sizeof(drive)) &&
-			GetEnv("HOMEPATH", hpath, sizeof(hpath)))
-		{
-			Format(path, size, "%s%s", drive, hpath);
-		}
-		else
-		{
-#ifdef	OS_WIN32
-			Win32GetCurrentDir(path, size);
-#else	// OS_WIN32
-			UnixGetCurrentDir(path, size);
 #endif	// OS_WIN32
 		}
 	}
@@ -767,21 +617,14 @@ void HashInstanceName(char *name, UINT size, char *instance_name)
 	Trim(tmp);
 	StrUpper(tmp);
 
-	Hash(hash, tmp, StrLen(tmp), SHA1_SIZE);
+	Sha0(hash, tmp, StrLen(tmp));
 	BinToStr(key, sizeof(key), hash, 5);
 	key[10] = 0;
 
 	Format(name, size, "VPN-%s", key);
 
-	if (OS_IS_WINDOWS_NT(GetOsInfo()->OsType))
-	{
-		if (GET_KETA(GetOsInfo()->OsType, 100) >= 2 ||
-			GetOsInfo()->OsType == OSTYPE_WINDOWS_NT_4_TERMINAL_SERVER)
-		{
-			StrCpy(tmp, sizeof(tmp), name);
-			Format(name, size, "Global\\%s", tmp);
-		}
-	}
+	StrCpy(tmp, sizeof(tmp), name);
+	Format(name, size, "Global\\%s", tmp);
 }
 void HashInstanceNameLocal(char *name, UINT size, char *instance_name)
 {
@@ -798,21 +641,14 @@ void HashInstanceNameLocal(char *name, UINT size, char *instance_name)
 	Trim(tmp);
 	StrUpper(tmp);
 
-	Hash(hash, tmp, StrLen(tmp), SHA1_SIZE);
+	Sha0(hash, tmp, StrLen(tmp));
 	BinToStr(key, sizeof(key), hash, 5);
 	key[10] = 0;
 
 	Format(name, size, "VPN-%s", key);
 
-	if (OS_IS_WINDOWS_NT(GetOsInfo()->OsType))
-	{
-		if (GET_KETA(GetOsInfo()->OsType, 100) >= 2 ||
-			GetOsInfo()->OsType == OSTYPE_WINDOWS_NT_4_TERMINAL_SERVER)
-		{
-			StrCpy(tmp, sizeof(tmp), name);
-			Format(name, size, "Local\\%s", tmp);
-		}
-	}
+	StrCpy(tmp, sizeof(tmp), name);
+	Format(name, size, "Local\\%s", tmp);
 }
 
 // Run the process
@@ -898,21 +734,6 @@ void GetDateTimeStrEx64(wchar_t *str, UINT size, UINT64 sec64, LOCALE *locale)
 	UINT64ToSystem(&st, sec64);
 	GetDateTimeStrEx(str, size, &st, locale);
 }
-void GetTimeStrEx64(wchar_t *str, UINT size, UINT64 sec64, LOCALE *locale)
-{
-	SYSTEMTIME st;
-	if (locale == NULL)
-	{
-		locale = &current_locale;
-	}
-	if (sec64 == 0 || SystemToLocal64(sec64) == 0 || LocalToSystem64(sec64) == 0)
-	{
-		UniStrCpy(str, size, locale->Unknown);
-		return;
-	}
-	UINT64ToSystem(&st, sec64);
-	GetTimeStrEx(str, size, &st, locale);
-}
 void GetDateStrEx64(wchar_t *str, UINT size, UINT64 sec64, LOCALE *locale)
 {
 	SYSTEMTIME st;
@@ -938,17 +759,6 @@ void GetTimeStrMilli64(char *str, UINT size, UINT64 sec64)
 	}
 	UINT64ToSystem(&st, sec64);
 	GetTimeStrMilli(str, size, &st);
-}
-void GetTimeStr64(char *str, UINT size, UINT64 sec64)
-{
-	SYSTEMTIME st;
-	if (sec64 == 0 || SystemToLocal64(sec64) == 0 || LocalToSystem64(sec64) == 0)
-	{
-		StrCpy(str, size, "(Unknown)");
-		return;
-	}
-	UINT64ToSystem(&st, sec64);
-	GetTimeStr(str, size, &st);
 }
 
 // Convert to a time to be used safely in the current POSIX implementation
@@ -1157,28 +967,16 @@ void SetThreadName(UINT thread_id, char *name, void *param)
 #endif	// OS_WIN32
 }
 
-// Do Nothing
-UINT DoNothing()
-{
-	return g_zero;
-}
-
 // Thread creation (pool)
 THREAD *NewThreadNamed(THREAD_PROC *thread_proc, void *param, char *name)
 {
 	THREAD *host = NULL;
 	THREAD_POOL_DATA *pd = NULL;
 	THREAD *ret;
-	bool new_thread = false;
 	// Validate arguments
 	if (thread_proc == NULL)
 	{
 		return NULL;
-	}
-
-	if (IsTrackingEnabled() == false)
-	{
-		DoNothing();
 	}
 
 	Inc(thread_count);
@@ -1198,8 +996,6 @@ THREAD *NewThreadNamed(THREAD_PROC *thread_proc, void *param, char *name)
 		pd->InitFinishEvent = NewEvent();
 		host = NewThreadInternal(ThreadPoolProc, pd);
 		WaitThreadInitInternal(host);
-
-		new_thread = true;
 	}
 	else
 	{
@@ -1567,19 +1363,6 @@ void GetTimeStrMilli(char *str, UINT size, SYSTEMTIME *st)
 		st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
 }
 
-// Get the time string (for example, 12:34:56)
-void GetTimeStr(char *str, UINT size, SYSTEMTIME *st)
-{
-	// Validate arguments
-	if (str == NULL || st == NULL)
-	{
-		return;
-	}
-
-	Format(str, size, "%02u:%02u:%02u",
-		st->wHour, st->wMinute, st->wSecond);
-}
-
 // Get the date string (example: 2004/07/23)
 void GetDateStr(char *str, UINT size, SYSTEMTIME *st)
 {
@@ -1622,6 +1405,7 @@ void GetDateTimeStrMilli(char *str, UINT size, SYSTEMTIME *st)
 		st->wMilliseconds);
 }
 
+
 // Convert string RFC3339 format (example: 2017-09-27T18:25:55.434-9:00) to UINT64
 UINT64 DateTimeStrRFC3339ToSystemTime64(char *str)
 {
@@ -1662,7 +1446,7 @@ bool DateTimeStrRFC3339ToSystemTime(SYSTEMTIME *st, char *str)
 			tmp[16] == ':')
 		{
 			char str_year[16], str_month[16], str_day[16], str_hour[16], str_minute[16],
-				 str_second[16], str_msec[16];
+				str_second[16], str_msec[16];
 
 			StrCpy(str_year, sizeof(str_year), tmp + 0);
 			str_year[4] = 0;
@@ -1734,31 +1518,6 @@ void GetDateTimeStrRFC3339(char *str, UINT size, SYSTEMTIME *st, int timezone_mi
 	}
 }
 
-// Get the time string
-void GetSpanStr(char *str, UINT size, UINT64 sec64)
-{
-	char tmp[MAX_SIZE];
-	// Validate arguments
-	if (str == NULL)
-	{
-		return;
-	}
-
-	StrCpy(tmp, sizeof(tmp), "");
-	if (sec64 >= (UINT64)(1000 * 3600 * 24))
-	{
-		Format(tmp, sizeof(tmp), "%u:", (UINT)(sec64 / (UINT64)(1000 * 3600 * 24)));
-	}
-
-	Format(tmp, sizeof(tmp), "%s%02u:%02u:%02u", tmp,
-		(UINT)(sec64 % (UINT64)(1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-		(UINT)(sec64 % (UINT64)(1000 * 60 * 60)) / (1000 * 60),
-		(UINT)(sec64 % (UINT64)(1000 * 60)) / 1000);
-
-	Trim(tmp);
-	StrCpy(str, size, tmp);
-}
-
 // Get the time string (in milliseconds)
 void GetSpanStrMilli(char *str, UINT size, UINT64 sec64)
 {
@@ -1783,49 +1542,6 @@ void GetSpanStrMilli(char *str, UINT size, UINT64 sec64)
 
 	Trim(tmp);
 	StrCpy(str, size, tmp);
-}
-
-// Get the time string (extended)
-void GetSpanStrEx(wchar_t *str, UINT size, UINT64 sec64, LOCALE *locale)
-{
-	wchar_t tmp[MAX_SIZE];
-	// Validate arguments
-	if (str == NULL)
-	{
-		return;
-	}
-
-	locale = (locale != NULL ? locale : &current_locale);
-
-	UniStrCpy(tmp, sizeof(tmp), L"");
-	if (sec64 >= (UINT64)(1000 * 3600 * 24))
-	{
-		UniFormat(tmp, sizeof(tmp), L"%u%s ", (UINT)(sec64 / (UINT64)(1000 * 3600 * 24)),
-			locale->SpanDay);
-	}
-
-	UniFormat(tmp, sizeof(tmp), L"%s%u%s %02u%s %02u%s", tmp,
-		(UINT)(sec64 % (UINT64)(1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-		locale->SpanHour,
-		(UINT)(sec64 % (UINT64)(1000 * 60 * 60)) / (1000 * 60),
-		locale->SpanMinute,
-		(UINT)(sec64 % (UINT64)(1000 * 60)) / 1000,
-		locale->SpanSecond);
-
-	UniTrim(tmp);
-	UniStrCpy(str, size, tmp);
-}
-
-// Get the current locale information
-void GetCurrentLocale(LOCALE *locale)
-{
-	// Validate arguments
-	if (locale == NULL)
-	{
-		return;
-	}
-
-	Copy(locale, &current_locale, sizeof(LOCALE));
 }
 
 // Set the locale information
@@ -1990,16 +1706,6 @@ void TimeToSystem(SYSTEMTIME *st, time_64t t)
 	TmToSystem(st, &tmp);
 }
 
-// Convert the time_t to 64-bit SYSTEMTIME
-UINT64 TimeToSystem64(time_64t t)
-{
-	SYSTEMTIME st;
-
-	TimeToSystem(&st, t);
-
-	return SystemToUINT64(&st);
-}
-
 // Convert the SYSTEMTIME to time_t
 time_64t SystemToTime(SYSTEMTIME *st)
 {
@@ -2012,16 +1718,6 @@ time_64t SystemToTime(SYSTEMTIME *st)
 
 	SystemToTm(&t, st);
 	return TmToTime(&t);
-}
-
-// Convert a 64-bit SYSTEMTIME to a time_t
-time_64t System64ToTime(UINT64 i)
-{
-	SYSTEMTIME st;
-
-	UINT64ToSystem(&st, i);
-
-	return SystemToTime(&st);
 }
 
 // Convert the tm to time_t
@@ -2204,7 +1900,7 @@ void UINT64ToSystem(SYSTEMTIME *st, UINT64 sec64)
 	sec = (UINT)tmp64;
 	time = (time_64t)sec;
 	TimeToSystem(st, time);
-	st->wMilliseconds = (WORD)millisec;
+	st->wMilliseconds = (USHORT)millisec;
 }
 
 // Convert the SYSTEMTIME to UINT64

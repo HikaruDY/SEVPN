@@ -1,102 +1,5 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Mayaqua Kernel
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Mayaqua.h
@@ -105,32 +8,28 @@
 #ifndef	MAYAQUA_H
 #define	MAYAQUA_H
 
-// PenCore.dll related
-#define	PENCORE_DLL_NAME		"|PenCore.dll"
-#define	PENCORE_DLL_NAME_X64	"|PenCore_x64.dll"
-#define	PENCORE_DLL_NAME_IA64	"|PenCore_ia64.dll"
+#include "Kernel.h"
 
+#include <stdio.h>
+
+#define	PENCORE_DLL_NAME		"|PenCore.dll"
 
 //#define	USE_PROBE						// Use Probe
 
 // Macro for the release flag
 #ifdef	VPN_SPEED
 
-#define	DONT_USE_KERNEL_STATUS			// Do not update the kernel status
 #define	WIN32_USE_HEAP_API_FOR_MEMORY	// Use the heap API to allocate memory
 #define	WIN32_NO_DEBUG_HELP_DLL			// Do not call the DLL for debugging
-#define	DONT_CHECK_HEAP					// Do not check the status of the heap
 #define	DONT_ALLOW_RUN_ON_DEBUGGER		// Do not allow running on the debugger
 
 #endif	// VPN_SPEED
 
-void InitProcessCallOnceEx(int restricted_mode);
 void InitProcessCallOnce();
 
-#ifdef	VPN_EXE
+#ifdef VPN_EXE
 // To build the executable file
-#ifdef	WIN32
-#include <windows.h>
+#ifdef OS_WIN32
 #include "../PenCore/resource.h"
 int main(int argc, char *argv[]);
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, char *CmdLine, int CmdShow)
@@ -147,13 +46,6 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, char *CmdLine, int CmdShow)
 //#define	DEFAULT_TABLE_FILE_NAME		"@hamcore_zh/strtable.stb"		// Test for Chinese
 
 #define	STRTABLE_ID					"SE_VPN_20121007"	// String table identifier
-
-// Determining the OS
-#ifdef	WIN32
-#define	OS_WIN32		// Microsoft Windows
-#else
-#define	OS_UNIX			// UNIX
-#endif	// WIN32
 
 // Directory separator
 #ifdef	OS_WIN32
@@ -207,12 +99,6 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, char *CmdLine, int CmdShow)
 #define	PROBE_DATA(data, size)
 #endif	// USE_PROBE
 
-// About Intel AES-NI Library
-#if	(defined(OS_WIN32) || (defined(UNIX_LINUX) && (defined(CPU_X86) || defined(CPU_X64))))
-// Supports only for Linux (x86 / x64) or Windows
-#define	USE_INTEL_AESNI_LIBRARY
-#endif
-
 // Determine the performance / memory strategy
 #if	(defined(CPU_X86) || defined(CPU_X64) || defined(CPU_X86_X64) || defined(CPU_SPARC) || defined(CPU_SPARC64) || defined(OS_WIN32) || defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64) || defined(i386) || defined(__i386) || defined(__i386__) || defined(__ia64__) || defined(__IA64__) || defined(_IA64))
 #define	USE_STRATEGY_PERFORMACE
@@ -227,164 +113,9 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, char *CmdLine, int CmdShow)
 #define	WHEN
 #endif	// WIN32
 
-#ifdef	OS_UNIX
-#ifndef	UNIX_SOLARIS
-#ifndef	CPU_SH4
-// Getifaddrs system call is supported on UNIX other than Solaris.
-// However, it is not supported also by the Linux on SH4 CPU
-#define	MAYAQUA_SUPPORTS_GETIFADDRS
-#endif	// CPU_SH4
-#endif	// UNIX_SOLARIS
-#endif	// OS_UNIX
-
-#ifdef	OS_UNIX
-// Header only needed in UNIX OS
-#include <sys/types.h>
-#include <unistd.h>
-#include <termios.h>
-#include <dirent.h>
-#ifdef	UNIX_LINUX
-#include <sys/vfs.h>
-#elif	UNIX_BSD
-#include <sys/param.h>
-#include <sys/mount.h>
+#ifdef OS_UNIX
+#define closesocket(s) close(s)
 #endif
-#ifdef	UNIX_SOLARIS
-#include <sys/statvfs.h>
-#define	USE_STATVFS
-#endif	// UNIX_SOLARIS
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/ioctl.h>
-#ifdef	UNIX_SOLARIS
-#include <sys/filio.h>
-#endif	// UNIX_SOLARIS
-#include <sys/poll.h>
-#include <sys/resource.h>
-#include <pthread.h>
-#ifdef	UNIX_LINUX
-#include <sys/prctl.h>
-#endif	// UNIX_LINUX
-#include <signal.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-//#include <netinet/ip.h>
-#include <netdb.h>
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-//#include <curses.h>
-#ifdef	MAYAQUA_SUPPORTS_GETIFADDRS
-#include <ifaddrs.h>
-#endif	// MAYAQUA_SUPPORTS_GETIFADDRS
-
-#ifdef	UNIX_LINUX
-typedef void *iconv_t;
-iconv_t iconv_open (__const char *__tocode, __const char *__fromcode);
-size_t iconv (iconv_t __cd, char **__restrict __inbuf,
-                     size_t *__restrict __inbytesleft,
-                     char **__restrict __outbuf,
-                     size_t *__restrict __outbytesleft);
-int iconv_close (iconv_t __cd);
-#else	// UNIX_LINUX
-#include <iconv.h>
-#endif	// UNIX_LINUX
-
-
-
-#ifdef	UNIX_LINUX
-#include <netinet/if_ether.h>
-#include <net/ethernet.h>
-#include <netpacket/packet.h>
-#endif	// UNIX_LINUX
-
-#ifdef	UNIX_SOLARIS
-#include <sys/dlpi.h>
-#include <sys/stropts.h>
-#include <sys/stream.h>
-#endif	// UNIX_SOLARIS
-
-#ifndef	NO_VLAN
-
-#include <Mayaqua/TunTap.h>
-
-#endif	// NO_VLAN
-
-#define	closesocket(s)		close(s)
-
-#else	// Win32 only
-
-#include <conio.h>
-
-#endif	// OS_UNIX
-
-// IPv6 support flag
-#ifndef	WIN32
-#ifndef	AF_INET6
-#define	NO_IPV6
-#endif	// AF_INET6
-#endif	// WIN32
-
-// Basic type declaration
-#include <Mayaqua/MayaType.h>
-
-// Object management
-#include <Mayaqua/Object.h>
-
-// Object tracking
-#include <Mayaqua/Tracking.h>
-
-// File I/O
-#include <Mayaqua/FileIO.h>
-
-// Memory management
-#include <Mayaqua/Memory.h>
-
-// String processing
-#include <Mayaqua/Str.h>
-
-// Internationalized string processing
-#include <Mayaqua/Internat.h>
-
-// Encryption processing
-#include <Mayaqua/Encrypt.h>
-
-// Secure token
-#include <Mayaqua/Secure.h>
-
-// Kernel
-#include <Mayaqua/Kernel.h>
-
-// Package
-#include <Mayaqua/Pack.h>
-
-// Configuration file
-#include <Mayaqua/Cfg.h>
-
-// String table
-#include <Mayaqua/Table.h>
-
-// Network communication
-#include <Mayaqua/Network.h>
-
-// TCP/IP
-#include <Mayaqua/TcpIp.h>
-
-// 64 bit real-time clock
-#include <Mayaqua/Tick64.h>
-
-// OS-dependent code
-#include <Mayaqua/OS.h>
-
-// Code for Microsoft Windows
-#include <Mayaqua/Microsoft.h>
-
 
 // Global variables
 extern bool g_memcheck;
@@ -393,13 +124,14 @@ extern char *cmdline;
 extern wchar_t *uni_cmdline;
 extern bool g_little_endian;
 extern LOCK *tick_manual_lock;
+extern bool g_foreground;
 
 // Kernel state
 #define	NUM_KERNEL_STATUS	128
 extern UINT64 kernel_status[NUM_KERNEL_STATUS];
 extern UINT64 kernel_status_max[NUM_KERNEL_STATUS];
 extern LOCK *kernel_status_lock[NUM_KERNEL_STATUS];
-extern BOOL kernel_status_inited;
+extern bool kernel_status_inited;
 
 // Kernel state operation macro
 #define	KS_LOCK(id)		LockKernelStatus(id)
@@ -409,43 +141,35 @@ extern BOOL kernel_status_inited;
 #define	KS_GETMAX64(id)	(kernel_status_max[id])
 #define	KS_GETMAX(id)	((UINT)KS_GETMAX64(id))
 
-#ifdef	DONT_USE_KERNEL_STATUS
-// Disable operations of the kernel status
-#define	KS_INC(id)
-#define	KS_DEC(id)
-#define	KS_ADD(id, n)
-#define	KS_SUB(id, n)
-#else	// DONT_USE_KERNEL_STATUS
-// Enable operations of the kernel status
-#define	KS_INC(id)							\
-if (kernel_status_inited) {					\
-	KS_LOCK(id);							\
-	kernel_status[id]++;					\
+// Operations of the kernel status
+#define	KS_INC(id)															\
+if (IsTrackingEnabled()) {													\
+	KS_LOCK(id);															\
+	kernel_status[id]++;													\
 	kernel_status_max[id] = MAX(kernel_status_max[id], kernel_status[id]);	\
-	KS_UNLOCK(id);							\
+	KS_UNLOCK(id);															\
 }
-#define	KS_DEC(id)							\
-if (kernel_status_inited) {					\
-	KS_LOCK(id);							\
-	kernel_status[id]--;					\
+#define	KS_DEC(id)															\
+if (IsTrackingEnabled()) {													\
+	KS_LOCK(id);															\
+	kernel_status[id]--;													\
 	kernel_status_max[id] = MAX(kernel_status_max[id], kernel_status[id]);	\
-	KS_UNLOCK(id);							\
+	KS_UNLOCK(id);															\
 }
-#define	KS_ADD(id, n)						\
-if (kernel_status_inited) {					\
-	KS_LOCK(id);							\
-	kernel_status[id] += n;					\
+#define	KS_ADD(id, n)														\
+if (IsTrackingEnabled()) {													\
+	KS_LOCK(id);															\
+	kernel_status[id] += n;													\
 	kernel_status_max[id] = MAX(kernel_status_max[id], kernel_status[id]);	\
-	KS_UNLOCK(id);							\
+	KS_UNLOCK(id);															\
 }
-#define	KS_SUB(id, n)						\
-if (kernel_status_inited) {					\
-	KS_LOCK(id);							\
-	kernel_status[id] -= n;					\
+#define	KS_SUB(id, n)														\
+if (IsTrackingEnabled()) {													\
+	KS_LOCK(id);															\
+	kernel_status[id] -= n;													\
 	kernel_status_max[id] = MAX(kernel_status_max[id], kernel_status[id]);	\
-	KS_UNLOCK(id);							\
+	KS_UNLOCK(id);															\
 }
-#endif	// DONT_USE_KERNEL_STATUS
 
 // Kernel status
 // String related
@@ -496,7 +220,6 @@ if (kernel_status_inited) {					\
 #define	KS_FREEFIFO_COUNT		37		// Number of times the FIFO object is deleted
 #define	KS_READ_FIFO_COUNT		38		// Number of calls ReadFifo
 #define	KS_WRITE_FIFO_COUNT		39		// Number of calls WriteFifo
-#define	KS_PEEK_FIFO_COUNT		40		// Number of calls PeekFifo
 // List related
 #define	KS_NEWLIST_COUNT		41		// Number of calls NewList
 #define	KS_FREELIST_COUNT		42		// Number of times the object LIST was deleted
@@ -548,8 +271,6 @@ if (kernel_status_inited) {					\
 void InitMayaqua(bool memcheck, bool debug, int argc, char **argv);
 void FreeMayaqua();
 bool IsNt();
-bool IsUnicode();
-void MayaquaDotNetMode();
 bool MayaquaIsDotNetMode();
 void MayaquaMinimalMode();
 bool MayaquaIsMinimalMode();
@@ -579,7 +300,6 @@ void Alert(char *msg, char *caption);
 void AlertW(wchar_t *msg, wchar_t *caption);
 OS_INFO *GetOsInfo();
 UINT GetOsType();
-void PrintOsInfo(OS_INFO *info);
 void CheckEndian();
 void CheckUnixTempDir();
 void TimeCheck();
@@ -593,26 +313,6 @@ void WriteProbe(char *filename, UINT line, char *str);
 void WriteProbeData(char *filename, UINT line, char *str, void *data, UINT size);
 USHORT CalcChecksum16(void *buf, UINT size);
 
-
-#ifdef	OS_WIN32
-// Import library (for Win32)
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "winmm.lib")
-#pragma comment(lib, "kernel32.lib")
-#pragma comment(lib, "user32.lib")
-#pragma comment(lib, "gdi32.lib")
-#pragma comment(lib, "shell32.lib")
-#pragma comment(lib, "comctl32.lib")
-#pragma comment(lib, "dbghelp.lib")
-#pragma comment(lib, "Iphlpapi.lib")
-#pragma comment(lib, "setupapi.lib")
-#pragma comment(lib, "version.lib")
-#pragma comment(lib, "Netapi32.lib")
-#pragma comment(lib, "shlwapi.lib")
-#pragma comment(lib, "crypt32.lib")
-#pragma warning( disable : 4099 )
-#endif	// OS_WIN32
-
 // For Debugging
 #ifndef	ENCRYPT_C
 //#define	Disconnect(s)		{Debug("Disconnect() Called: %s %u\n", __FILE__, __LINE__);Disconnect(s);}
@@ -620,5 +320,3 @@ USHORT CalcChecksum16(void *buf, UINT size);
 
 
 #endif	// MAYAQUA_H
-
-

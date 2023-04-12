@@ -1,830 +1,47 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
-
+// c 2020 Nokia
 
 // Protocol.c
 // SoftEther protocol related routines
 
-#include "CedarPch.h"
+#include "Protocol.h"
 
-static UCHAR ssl_packet_start[3] = {0x17, 0x03, 0x00};
+#include "Admin.h"
+#include "Client.h"
+#include "CM.h"
+#include "DDNS.h"
+#include "Hub.h"
+#include "IPC.h"
+#include "Link.h"
+#include "Logging.h"
+#include "Proto_IPsec.h"
+#include "Proto_OpenVPN.h"
+#include "Proto_PPP.h"
+#include "Proto_SSTP.h"
+#include "Radius.h"
+#include "Sam.h"
+#include "Server.h"
+#include "UdpAccel.h"
+#include "VLanUnix.h"
+#include "WaterMark.h"
+#include "WebUI.h"
+#include "WinUi.h"
+#include "Wpc.h"
 
-// MIME list from https://www.freeformatter.com/mime-types-list.html
-static HTTP_MIME_TYPE http_mime_types[] =
-{
-	{".x3d", "application/vnd.hzn-3d-crossword"},
-	{".3gp", "video/3gpp"},
-	{".3g2", "video/3gpp2"},
-	{".mseq", "application/vnd.mseq"},
-	{".pwn", "application/vnd.3m.post-it-notes"},
-	{".plb", "application/vnd.3gpp.pic-bw-large"},
-	{".psb", "application/vnd.3gpp.pic-bw-small"},
-	{".pvb", "application/vnd.3gpp.pic-bw-var"},
-	{".tcap", "application/vnd.3gpp2.tcap"},
-	{".7z", "application/x-7z-compressed"},
-	{".abw", "application/x-abiword"},
-	{".ace", "application/x-ace-compressed"},
-	{".acc", "application/vnd.americandynamics.acc"},
-	{".acu", "application/vnd.acucobol"},
-	{".atc", "application/vnd.acucorp"},
-	{".adp", "audio/adpcm"},
-	{".aab", "application/x-authorware-bin"},
-	{".aam", "application/x-authorware-map"},
-	{".aas", "application/x-authorware-seg"},
-	{".air", "application/vnd.adobe.air-application-installer-package+zip"},
-	{".swf", "application/x-shockwave-flash"},
-	{".fxp", "application/vnd.adobe.fxp"},
-	{".pdf", "application/pdf"},
-	{".ppd", "application/vnd.cups-ppd"},
-	{".dir", "application/x-director"},
-	{".xdp", "application/vnd.adobe.xdp+xml"},
-	{".xfdf", "application/vnd.adobe.xfdf"},
-	{".aac", "audio/x-aac"},
-	{".ahead", "application/vnd.ahead.space"},
-	{".azf", "application/vnd.airzip.filesecure.azf"},
-	{".azs", "application/vnd.airzip.filesecure.azs"},
-	{".azw", "application/vnd.amazon.ebook"},
-	{".ami", "application/vnd.amiga.ami"},
-	{".apk", "application/vnd.android.package-archive"},
-	{".cii", "application/vnd.anser-web-certificate-issue-initiation"},
-	{".fti", "application/vnd.anser-web-funds-transfer-initiation"},
-	{".atx", "application/vnd.antix.game-component"},
-	{".dmg", "application/x-apple-diskimage"},
-	{".mpkg", "application/vnd.apple.installer+xml"},
-	{".aw", "application/applixware"},
-	{".les", "application/vnd.hhe.lesson-player"},
-	{".swi", "application/vnd.aristanetworks.swi"},
-	{".s", "text/x-asm"},
-	{".atomcat", "application/atomcat+xml"},
-	{".atomsvc", "application/atomsvc+xml"},
-	{".atom", "application/atom+xml"},
-	{".ac", "application/pkix-attr-cert"},
-	{".aif", "audio/x-aiff"},
-	{".avi", "video/x-msvideo"},
-	{".aep", "application/vnd.audiograph"},
-	{".dxf", "image/vnd.dxf"},
-	{".dwf", "model/vnd.dwf"},
-	{".par", "text/plain-bas"},
-	{".bcpio", "application/x-bcpio"},
-	{".bin", "application/octet-stream"},
-	{".bmp", "image/bmp"},
-	{".torrent", "application/x-bittorrent"},
-	{".cod", "application/vnd.rim.cod"},
-	{".mpm", "application/vnd.blueice.multipass"},
-	{".bmi", "application/vnd.bmi"},
-	{".sh", "application/x-sh"},
-	{".btif", "image/prs.btif"},
-	{".rep", "application/vnd.businessobjects"},
-	{".bz", "application/x-bzip"},
-	{".bz2", "application/x-bzip2"},
-	{".csh", "application/x-csh"},
-	{".c", "text/x-c"},
-	{".cdxml", "application/vnd.chemdraw+xml"},
-	{".css", "text/css"},
-	{".cdx", "chemical/x-cdx"},
-	{".cml", "chemical/x-cml"},
-	{".csml", "chemical/x-csml"},
-	{".cdbcmsg", "application/vnd.contact.cmsg"},
-	{".cla", "application/vnd.claymore"},
-	{".c4g", "application/vnd.clonk.c4group"},
-	{".sub", "image/vnd.dvb.subtitle"},
-	{".cdmia", "application/cdmi-capability"},
-	{".cdmic", "application/cdmi-container"},
-	{".cdmid", "application/cdmi-domain"},
-	{".cdmio", "application/cdmi-object"},
-	{".cdmiq", "application/cdmi-queue"},
-	{".c11amc", "application/vnd.cluetrust.cartomobile-config"},
-	{".c11amz", "application/vnd.cluetrust.cartomobile-config-pkg"},
-	{".ras", "image/x-cmu-raster"},
-	{".dae", "model/vnd.collada+xml"},
-	{".csv", "text/csv"},
-	{".cpt", "application/mac-compactpro"},
-	{".wmlc", "application/vnd.wap.wmlc"},
-	{".cgm", "image/cgm"},
-	{".ice", "x-conference/x-cooltalk"},
-	{".cmx", "image/x-cmx"},
-	{".xar", "application/vnd.xara"},
-	{".cmc", "application/vnd.cosmocaller"},
-	{".cpio", "application/x-cpio"},
-	{".clkx", "application/vnd.crick.clicker"},
-	{".clkk", "application/vnd.crick.clicker.keyboard"},
-	{".clkp", "application/vnd.crick.clicker.palette"},
-	{".clkt", "application/vnd.crick.clicker.template"},
-	{".clkw", "application/vnd.crick.clicker.wordbank"},
-	{".wbs", "application/vnd.criticaltools.wbs+xml"},
-	{".cryptonote", "application/vnd.rig.cryptonote"},
-	{".cif", "chemical/x-cif"},
-	{".cmdf", "chemical/x-cmdf"},
-	{".cu", "application/cu-seeme"},
-	{".cww", "application/prs.cww"},
-	{".curl", "text/vnd.curl"},
-	{".dcurl", "text/vnd.curl.dcurl"},
-	{".mcurl", "text/vnd.curl.mcurl"},
-	{".scurl", "text/vnd.curl.scurl"},
-	{".car", "application/vnd.curl.car"},
-	{".pcurl", "application/vnd.curl.pcurl"},
-	{".cmp", "application/vnd.yellowriver-custom-menu"},
-	{".dssc", "application/dssc+der"},
-	{".xdssc", "application/dssc+xml"},
-	{".deb", "application/x-debian-package"},
-	{".uva", "audio/vnd.dece.audio"},
-	{".uvi", "image/vnd.dece.graphic"},
-	{".uvh", "video/vnd.dece.hd"},
-	{".uvm", "video/vnd.dece.mobile"},
-	{".uvu", "video/vnd.uvvu.mp4"},
-	{".uvp", "video/vnd.dece.pd"},
-	{".uvs", "video/vnd.dece.sd"},
-	{".uvv", "video/vnd.dece.video"},
-	{".dvi", "application/x-dvi"},
-	{".seed", "application/vnd.fdsn.seed"},
-	{".dtb", "application/x-dtbook+xml"},
-	{".res", "application/x-dtbresource+xml"},
-	{".ait", "application/vnd.dvb.ait"},
-	{".svc", "application/vnd.dvb.service"},
-	{".eol", "audio/vnd.digital-winds"},
-	{".djvu", "image/vnd.djvu"},
-	{".dtd", "application/xml-dtd"},
-	{".mlp", "application/vnd.dolby.mlp"},
-	{".wad", "application/x-doom"},
-	{".dpg", "application/vnd.dpgraph"},
-	{".dra", "audio/vnd.dra"},
-	{".dfac", "application/vnd.dreamfactory"},
-	{".dts", "audio/vnd.dts"},
-	{".dtshd", "audio/vnd.dts.hd"},
-	{".dwg", "image/vnd.dwg"},
-	{".geo", "application/vnd.dynageo"},
-	{".es", "application/ecmascript"},
-	{".mag", "application/vnd.ecowin.chart"},
-	{".mmr", "image/vnd.fujixerox.edmics-mmr"},
-	{".rlc", "image/vnd.fujixerox.edmics-rlc"},
-	{".exi", "application/exi"},
-	{".mgz", "application/vnd.proteus.magazine"},
-	{".epub", "application/epub+zip"},
-	{".eml", "message/rfc822"},
-	{".nml", "application/vnd.enliven"},
-	{".xpr", "application/vnd.is-xpr"},
-	{".xif", "image/vnd.xiff"},
-	{".xfdl", "application/vnd.xfdl"},
-	{".emma", "application/emma+xml"},
-	{".ez2", "application/vnd.ezpix-album"},
-	{".ez3", "application/vnd.ezpix-package"},
-	{".fst", "image/vnd.fst"},
-	{".fvt", "video/vnd.fvt"},
-	{".fbs", "image/vnd.fastbidsheet"},
-	{".fe_launch", "application/vnd.denovo.fcselayout-link"},
-	{".f4v", "video/x-f4v"},
-	{".flv", "video/x-flv"},
-	{".fpx", "image/vnd.fpx"},
-	{".npx", "image/vnd.net-fpx"},
-	{".flx", "text/vnd.fmi.flexstor"},
-	{".fli", "video/x-fli"},
-	{".ftc", "application/vnd.fluxtime.clip"},
-	{".fdf", "application/vnd.fdf"},
-	{".f", "text/x-fortran"},
-	{".mif", "application/vnd.mif"},
-	{".fm", "application/vnd.framemaker"},
-	{".fh", "image/x-freehand"},
-	{".fsc", "application/vnd.fsc.weblaunch"},
-	{".fnc", "application/vnd.frogans.fnc"},
-	{".ltf", "application/vnd.frogans.ltf"},
-	{".ddd", "application/vnd.fujixerox.ddd"},
-	{".xdw", "application/vnd.fujixerox.docuworks"},
-	{".xbd", "application/vnd.fujixerox.docuworks.binder"},
-	{".oas", "application/vnd.fujitsu.oasys"},
-	{".oa2", "application/vnd.fujitsu.oasys2"},
-	{".oa3", "application/vnd.fujitsu.oasys3"},
-	{".fg5", "application/vnd.fujitsu.oasysgp"},
-	{".bh2", "application/vnd.fujitsu.oasysprs"},
-	{".spl", "application/x-futuresplash"},
-	{".fzs", "application/vnd.fuzzysheet"},
-	{".g3", "image/g3fax"},
-	{".gmx", "application/vnd.gmx"},
-	{".gtw", "model/vnd.gtw"},
-	{".txd", "application/vnd.genomatix.tuxedo"},
-	{".ggb", "application/vnd.geogebra.file"},
-	{".ggt", "application/vnd.geogebra.tool"},
-	{".gdl", "model/vnd.gdl"},
-	{".gex", "application/vnd.geometry-explorer"},
-	{".gxt", "application/vnd.geonext"},
-	{".g2w", "application/vnd.geoplan"},
-	{".g3w", "application/vnd.geospace"},
-	{".gsf", "application/x-font-ghostscript"},
-	{".bdf", "application/x-font-bdf"},
-	{".gtar", "application/x-gtar"},
-	{".texinfo", "application/x-texinfo"},
-	{".gnumeric", "application/x-gnumeric"},
-	{".kml", "application/vnd.google-earth.kml+xml"},
-	{".kmz", "application/vnd.google-earth.kmz"},
-	{".gqf", "application/vnd.grafeq"},
-	{".gif", "image/gif"},
-	{".gv", "text/vnd.graphviz"},
-	{".gac", "application/vnd.groove-account"},
-	{".ghf", "application/vnd.groove-help"},
-	{".gim", "application/vnd.groove-identity-message"},
-	{".grv", "application/vnd.groove-injector"},
-	{".gtm", "application/vnd.groove-tool-message"},
-	{".tpl", "application/vnd.groove-tool-template"},
-	{".vcg", "application/vnd.groove-vcard"},
-	{".h261", "video/h261"},
-	{".h263", "video/h263"},
-	{".h264", "video/h264"},
-	{".hpid", "application/vnd.hp-hpid"},
-	{".hps", "application/vnd.hp-hps"},
-	{".hdf", "application/x-hdf"},
-	{".rip", "audio/vnd.rip"},
-	{".hbci", "application/vnd.hbci"},
-	{".jlt", "application/vnd.hp-jlyt"},
-	{".pcl", "application/vnd.hp-pcl"},
-	{".hpgl", "application/vnd.hp-hpgl"},
-	{".hvs", "application/vnd.yamaha.hv-script"},
-	{".hvd", "application/vnd.yamaha.hv-dic"},
-	{".hvp", "application/vnd.yamaha.hv-voice"},
-	{".sfd-hdstx", "application/vnd.hydrostatix.sof-data"},
-	{".stk", "application/hyperstudio"},
-	{".hal", "application/vnd.hal+xml"},
-	{".htm", "text/html; charset=utf-8"},
-	{".html", "text/html; charset=utf-8"},
-	{".irm", "application/vnd.ibm.rights-management"},
-	{".sc", "application/vnd.ibm.secure-container"},
-	{".ics", "text/calendar"},
-	{".icc", "application/vnd.iccprofile"},
-	{".ico", "image/x-icon"},
-	{".igl", "application/vnd.igloader"},
-	{".ief", "image/ief"},
-	{".ivp", "application/vnd.immervision-ivp"},
-	{".ivu", "application/vnd.immervision-ivu"},
-	{".rif", "application/reginfo+xml"},
-	{".3dml", "text/vnd.in3d.3dml"},
-	{".spot", "text/vnd.in3d.spot"},
-	{".igs", "model/iges"},
-	{".i2g", "application/vnd.intergeo"},
-	{".cdy", "application/vnd.cinderella"},
-	{".xpw", "application/vnd.intercon.formnet"},
-	{".fcs", "application/vnd.isac.fcs"},
-	{".ipfix", "application/ipfix"},
-	{".cer", "application/pkix-cert"},
-	{".pki", "application/pkixcmp"},
-	{".crl", "application/pkix-crl"},
-	{".pkipath", "application/pkix-pkipath"},
-	{".igm", "application/vnd.insors.igm"},
-	{".rcprofile", "application/vnd.ipunplugged.rcprofile"},
-	{".irp", "application/vnd.irepository.package+xml"},
-	{".jad", "text/vnd.sun.j2me.app-descriptor"},
-	{".jar", "application/java-archive"},
-	{".class", "application/java-vm"},
-	{".jnlp", "application/x-java-jnlp-file"},
-	{".ser", "application/java-serialized-object"},
-	{".java", "text/x-java-source"},
-	{".js", "application/javascript"},
-	{".json", "application/json"},
-	{".joda", "application/vnd.joost.joda-archive"},
-	{".jpm", "video/jpm"},
-	{".jpg", "image/jpeg"},
-	{".jpeg", "image/jpeg"},
-	{".pjpeg", "image/pjpeg"},
-	{".jpgv", "video/jpeg"},
-	{".ktz", "application/vnd.kahootz"},
-	{".mmd", "application/vnd.chipnuts.karaoke-mmd"},
-	{".karbon", "application/vnd.kde.karbon"},
-	{".chrt", "application/vnd.kde.kchart"},
-	{".kfo", "application/vnd.kde.kformula"},
-	{".flw", "application/vnd.kde.kivio"},
-	{".kon", "application/vnd.kde.kontour"},
-	{".kpr", "application/vnd.kde.kpresenter"},
-	{".ksp", "application/vnd.kde.kspread"},
-	{".kwd", "application/vnd.kde.kword"},
-	{".htke", "application/vnd.kenameaapp"},
-	{".kia", "application/vnd.kidspiration"},
-	{".kne", "application/vnd.kinar"},
-	{".sse", "application/vnd.kodak-descriptor"},
-	{".lasxml", "application/vnd.las.las+xml"},
-	{".latex", "application/x-latex"},
-	{".lbd", "application/vnd.llamagraphics.life-balance.desktop"},
-	{".lbe", "application/vnd.llamagraphics.life-balance.exchange+xml"},
-	{".jam", "application/vnd.jam"},
-	{"0.123", "application/vnd.lotus-1-2-3"},
-	{".apr", "application/vnd.lotus-approach"},
-	{".pre", "application/vnd.lotus-freelance"},
-	{".nsf", "application/vnd.lotus-notes"},
-	{".org", "application/vnd.lotus-organizer"},
-	{".scm", "application/vnd.lotus-screencam"},
-	{".lwp", "application/vnd.lotus-wordpro"},
-	{".lvp", "audio/vnd.lucent.voice"},
-	{".m3u", "audio/x-mpegurl"},
-	{".m4v", "video/x-m4v"},
-	{".hqx", "application/mac-binhex40"},
-	{".portpkg", "application/vnd.macports.portpkg"},
-	{".mgp", "application/vnd.osgeo.mapguide.package"},
-	{".mrc", "application/marc"},
-	{".mrcx", "application/marcxml+xml"},
-	{".mxf", "application/mxf"},
-	{".nbp", "application/vnd.wolfram.player"},
-	{".ma", "application/mathematica"},
-	{".mathml", "application/mathml+xml"},
-	{".mbox", "application/mbox"},
-	{".mc1", "application/vnd.medcalcdata"},
-	{".mscml", "application/mediaservercontrol+xml"},
-	{".cdkey", "application/vnd.mediastation.cdkey"},
-	{".mwf", "application/vnd.mfer"},
-	{".mfm", "application/vnd.mfmp"},
-	{".msh", "model/mesh"},
-	{".mads", "application/mads+xml"},
-	{".mets", "application/mets+xml"},
-	{".mods", "application/mods+xml"},
-	{".meta4", "application/metalink4+xml"},
-	{".mcd", "application/vnd.mcd"},
-	{".flo", "application/vnd.micrografx.flo"},
-	{".igx", "application/vnd.micrografx.igx"},
-	{".es3", "application/vnd.eszigno3+xml"},
-	{".mdb", "application/x-msaccess"},
-	{".asf", "video/x-ms-asf"},
-	{".exe", "application/x-msdownload"},
-	{".cil", "application/vnd.ms-artgalry"},
-	{".cab", "application/vnd.ms-cab-compressed"},
-	{".ims", "application/vnd.ms-ims"},
-	{".application", "application/x-ms-application"},
-	{".clp", "application/x-msclip"},
-	{".mdi", "image/vnd.ms-modi"},
-	{".eot", "application/vnd.ms-fontobject"},
-	{".xls", "application/vnd.ms-excel"},
-	{".xlam", "application/vnd.ms-excel.addin.macroenabled.12"},
-	{".xlsb", "application/vnd.ms-excel.sheet.binary.macroenabled.12"},
-	{".xltm", "application/vnd.ms-excel.template.macroenabled.12"},
-	{".xlsm", "application/vnd.ms-excel.sheet.macroenabled.12"},
-	{".chm", "application/vnd.ms-htmlhelp"},
-	{".crd", "application/x-mscardfile"},
-	{".lrm", "application/vnd.ms-lrm"},
-	{".mvb", "application/x-msmediaview"},
-	{".mny", "application/x-msmoney"},
-	{".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
-	{".sldx", "application/vnd.openxmlformats-officedocument.presentationml.slide"},
-	{".ppsx", "application/vnd.openxmlformats-officedocument.presentationml.slideshow"},
-	{".potx", "application/vnd.openxmlformats-officedocument.presentationml.template"},
-	{".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
-	{".xltx", "application/vnd.openxmlformats-officedocument.spreadsheetml.template"},
-	{".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
-	{".dotx", "application/vnd.openxmlformats-officedocument.wordprocessingml.template"},
-	{".obd", "application/x-msbinder"},
-	{".thmx", "application/vnd.ms-officetheme"},
-	{".onetoc", "application/onenote"},
-	{".pya", "audio/vnd.ms-playready.media.pya"},
-	{".pyv", "video/vnd.ms-playready.media.pyv"},
-	{".ppt", "application/vnd.ms-powerpoint"},
-	{".ppam", "application/vnd.ms-powerpoint.addin.macroenabled.12"},
-	{".sldm", "application/vnd.ms-powerpoint.slide.macroenabled.12"},
-	{".pptm", "application/vnd.ms-powerpoint.presentation.macroenabled.12"},
-	{".ppsm", "application/vnd.ms-powerpoint.slideshow.macroenabled.12"},
-	{".potm", "application/vnd.ms-powerpoint.template.macroenabled.12"},
-	{".mpp", "application/vnd.ms-project"},
-	{".pub", "application/x-mspublisher"},
-	{".scd", "application/x-msschedule"},
-	{".xap", "application/x-silverlight-app"},
-	{".stl", "application/vnd.ms-pki.stl"},
-	{".cat", "application/vnd.ms-pki.seccat"},
-	{".vsd", "application/vnd.visio"},
-	{".vsdx", "application/vnd.visio2013"},
-	{".wm", "video/x-ms-wm"},
-	{".wma", "audio/x-ms-wma"},
-	{".wax", "audio/x-ms-wax"},
-	{".wmx", "video/x-ms-wmx"},
-	{".wmd", "application/x-ms-wmd"},
-	{".wpl", "application/vnd.ms-wpl"},
-	{".wmz", "application/x-ms-wmz"},
-	{".wmv", "video/x-ms-wmv"},
-	{".wvx", "video/x-ms-wvx"},
-	{".wmf", "application/x-msmetafile"},
-	{".trm", "application/x-msterminal"},
-	{".doc", "application/msword"},
-	{".docm", "application/vnd.ms-word.document.macroenabled.12"},
-	{".dotm", "application/vnd.ms-word.template.macroenabled.12"},
-	{".wri", "application/x-mswrite"},
-	{".wps", "application/vnd.ms-works"},
-	{".xbap", "application/x-ms-xbap"},
-	{".xps", "application/vnd.ms-xpsdocument"},
-	{".mid", "audio/midi"},
-	{".mpy", "application/vnd.ibm.minipay"},
-	{".afp", "application/vnd.ibm.modcap"},
-	{".rms", "application/vnd.jcp.javame.midlet-rms"},
-	{".tmo", "application/vnd.tmobile-livetv"},
-	{".prc", "application/x-mobipocket-ebook"},
-	{".mbk", "application/vnd.mobius.mbk"},
-	{".dis", "application/vnd.mobius.dis"},
-	{".plc", "application/vnd.mobius.plc"},
-	{".mqy", "application/vnd.mobius.mqy"},
-	{".msl", "application/vnd.mobius.msl"},
-	{".txf", "application/vnd.mobius.txf"},
-	{".daf", "application/vnd.mobius.daf"},
-	{".fly", "text/vnd.fly"},
-	{".mpc", "application/vnd.mophun.certificate"},
-	{".mpn", "application/vnd.mophun.application"},
-	{".mj2", "video/mj2"},
-	{".mpga", "audio/mpeg"},
-	{".mxu", "video/vnd.mpegurl"},
-	{".mpeg", "video/mpeg"},
-	{".m21", "application/mp21"},
-	{".mp4a", "audio/mp4"},
-	{".mp4", "video/mp4"},
-	{".mp4", "application/mp4"},
-	{".m3u8", "application/vnd.apple.mpegurl"},
-	{".mus", "application/vnd.musician"},
-	{".msty", "application/vnd.muvee.style"},
-	{".mxml", "application/xv+xml"},
-	{".ngdat", "application/vnd.nokia.n-gage.data"},
-	{".n-gage", "application/vnd.nokia.n-gage.symbian.install"},
-	{".ncx", "application/x-dtbncx+xml"},
-	{".nc", "application/x-netcdf"},
-	{".nlu", "application/vnd.neurolanguage.nlu"},
-	{".dna", "application/vnd.dna"},
-	{".nnd", "application/vnd.noblenet-directory"},
-	{".nns", "application/vnd.noblenet-sealer"},
-	{".nnw", "application/vnd.noblenet-web"},
-	{".rpst", "application/vnd.nokia.radio-preset"},
-	{".rpss", "application/vnd.nokia.radio-presets"},
-	{".n3", "text/n3"},
-	{".edm", "application/vnd.novadigm.edm"},
-	{".edx", "application/vnd.novadigm.edx"},
-	{".ext", "application/vnd.novadigm.ext"},
-	{".gph", "application/vnd.flographit"},
-	{".ecelp4800", "audio/vnd.nuera.ecelp4800"},
-	{".ecelp7470", "audio/vnd.nuera.ecelp7470"},
-	{".ecelp9600", "audio/vnd.nuera.ecelp9600"},
-	{".oda", "application/oda"},
-	{".ogx", "application/ogg"},
-	{".oga", "audio/ogg"},
-	{".ogv", "video/ogg"},
-	{".dd2", "application/vnd.oma.dd2+xml"},
-	{".oth", "application/vnd.oasis.opendocument.text-web"},
-	{".opf", "application/oebps-package+xml"},
-	{".qbo", "application/vnd.intu.qbo"},
-	{".oxt", "application/vnd.openofficeorg.extension"},
-	{".osf", "application/vnd.yamaha.openscoreformat"},
-	{".weba", "audio/webm"},
-	{".webm", "video/webm"},
-	{".odc", "application/vnd.oasis.opendocument.chart"},
-	{".otc", "application/vnd.oasis.opendocument.chart-template"},
-	{".odb", "application/vnd.oasis.opendocument.database"},
-	{".odf", "application/vnd.oasis.opendocument.formula"},
-	{".odft", "application/vnd.oasis.opendocument.formula-template"},
-	{".odg", "application/vnd.oasis.opendocument.graphics"},
-	{".otg", "application/vnd.oasis.opendocument.graphics-template"},
-	{".odi", "application/vnd.oasis.opendocument.image"},
-	{".oti", "application/vnd.oasis.opendocument.image-template"},
-	{".odp", "application/vnd.oasis.opendocument.presentation"},
-	{".otp", "application/vnd.oasis.opendocument.presentation-template"},
-	{".ods", "application/vnd.oasis.opendocument.spreadsheet"},
-	{".ots", "application/vnd.oasis.opendocument.spreadsheet-template"},
-	{".odt", "application/vnd.oasis.opendocument.text"},
-	{".odm", "application/vnd.oasis.opendocument.text-master"},
-	{".ott", "application/vnd.oasis.opendocument.text-template"},
-	{".ktx", "image/ktx"},
-	{".sxc", "application/vnd.sun.xml.calc"},
-	{".stc", "application/vnd.sun.xml.calc.template"},
-	{".sxd", "application/vnd.sun.xml.draw"},
-	{".std", "application/vnd.sun.xml.draw.template"},
-	{".sxi", "application/vnd.sun.xml.impress"},
-	{".sti", "application/vnd.sun.xml.impress.template"},
-	{".sxm", "application/vnd.sun.xml.math"},
-	{".sxw", "application/vnd.sun.xml.writer"},
-	{".sxg", "application/vnd.sun.xml.writer.global"},
-	{".stw", "application/vnd.sun.xml.writer.template"},
-	{".otf", "application/x-font-otf"},
-	{".osfpvg", "application/vnd.yamaha.openscoreformat.osfpvg+xml"},
-	{".dp", "application/vnd.osgi.dp"},
-	{".pdb", "application/vnd.palm"},
-	{".p", "text/x-pascal"},
-	{".paw", "application/vnd.pawaafile"},
-	{".pclxl", "application/vnd.hp-pclxl"},
-	{".efif", "application/vnd.picsel"},
-	{".pcx", "image/x-pcx"},
-	{".psd", "image/vnd.adobe.photoshop"},
-	{".prf", "application/pics-rules"},
-	{".pic", "image/x-pict"},
-	{".chat", "application/x-chat"},
-	{".p10", "application/pkcs10"},
-	{".p12", "application/x-pkcs12"},
-	{".p7m", "application/pkcs7-mime"},
-	{".p7s", "application/pkcs7-signature"},
-	{".p7r", "application/x-pkcs7-certreqresp"},
-	{".p7b", "application/x-pkcs7-certificates"},
-	{".p8", "application/pkcs8"},
-	{".plf", "application/vnd.pocketlearn"},
-	{".pnm", "image/x-portable-anymap"},
-	{".pbm", "image/x-portable-bitmap"},
-	{".pcf", "application/x-font-pcf"},
-	{".pfr", "application/font-tdpfr"},
-	{".pgn", "application/x-chess-pgn"},
-	{".pgm", "image/x-portable-graymap"},
-	{".png", "image/png"},
-	{".png", "image/x-citrix-png"},
-	{".png", "image/x-png"},
-	{".ppm", "image/x-portable-pixmap"},
-	{".pskcxml", "application/pskc+xml"},
-	{".pml", "application/vnd.ctc-posml"},
-	{".ai", "application/postscript"},
-	{".pfa", "application/x-font-type1"},
-	{".pbd", "application/vnd.powerbuilder6"},
-	{".pgp", "application/pgp-encrypted"},
-	{".pgp", "application/pgp-signature"},
-	{".box", "application/vnd.previewsystems.box"},
-	{".ptid", "application/vnd.pvi.ptid1"},
-	{".pls", "application/pls+xml"},
-	{".str", "application/vnd.pg.format"},
-	{".ei6", "application/vnd.pg.osasli"},
-	{".dsc", "text/prs.lines.tag"},
-	{".psf", "application/x-font-linux-psf"},
-	{".qps", "application/vnd.publishare-delta-tree"},
-	{".wg", "application/vnd.pmi.widget"},
-	{".qxd", "application/vnd.quark.quarkxpress"},
-	{".esf", "application/vnd.epson.esf"},
-	{".msf", "application/vnd.epson.msf"},
-	{".ssf", "application/vnd.epson.ssf"},
-	{".qam", "application/vnd.epson.quickanime"},
-	{".qfx", "application/vnd.intu.qfx"},
-	{".qt", "video/quicktime"},
-	{".rar", "application/x-rar-compressed"},
-	{".ram", "audio/x-pn-realaudio"},
-	{".rmp", "audio/x-pn-realaudio-plugin"},
-	{".rsd", "application/rsd+xml"},
-	{".rm", "application/vnd.rn-realmedia"},
-	{".bed", "application/vnd.realvnc.bed"},
-	{".mxl", "application/vnd.recordare.musicxml"},
-	{".musicxml", "application/vnd.recordare.musicxml+xml"},
-	{".rnc", "application/relax-ng-compact-syntax"},
-	{".rdz", "application/vnd.data-vision.rdz"},
-	{".rdf", "application/rdf+xml"},
-	{".rp9", "application/vnd.cloanto.rp9"},
-	{".jisp", "application/vnd.jisp"},
-	{".rtf", "application/rtf"},
-	{".rtx", "text/richtext"},
-	{".link66", "application/vnd.route66.link66+xml"},
-	{".rss", "application/rss+xml"},
-	{".shf", "application/shf+xml"},
-	{".st", "application/vnd.sailingtracker.track"},
-	{".svg", "image/svg+xml"},
-	{".sus", "application/vnd.sus-calendar"},
-	{".sru", "application/sru+xml"},
-	{".setpay", "application/set-payment-initiation"},
-	{".setreg", "application/set-registration-initiation"},
-	{".sema", "application/vnd.sema"},
-	{".semd", "application/vnd.semd"},
-	{".semf", "application/vnd.semf"},
-	{".see", "application/vnd.seemail"},
-	{".snf", "application/x-font-snf"},
-	{".spq", "application/scvp-vp-request"},
-	{".spp", "application/scvp-vp-response"},
-	{".scq", "application/scvp-cv-request"},
-	{".scs", "application/scvp-cv-response"},
-	{".sdp", "application/sdp"},
-	{".etx", "text/x-setext"},
-	{".movie", "video/x-sgi-movie"},
-	{".ifm", "application/vnd.shana.informed.formdata"},
-	{".itp", "application/vnd.shana.informed.formtemplate"},
-	{".iif", "application/vnd.shana.informed.interchange"},
-	{".ipk", "application/vnd.shana.informed.package"},
-	{".tfi", "application/thraud+xml"},
-	{".shar", "application/x-shar"},
-	{".rgb", "image/x-rgb"},
-	{".slt", "application/vnd.epson.salt"},
-	{".aso", "application/vnd.accpac.simply.aso"},
-	{".imp", "application/vnd.accpac.simply.imp"},
-	{".twd", "application/vnd.simtech-mindmapper"},
-	{".csp", "application/vnd.commonspace"},
-	{".saf", "application/vnd.yamaha.smaf-audio"},
-	{".mmf", "application/vnd.smaf"},
-	{".spf", "application/vnd.yamaha.smaf-phrase"},
-	{".teacher", "application/vnd.smart.teacher"},
-	{".svd", "application/vnd.svd"},
-	{".rq", "application/sparql-query"},
-	{".srx", "application/sparql-results+xml"},
-	{".gram", "application/srgs"},
-	{".grxml", "application/srgs+xml"},
-	{".ssml", "application/ssml+xml"},
-	{".skp", "application/vnd.koan"},
-	{".sgml", "text/sgml"},
-	{".sdc", "application/vnd.stardivision.calc"},
-	{".sda", "application/vnd.stardivision.draw"},
-	{".sdd", "application/vnd.stardivision.impress"},
-	{".smf", "application/vnd.stardivision.math"},
-	{".sdw", "application/vnd.stardivision.writer"},
-	{".sgl", "application/vnd.stardivision.writer-global"},
-	{".sm", "application/vnd.stepmania.stepchart"},
-	{".sit", "application/x-stuffit"},
-	{".sitx", "application/x-stuffitx"},
-	{".sdkm", "application/vnd.solent.sdkm+xml"},
-	{".xo", "application/vnd.olpc-sugar"},
-	{".au", "audio/basic"},
-	{".wqd", "application/vnd.wqd"},
-	{".sis", "application/vnd.symbian.install"},
-	{".smi", "application/smil+xml"},
-	{".xsm", "application/vnd.syncml+xml"},
-	{".bdm", "application/vnd.syncml.dm+wbxml"},
-	{".xdm", "application/vnd.syncml.dm+xml"},
-	{".sv4cpio", "application/x-sv4cpio"},
-	{".sv4crc", "application/x-sv4crc"},
-	{".sbml", "application/sbml+xml"},
-	{".tsv", "text/tab-separated-values"},
-	{".tiff", "image/tiff"},
-	{".tao", "application/vnd.tao.intent-module-archive"},
-	{".tar", "application/x-tar"},
-	{".tcl", "application/x-tcl"},
-	{".tex", "application/x-tex"},
-	{".tfm", "application/x-tex-tfm"},
-	{".tei", "application/tei+xml"},
-	{".txt", "text/plain; charset=utf-8"},
-	{".md", "text/markdown; charset=utf-8"},
-	{".dxp", "application/vnd.spotfire.dxp"},
-	{".sfs", "application/vnd.spotfire.sfs"},
-	{".tsd", "application/timestamped-data"},
-	{".tpt", "application/vnd.trid.tpt"},
-	{".mxs", "application/vnd.triscape.mxs"},
-	{".t", "text/troff"},
-	{".tra", "application/vnd.trueapp"},
-	{".ttf", "application/x-font-ttf"},
-	{".ttl", "text/turtle"},
-	{".umj", "application/vnd.umajin"},
-	{".uoml", "application/vnd.uoml+xml"},
-	{".unityweb", "application/vnd.unity"},
-	{".ufd", "application/vnd.ufdl"},
-	{".uri", "text/uri-list"},
-	{".utz", "application/vnd.uiq.theme"},
-	{".ustar", "application/x-ustar"},
-	{".uu", "text/x-uuencode"},
-	{".vcs", "text/x-vcalendar"},
-	{".vcf", "text/x-vcard"},
-	{".vcd", "application/x-cdlink"},
-	{".vsf", "application/vnd.vsf"},
-	{".wrl", "model/vrml"},
-	{".vcx", "application/vnd.vcx"},
-	{".mts", "model/vnd.mts"},
-	{".vtu", "model/vnd.vtu"},
-	{".vis", "application/vnd.visionary"},
-	{".viv", "video/vnd.vivo"},
-	{".ccxml", "application/ccxml+xml"},
-	{".vxml", "application/voicexml+xml"},
-	{".src", "application/x-wais-source"},
-	{".wbxml", "application/vnd.wap.wbxml"},
-	{".wbmp", "image/vnd.wap.wbmp"},
-	{".wav", "audio/x-wav"},
-	{".davmount", "application/davmount+xml"},
-	{".woff", "application/x-font-woff"},
-	{".wspolicy", "application/wspolicy+xml"},
-	{".webp", "image/webp"},
-	{".wtb", "application/vnd.webturbo"},
-	{".wgt", "application/widget"},
-	{".hlp", "application/winhlp"},
-	{".wml", "text/vnd.wap.wml"},
-	{".wmls", "text/vnd.wap.wmlscript"},
-	{".wmlsc", "application/vnd.wap.wmlscriptc"},
-	{".wpd", "application/vnd.wordperfect"},
-	{".stf", "application/vnd.wt.stf"},
-	{".wsdl", "application/wsdl+xml"},
-	{".xbm", "image/x-xbitmap"},
-	{".xpm", "image/x-xpixmap"},
-	{".xwd", "image/x-xwindowdump"},
-	{".der", "application/x-x509-ca-cert"},
-	{".fig", "application/x-xfig"},
-	{".xhtml", "application/xhtml+xml"},
-	{".xml", "application/xml"},
-	{".xdf", "application/xcap-diff+xml"},
-	{".xenc", "application/xenc+xml"},
-	{".xer", "application/patch-ops-error+xml"},
-	{".rl", "application/resource-lists+xml"},
-	{".rs", "application/rls-services+xml"},
-	{".rld", "application/resource-lists-diff+xml"},
-	{".xslt", "application/xslt+xml"},
-	{".xop", "application/xop+xml"},
-	{".xpi", "application/x-xpinstall"},
-	{".xspf", "application/xspf+xml"},
-	{".xul", "application/vnd.mozilla.xul+xml"},
-	{".xyz", "chemical/x-xyz"},
-	{".yaml", "text/yaml"},
-	{".yang", "application/yang"},
-	{".yin", "application/yin+xml"},
-	{".zir", "application/vnd.zul"},
-	{".zip", "application/zip"},
-	{".zmm", "application/vnd.handheld-entertainment+xml"},
-	{".zaz", "application/vnd.zzazz.deck+xml"},
-};
-
-// Get HTTP MIME type from filename
-char *GetMimeTypeFromFileName(char *filename)
-{
-	UINT i;
-	UINT num = sizeof(http_mime_types) / sizeof(HTTP_MIME_TYPE);
-	if (filename == NULL)
-	{
-		return NULL;
-	}
-
-	for (i = 0;i < num;i++)
-	{
-		HTTP_MIME_TYPE *a = &http_mime_types[i];
-
-		if (EndWith(filename, a->Extension))
-		{
-			return a->MimeType;
-		}
-	}
-
-	return NULL;
-}
+#include "Mayaqua/Cfg.h"
+#include "Mayaqua/DNS.h"
+#include "Mayaqua/FileIO.h"
+#include "Mayaqua/Internat.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Microsoft.h"
+#include "Mayaqua/Object.h"
+#include "Mayaqua/OS.h"
+#include "Mayaqua/Pack.h"
+#include "Mayaqua/Secure.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/Table.h"
+#include "Mayaqua/Tick64.h"
 
 // Download and save intermediate certificates if necessary
 bool DownloadAndSaveIntermediateCertificatesIfNecessary(X *x)
@@ -874,7 +91,7 @@ bool TryGetRootCertChain(LIST *o, X *x, bool auto_save, X **found_root_x)
 		wchar_t dirname[MAX_SIZE];
 		wchar_t exedir[MAX_SIZE];
 
-		GetExeDirW(exedir, sizeof(exedir));
+		GetDbDirW(exedir, sizeof(exedir));
 		CombinePathW(dirname, sizeof(dirname), exedir, L"chain_certs");
 		MakeDirExW(dirname);
 
@@ -1180,7 +397,7 @@ void AddAllChainCertsToCertList(LIST *o)
 		return;
 	}
 
-	GetExeDirW(exedir, sizeof(exedir));
+	GetDbDirW(exedir, sizeof(exedir));
 
 	CombinePathW(dirname, sizeof(dirname), exedir, L"chain_certs");
 
@@ -1479,14 +696,11 @@ void UpdateClientThreadProc(THREAD *thread, void *param)
 // Update the configuration of the update client
 void SetUpdateClientSetting(UPDATE_CLIENT *c, UPDATE_CLIENT_SETTING *s)
 {
-	bool old_disable;
 	// Validate arguments
 	if (c == NULL || s == NULL)
 	{
 		return;
 	}
-
-	old_disable = c->Setting.DisableCheck;
 
 	c->Setting.DisableCheck = true; //***
 
@@ -1589,7 +803,7 @@ void GenerateMachineUniqueHash(void *data)
 	WriteBuf(b, osinfo->OsVendorName, StrLen(osinfo->OsVendorName));
 	WriteBuf(b, osinfo->OsVersion, StrLen(osinfo->OsVersion));
 
-	Hash(data, b->Buf, b->Size, true);
+	Sha0(data, b->Buf, b->Size);
 
 	FreeBuf(b);
 }
@@ -1617,95 +831,6 @@ void NodeInfoToStr(wchar_t *str, UINT size, NODE_INFO *info)
 		info->ServerHostname, server_ip, Endian32(info->ServerPort),
 		info->ProxyHostname, proxy_ip, Endian32(info->ProxyPort),
 		info->HubName, unique_id);
-}
-
-// Comparison of node information
-bool CompareNodeInfo(NODE_INFO *a, NODE_INFO *b)
-{
-	// Validate arguments
-	if (a == NULL || b == NULL)
-	{
-		return false;
-	}
-
-	if (StrCmp(a->ClientProductName, b->ClientProductName) != 0)
-	{
-		return false;
-	}
-	if (a->ClientProductVer != b->ClientProductVer)
-	{
-		return false;
-	}
-	if (a->ClientProductBuild != b->ClientProductBuild)
-	{
-		return false;
-	}
-	if (StrCmp(a->ServerProductName, b->ServerProductName) != 0)
-	{
-		return false;
-	}
-	if (a->ServerProductVer != b->ServerProductVer)
-	{
-		return false;
-	}
-	if (a->ServerProductBuild != b->ServerProductBuild)
-	{
-		return false;
-	}
-	if (StrCmp(a->ClientOsName, b->ClientOsName) != 0)
-	{
-		return false;
-	}
-	if (StrCmp(a->ClientOsVer, b->ClientOsVer) != 0)
-	{
-		return false;
-	}
-	if (StrCmp(a->ClientOsProductId, b->ClientOsProductId) != 0)
-	{
-		return false;
-	}
-	if (StrCmp(a->ClientHostname, b->ClientHostname) != 0)
-	{
-		return false;
-	}
-	if (a->ClientIpAddress != b->ClientIpAddress)
-	{
-		return false;
-	}
-	if (StrCmp(a->ServerHostname, b->ServerHostname) != 0)
-	{
-		return false;
-	}
-	if (a->ServerIpAddress != b->ServerIpAddress)
-	{
-		return false;
-	}
-	if (a->ServerPort != b->ServerPort)
-	{
-		return false;
-	}
-	if (StrCmp(a->ProxyHostname, b->ProxyHostname) != 0)
-	{
-		return false;
-	}
-	if (a->ProxyIpAddress != b->ProxyIpAddress)
-	{
-		return false;
-	}
-	if (a->ProxyPort != b->ProxyPort)
-	{
-		return false;
-	}
-	if (StrCmp(a->HubName, b->HubName) != 0)
-	{
-		return false;
-	}
-	if (Cmp(a->UniqueId, b->UniqueId, 16) != 0)
-	{
-		return false;
-	}
-
-	return true;
 }
 
 // Accept the password change
@@ -1820,7 +945,6 @@ UINT ChangePasswordAccept(CONNECTION *c, PACK *p)
 								{
 									Copy(pw->HashedKey, new_password, SHA1_SIZE);
 									Copy(pw->NtLmSecureHash, new_password_ntlm, MD5_SIZE);
-									IncrementServerConfigRevision(cedar->Server);
 								}
 								HLog(hub, "LH_CHANGE_PASSWORD_5", c->Name, username);
 							}
@@ -1980,7 +1104,6 @@ bool ServerAccept(CONNECTION *c)
 	char groupname[MAX_SIZE];
 	UCHAR session_key[SHA1_SIZE];
 	UCHAR ticket[SHA1_SIZE];
-	RC4_KEY_PAIR key_pair;
 	UINT authtype;
 	POLICY *policy;
 	UINT assigned_vlan_id = 0;
@@ -2005,7 +1128,6 @@ bool ServerAccept(CONNECTION *c)
 	UCHAR udp_acceleration_client_key[UDP_ACCELERATION_COMMON_KEY_SIZE_V1];
 	UCHAR udp_acceleration_client_key_v2[UDP_ACCELERATION_COMMON_KEY_SIZE_V2];
 	UINT udp_acceleration_client_port;
-	bool use_fast_rc4;
 	bool admin_mode = false;
 	UINT direction;
 	UINT max_connection;
@@ -2220,8 +1342,8 @@ bool ServerAccept(CONNECTION *c)
 		{
 			StrCpy(c->ClientStr, sizeof(c->ClientStr), "Unknown");
 		}
-		c->ServerVer = CEDAR_VER;
-		c->ServerBuild = CEDAR_BUILD;
+		c->ServerVer = GetCedarVersionNumber();
+		c->ServerBuild = CEDAR_VERSION_BUILD;
 
 		// Get the NODE_INFO
 		Zero(&node, sizeof(node));
@@ -2247,12 +1369,45 @@ bool ServerAccept(CONNECTION *c)
 			goto CLEANUP;
 		}
 
-
-
-		// Login
-		if (GetHubnameAndUsernameFromPack(p, username, sizeof(username), hubname, sizeof(hubname)) == false)
+		// Get authentication method and initiate login process
+		authtype = GetAuthTypeFromPack(p);
+		if (authtype == AUTHTYPE_WIREGUARD_KEY)
 		{
-			// Protocol error
+			WGK *wgk, tmp;
+			bool ok = false;
+
+			if (PackGetStr(p, "key", tmp.Key, sizeof(tmp.Key)) == false)
+			{
+				FreePack(p);
+				c->Err = ERR_PROTOCOL_ERROR;
+				error_detail = "GetWireGuardKeyFromPack";
+				goto CLEANUP;
+			}
+
+			LockList(c->Cedar->WgkList);
+			{
+				wgk = Search(c->Cedar->WgkList, &tmp);
+				if (wgk != NULL)
+				{
+					ok = true;
+					StrCpy(hubname, sizeof(hubname), wgk->Hub);
+					StrCpy(username, sizeof(username), wgk->User);
+					StrCpy(node.HubName, sizeof(node.HubName), hubname);
+				}
+			}
+			UnlockList(c->Cedar->WgkList);
+
+			if (ok == false)
+			{
+				FreePack(p);
+				c->Err = ERR_AUTH_FAILED;
+				SLog(c->Cedar, "LS_WG_KEY_NOT_FOUND", c->Name, hubname);
+				error_detail = "ERR_AUTH_FAILED";
+				goto CLEANUP;
+			}
+		}
+		else if (GetHubnameAndUsernameFromPack(p, username, sizeof(username), hubname, sizeof(hubname)) == false)
+		{
 			FreePack(p);
 			c->Err = ERR_PROTOCOL_ERROR;
 			error_detail = "GetHubnameAndUsernameFromPack";
@@ -2262,9 +1417,7 @@ bool ServerAccept(CONNECTION *c)
 		if (farm_member)
 		{
 			bool ok = false;
-			UINT authtype;
 
-			authtype = GetAuthTypeFromPack(p);
 			if (StrCmpi(username, ADMINISTRATOR_USERNAME) == 0 &&
 				authtype == AUTHTYPE_PASSWORD)
 			{
@@ -2305,7 +1458,7 @@ bool ServerAccept(CONNECTION *c)
 
 		if (hub->ForceDisableComm)
 		{
-			// Commnunication function is disabled
+			// Communication function is disabled
 			FreePack(p);
 			c->Err = ERR_SERVER_CANT_ACCEPT;
 			error_detail = "ERR_COMM_DISABLED";
@@ -2372,7 +1525,6 @@ bool ServerAccept(CONNECTION *c)
 			use_compress = PackGetInt(p, "use_compress") == 0 ? false : true;
 			max_connection = PackGetInt(p, "max_connection");
 			half_connection = PackGetInt(p, "half_connection") == 0 ? false : true;
-			use_fast_rc4 = PackGetInt(p, "use_fast_rc4") == 0 ? false : true;
 			qos = PackGetInt(p, "qos") ? true : false;
 			client_id = PackGetInt(p, "client_id");
 			adjust_mss = PackGetInt(p, "adjust_mss");
@@ -2413,12 +1565,8 @@ bool ServerAccept(CONNECTION *c)
 				{
 					if (IsEmptyStr(c->InProcPrefix) == false)
 					{
-						Format(c->FirstSock->UnderlayProtocol, sizeof(c->FirstSock->UnderlayProtocol),
-							SOCK_UNDERLAY_INPROC_EX, c->InProcPrefix);
-
-						AddProtocolDetailsStr(c->FirstSock->UnderlayProtocol,
-							sizeof(c->FirstSock->UnderlayProtocol),
-							c->InProcPrefix);
+						Format(c->FirstSock->UnderlayProtocol, sizeof(c->FirstSock->UnderlayProtocol), SOCK_UNDERLAY_INPROC_EX, c->InProcPrefix);
+						AddProtocolDetailsStr(c->FirstSock->UnderlayProtocol, sizeof(c->FirstSock->UnderlayProtocol), c->InProcPrefix);
 					}
 				}
 
@@ -2522,9 +1670,6 @@ bool ServerAccept(CONNECTION *c)
 				PackGetData(p, "unique_id", unique);
 			}
 
-			// Get the authentication method
-			authtype = GetAuthTypeFromPack(p);
-
 			if (1)
 			{
 				// Log
@@ -2544,11 +1689,14 @@ bool ServerAccept(CONNECTION *c)
 				case CLIENT_AUTHTYPE_CERT:
 					authtype_str = _UU("LH_AUTH_CERT");
 					break;
-				case AUTHTYPE_TICKET:
-					authtype_str = _UU("LH_AUTH_TICKET");
+				case AUTHTYPE_WIREGUARD_KEY:
+					authtype_str = _UU("LH_AUTH_WIREGUARD_KEY");
 					break;
 				case AUTHTYPE_OPENVPN_CERT:
 					authtype_str = _UU("LH_AUTH_OPENVPN_CERT");
+					break;
+				case AUTHTYPE_TICKET:
+					authtype_str = _UU("LH_AUTH_TICKET");
 					break;
 				}
 				IPToStr(ip1, sizeof(ip1), &c->FirstSock->RemoteIP);
@@ -2562,7 +1710,6 @@ bool ServerAccept(CONNECTION *c)
 
 			// Attempt an anonymous authentication first
 			auth_ret = SamAuthUserByAnonymous(hub, username);
-
 			if (auth_ret)
 			{
 				if (c->IsInProc)
@@ -2603,7 +1750,7 @@ bool ServerAccept(CONNECTION *c)
 						Add(o, "p");
 						Add(o, "guest");
 						Add(o, "anony");
-						Add(o, "anonymouse");
+						Add(o, "anonymous");
 						Add(o, "password");
 						Add(o, "passwd");
 						Add(o, "pass");
@@ -2656,8 +1803,6 @@ bool ServerAccept(CONNECTION *c)
 
 				if (auth_ret)
 				{
-					// User authentication success by anonymous authentication
-					HLog(hub, "LH_AUTH_OK", c->Name, username);
 					is_empty_password = true;
 				}
 			}
@@ -2854,7 +1999,7 @@ bool ServerAccept(CONNECTION *c)
 												if (auth_ret)
 												{
 													// Copy the certificate
-													c->ClientX = CloneXFast(x);
+													c->ClientX = CloneX(x);
 												}
 											}
 											else
@@ -2875,6 +2020,24 @@ bool ServerAccept(CONNECTION *c)
 					{
 						// Certificate authentication is not supported in the open source version
 						HLog(hub, "LH_AUTH_CERT_NOT_SUPPORT_ON_OPEN_SOURCE", c->Name, username);
+						Unlock(hub->lock);
+						ReleaseHub(hub);
+						FreePack(p);
+						c->Err = ERR_AUTHTYPE_NOT_SUPPORTED;
+						goto CLEANUP;
+					}
+					break;
+
+				case AUTHTYPE_WIREGUARD_KEY:
+					// We already retrieved the hubname and username associated with the key.
+					// Now we only have to verify that the user effectively exists.
+					if (c->IsInProc)
+					{
+						auth_ret = SamIsUser(hub, username);
+					}
+					else
+					{
+						// WireGuard public key authentication cannot be used directly by external clients.
 						Unlock(hub->lock);
 						ReleaseHub(hub);
 						FreePack(p);
@@ -2907,7 +2070,7 @@ bool ServerAccept(CONNECTION *c)
 									if (auth_ret)
 									{
 										// Copy the certificate
-										c->ClientX = CloneXFast(x);
+										c->ClientX = CloneX(x);
 									}
 								}
 								FreeX(x);
@@ -2936,22 +2099,14 @@ bool ServerAccept(CONNECTION *c)
 					error_detail = "ERR_AUTHTYPE_NOT_SUPPORTED";
 					goto CLEANUP;
 				}
-
-				if (auth_ret == false)
-				{
-					// Authentication failure
-					HLog(hub, "LH_AUTH_NG", c->Name, username);
-				}
-				else
-				{
-					// Authentication success
-					HLog(hub, "LH_AUTH_OK", c->Name, username);
-				}
 			}
 
 			if (auth_ret == false)
 			{
-				// Authentication failure
+				char ip[64];
+				IPToStr(ip, sizeof(ip), &c->FirstSock->RemoteIP);
+				HLog(hub, "LH_AUTH_NG", c->Name, username, ip);
+
 				Unlock(hub->lock);
 				ReleaseHub(hub);
 				FreePack(p);
@@ -2965,13 +2120,12 @@ bool ServerAccept(CONNECTION *c)
 			}
 			else
 			{
-				if(is_empty_password)
+				if (is_empty_password)
 				{
-					SOCK *s = c->FirstSock;
-					if (s != NULL && s->RemoteIP.addr[0] != 127)
+					const SOCK *s = c->FirstSock;
+					if (s != NULL && IsLocalHostIP(&s->RemoteIP) == false)
 					{
-						if(StrCmpi(username, ADMINISTRATOR_USERNAME) == 0 || 
-							GetHubAdminOption(hub, "deny_empty_password") != 0)
+						if (StrCmpi(username, ADMINISTRATOR_USERNAME) == 0 || GetHubAdminOption(hub, "deny_empty_password") != 0)
 						{
 							// When the password is empty, remote connection is not acceptable
 							HLog(hub, "LH_LOCAL_ONLY", c->Name, username);
@@ -2985,6 +2139,8 @@ bool ServerAccept(CONNECTION *c)
 						}
 					}
 				}
+
+				HLog(hub, "LH_AUTH_OK", c->Name, username);
 			}
 
 			policy = NULL;
@@ -3058,6 +2214,7 @@ bool ServerAccept(CONNECTION *c)
 							{
 								if (IsZero(assigned_ipc_mac_address, 6))
 								{
+									WHERE;
 									Copy(assigned_ipc_mac_address, associated_mac_address, 6);
 								}
 							}
@@ -3740,16 +2897,14 @@ bool ServerAccept(CONNECTION *c)
 			s->NormalClient = true;
 
 			IPToStr(s->ClientIP, sizeof(s->ClientIP), &c->ClientIp);
-			s->ClientPort = c->ClientPort;
 
 			if (c->FirstSock->IsRUDPSocket)
 			{
 				// R-UDP session
 				s->IsRUDPSession = true;
 				s->RUdpMss = c->FirstSock->RUDP_OptimizedMss;
-				Debug("Optimized MSS Value for R-UDP: %u\n", s->RUdpMss);
-				AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails),
-					"RUDP_MSS", s->RUdpMss);
+				Debug("ServerAccept(): Optimized MSS Value for R-UDP: %u\n", s->RUdpMss);
+				AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails), "RUDP_MSS", s->RUdpMss);
 			}
 
 			if (enable_bulk_on_rudp)
@@ -3794,7 +2949,6 @@ bool ServerAccept(CONNECTION *c)
 
 				s->UdpAccelFastDisconnectDetect = support_udp_accel_fast_disconnect_detect;
 
-				// TODO: determine UDP Accel version
 				udp_acceleration_version = 1;
 				if (client_udp_acceleration_max_version >= 2)
 				{
@@ -3802,19 +2956,14 @@ bool ServerAccept(CONNECTION *c)
 				}
 			}
 
-			// TODO: determine RUDP Bulk version
 			if (client_rudp_bulk_max_version >= 2)
 			{
 				rudp_bulk_version = 2;
 			}
 
-			s->BulkOnRUDPVersion = rudp_bulk_version;
-
 			if (s->EnableBulkOnRUDP)
 			{
-				AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails),
-					"RUDP_Bulk_Ver",
-					s->BulkOnRUDPVersion);
+				AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails), "RUDP_Bulk_Ver", s->BulkOnRUDPVersion);
 			}
 
 			if (hub->Option != NULL && hub->Option->DisableUdpAcceleration)
@@ -3858,8 +3007,7 @@ bool ServerAccept(CONNECTION *c)
 
 					if (UdpAccelInitServer(s->UdpAccel,
 						s->UdpAccel->Version == 2 ? udp_acceleration_client_key_v2 : udp_acceleration_client_key,
-						&udp_acceleration_client_ip, udp_acceleration_client_port,
-						&c->FirstSock->RemoteIP) == false)
+						&c->FirstSock->RemoteIP, &udp_acceleration_client_ip, udp_acceleration_client_port) == false)
 					{
 						Debug("UdpAccelInitServer Failed.\n");
 						s->UseUdpAcceleration = false;
@@ -3874,20 +3022,11 @@ bool ServerAccept(CONNECTION *c)
 
 					s->UdpAccel->UseHMac = s->UseHMacOnUdpAcceleration;
 
-					AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails),
-						"UDPAccel_Ver",
-						s->UdpAccel->Version);
+					AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails), "UDPAccel_Ver", s->UdpAccel->Version);
 
-					if (s->UdpAccel->Version >= 2)
-					{
-						AddProtocolDetailsStr(s->ProtocolDetails, sizeof(s->ProtocolDetails),
-							Aead_ChaCha20Poly1305_Ietf_IsOpenSSL() ? 
-							"ChachaPoly_OpenSSL" : "ChachaPoly_Self");
-					}
+					AddProtocolDetailsStr(s->ProtocolDetails, sizeof(s->ProtocolDetails), s->UdpAccel->Version > 1 ? "ChaCha20-Poly1305" : "RC4");
 
-					AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails),
-						"UDPAccel_MSS",
-						UdpAccelCalcMss(s->UdpAccel));
+					AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails), "UDPAccel_MSS", UdpAccelCalcMss(s->UdpAccel));
 				}
 			}
 
@@ -3898,8 +3037,7 @@ bool ServerAccept(CONNECTION *c)
 			if (s->AdjustMss != 0)
 			{
 				Debug("AdjustMSS: %u\n", s->AdjustMss);
-				AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails),
-					"AdjustMSS", s->AdjustMss);
+				AddProtocolDetailsKeyValueInt(s->ProtocolDetails, sizeof(s->ProtocolDetails), "AdjustMSS", s->AdjustMss);
 			}
 
 			s->IsBridgeMode = (policy->NoBridge == false) || (policy->NoRouting == false);
@@ -3945,9 +3083,7 @@ bool ServerAccept(CONNECTION *c)
 			{
 				char ip[128];
 				IPToStr(ip, sizeof(ip), &c->FirstSock->RemoteIP);
-				HLog(hub, "LH_NEW_SESSION", c->Name, s->Name, ip, c->FirstSock->RemotePort,
-					c->FirstSock->UnderlayProtocol,
-					c->FirstSock->ProtocolDetails);
+				HLog(hub, "LH_NEW_SESSION", c->Name, s->Name, ip, c->FirstSock->RemotePort, c->FirstSock->UnderlayProtocol, c->FirstSock->ProtocolDetails);
 			}
 
 			c->Session = s;
@@ -3961,16 +3097,11 @@ bool ServerAccept(CONNECTION *c)
 			// Set the parameters
 			s->MaxConnection = max_connection;
 			s->UseEncrypt = use_encrypt;
-			if (s->UseEncrypt && use_fast_rc4)
-			{
-				s->UseFastRC4 = use_fast_rc4;
-			}
 			s->UseCompress = use_compress;
 			s->HalfConnection = half_connection;
 			s->Timeout = timeout;
 			s->QoS = qos;
 			s->NoReconnectToSession = no_reconnect_to_session;
-
 			s->VLanId = policy->VLanId;
 
 			// User name
@@ -3997,7 +3128,7 @@ bool ServerAccept(CONNECTION *c)
 
 		PackAddBool(p, "suppress_client_update_notification", suppress_client_update_notification);
 
-		if (s->InProcMode)
+		if (s != NULL && s->InProcMode)
 		{
 			if (IsZero(mschap_v2_server_response_20, sizeof(mschap_v2_server_response_20)) == false)
 			{
@@ -4064,7 +3195,7 @@ bool ServerAccept(CONNECTION *c)
 			if (IsURLMsg(msg, NULL, 0) == false)
 			{
 
-				if (s != NULL && s->IsRUDPSession && c != NULL && StrCmpi(hub->Name, VG_HUBNAME) != 0)
+				if (s != NULL && s->IsRUDPSession && c != NULL)
 				{
 					// Show the warning message if the connection is made by NAT-T
 					wchar_t *tmp2;
@@ -4122,26 +3253,6 @@ bool ServerAccept(CONNECTION *c)
 
 		Free(msg);
 
-
-		if (s->UseFastRC4)
-		{
-			// Generate a RC4 key pair
-			GenerateRC4KeyPair(&key_pair);
-
-			// Add to Welcome packet
-			PackAddData(p, "rc4_key_client_to_server", key_pair.ClientToServerKey, sizeof(key_pair.ClientToServerKey));
-			PackAddData(p, "rc4_key_server_to_client", key_pair.ServerToClientKey, sizeof(key_pair.ServerToClientKey));
-			{
-				char key1[64], key2[64];
-				BinToStr(key1, sizeof(key1), key_pair.ClientToServerKey, 16);
-				BinToStr(key2, sizeof(key2), key_pair.ServerToClientKey, 16);
-				Debug(
-					"Client to Server Key: %s\n"
-					"Server to Client Key: %s\n",
-					key1, key2);
-			}
-		}
-
 		// Brand string for the connection limit
 		{
 			char *branded_cfroms = _SS("BRANDED_C_FROM_S");
@@ -4179,24 +3290,6 @@ bool ServerAccept(CONNECTION *c)
 			// The direction of the first socket is client to server
 			TCPSOCK *ts = (TCPSOCK *)LIST_DATA(c->Tcp->TcpSockList, 0);
 			ts->Direction = TCP_CLIENT_TO_SERVER;
-		}
-
-		if (s->UseFastRC4)
-		{
-			// Set the RC4 key information to the first TCP connection
-			TCPSOCK *ts = (TCPSOCK *)LIST_DATA(c->Tcp->TcpSockList, 0);
-			Copy(&ts->Rc4KeyPair, &key_pair, sizeof(RC4_KEY_PAIR));
-
-			InitTcpSockRc4Key(ts, true);
-		}
-
-		if (s->UseEncrypt && s->UseFastRC4 == false)
-		{
-			s->UseSSLDataEncryption = true;
-		}
-		else
-		{
-			s->UseSSLDataEncryption = false;
 		}
 
 		if (s->Hub->Type == HUB_TYPE_FARM_DYNAMIC && s->Cedar->Server != NULL && s->Cedar->Server->ServerType == SERVER_TYPE_FARM_CONTROLLER)
@@ -4364,12 +3457,6 @@ bool ServerAccept(CONNECTION *c)
 			goto CLEANUP;
 		}
 
-		// Generate a high-speed RC4 encryption key
-		if (s->UseFastRC4)
-		{
-			GenerateRC4KeyPair(&key_pair);
-		}
-
 		// Add the socket of this connection to the connection list of the session (TCP)
 		sock = c->FirstSock;
 
@@ -4382,17 +3469,6 @@ bool ServerAccept(CONNECTION *c)
 				sock->BulkRecvKey->Size = s->BulkRecvKeySize;
 				Copy(sock->BulkSendKey->Data, s->BulkSendKey, s->BulkSendKeySize);
 				sock->BulkSendKey->Size = s->BulkSendKeySize;
-
-				if (false)
-				{
-					char tmp1[128];
-					char tmp2[128];
-					BinToStr(tmp1, sizeof(tmp1), s->BulkRecvKey, s->BulkRecvKeySize);
-					BinToStr(tmp2, sizeof(tmp2), s->BulkSendKey, s->BulkSendKeySize);
-					Debug("Restore: s->BulkRecvKey->Size = %u, s->BulkSendKey->Size = %u\n",
-						s->BulkRecvKeySize, s->BulkSendKeySize);
-					Debug("Restore:\n%s\n%s\n\n", tmp1, tmp2);
-				}			
 			}
 		}
 
@@ -4433,33 +3509,9 @@ bool ServerAccept(CONNECTION *c)
 		}
 		UnlockList(s->Connection->Tcp->TcpSockList);
 
-		if (s->UseFastRC4)
-		{
-			// Set the RC4 key information
-			Copy(&ts->Rc4KeyPair, &key_pair, sizeof(RC4_KEY_PAIR));
-
-			InitTcpSockRc4Key(ts, true);
-		}
-
 		// Return a success result
 		p = PackError(ERR_NO_ERROR);
 		PackAddInt(p, "direction", direction);
-
-		if (s->UseFastRC4)
-		{
-			// Add a RC4 key information
-			PackAddData(p, "rc4_key_client_to_server", key_pair.ClientToServerKey, sizeof(key_pair.ClientToServerKey));
-			PackAddData(p, "rc4_key_server_to_client", key_pair.ServerToClientKey, sizeof(key_pair.ServerToClientKey));
-			{
-				char key1[64], key2[64];
-				BinToStr(key1, sizeof(key1), key_pair.ClientToServerKey, 16);
-				BinToStr(key2, sizeof(key2), key_pair.ServerToClientKey, 16);
-				Debug(
-					"Client to Server Key: %s\n"
-					"Server to Client Key: %s\n",
-					key1, key2);
-			}
-		}
 
 		HttpServerSend(c->FirstSock, p);
 		FreePack(p);
@@ -4721,7 +3773,6 @@ void CreateNodeInfo(NODE_INFO *info, CONNECTION *c)
 	OS_INFO *os;
 	char *product_id;
 	IP ip;
-	bool is_vgc = false;
 	// Validate arguments
 	if (c == NULL)
 	{
@@ -4789,7 +3840,7 @@ void CreateNodeInfo(NODE_INFO *info, CONNECTION *c)
 	}
 	else
 	{
-		Copy(info->ClientIpAddress6, c->FirstSock->LocalIP.ipv6_addr, sizeof(info->ClientIpAddress6));
+		Copy(info->ClientIpAddress6, c->FirstSock->LocalIP.address, sizeof(info->ClientIpAddress6));
 	}
 	// Client port number
 	info->ClientPort = Endian32(c->FirstSock->LocalPort);
@@ -4805,7 +3856,7 @@ void CreateNodeInfo(NODE_INFO *info, CONNECTION *c)
 		}
 		else
 		{
-			Copy(info->ServerIpAddress6, ip.ipv6_addr, sizeof(info->ServerIpAddress6));
+			Copy(info->ServerIpAddress6, ip.address, sizeof(info->ServerIpAddress6));
 		}
 	}
 	// Server port number
@@ -4823,7 +3874,7 @@ void CreateNodeInfo(NODE_INFO *info, CONNECTION *c)
 		}
 		else
 		{
-			Copy(&info->ProxyIpAddress6, c->FirstSock->RemoteIP.ipv6_addr, sizeof(info->ProxyIpAddress6));
+			Copy(&info->ProxyIpAddress6, c->FirstSock->RemoteIP.address, sizeof(info->ProxyIpAddress6));
 		}
 
 		info->ProxyPort = Endian32(c->FirstSock->RemotePort);
@@ -4847,7 +3898,7 @@ SOCK *ClientAdditionalConnectToServer(CONNECTION *c)
 	}
 
 	// Socket connection
-	s = ClientConnectGetSocket(c, true, (c->DontUseTls1 ? false : true));
+	s = ClientConnectGetSocket(c, true);
 	if (s == NULL)
 	{
 		// Connection failure
@@ -4882,7 +3933,7 @@ SOCK *ClientAdditionalConnectToServer(CONNECTION *c)
 	SetTimeout(s, CONNECTING_TIMEOUT);
 
 	// Start the SSL communication
-	if (StartSSLEx(s, NULL, NULL, (c->DontUseTls1 ? false : true), 0, c->ServerName) == false)
+	if (StartSSLEx(s, NULL, NULL, 0, c->ServerName) == false)
 	{
 		// SSL communication failure
 		Disconnect(s);
@@ -4907,216 +3958,6 @@ SOCK *ClientAdditionalConnectToServer(CONNECTION *c)
 	}
 
 	return s;
-}
-
-// Remove the key and certificate in the secure device
-UINT SecureDelete(UINT device_id, char *pin, char *cert_name, char *key_name)
-{
-	SECURE *sec;
-	// Validate arguments
-	if (pin == NULL || device_id == 0)
-	{
-		return ERR_INTERNAL_ERROR;
-	}
-
-	// Open the device
-	sec = OpenSec(device_id);
-	if (sec == NULL)
-	{
-		return ERR_SECURE_DEVICE_OPEN_FAILED;
-	}
-
-	// Open the session
-	if (OpenSecSession(sec, 0) == false)
-	{
-		CloseSec(sec);
-		return ERR_SECURE_DEVICE_OPEN_FAILED;
-	}
-
-	// Login
-	if (LoginSec(sec, pin) == false)
-	{
-		CloseSecSession(sec);
-		CloseSec(sec);
-		return ERR_SECURE_PIN_LOGIN_FAILED;
-	}
-
-	// Delete the certificate
-	if (cert_name != NULL)
-	{
-		DeleteSecCert(sec, cert_name);
-	}
-
-	// Delete the Private key
-	if (key_name != NULL)
-	{
-		DeleteSecKey(sec, key_name);
-	}
-
-	// Log out
-	LogoutSec(sec);
-
-	// Close the session
-	CloseSecSession(sec);
-
-	// Close the device
-	CloseSec(sec);
-
-	return ERR_NO_ERROR;
-}
-
-// Enumerate certificates and keys in the secure device
-UINT SecureEnum(UINT device_id, char *pin, TOKEN_LIST **cert_list, TOKEN_LIST **key_list)
-{
-	SECURE *sec;
-	LIST *o;
-	LIST *cert_name_list, *key_name_list;
-	// Validate arguments
-	if (pin == NULL || device_id == 0 || cert_list == NULL || key_list == NULL)
-	{
-		return ERR_INTERNAL_ERROR;
-	}
-
-	// Open the device
-	sec = OpenSec(device_id);
-	if (sec == NULL)
-	{
-		return ERR_SECURE_DEVICE_OPEN_FAILED;
-	}
-
-	// Open the session
-	if (OpenSecSession(sec, 0) == false)
-	{
-		CloseSec(sec);
-		return ERR_SECURE_DEVICE_OPEN_FAILED;
-	}
-
-	// Login
-	if (LoginSec(sec, pin) == false)
-	{
-		CloseSecSession(sec);
-		CloseSec(sec);
-		return ERR_SECURE_PIN_LOGIN_FAILED;
-	}
-
-	// Enumerate objects
-	if ((o = EnumSecObject(sec)) != NULL)
-	{
-		UINT i;
-
-		cert_name_list = NewList(CompareStr);
-		key_name_list = NewList(CompareStr);
-
-		for (i = 0;i < LIST_NUM(o);i++)
-		{
-			SEC_OBJ *obj = LIST_DATA(o, i);
-
-			if (obj->Type == SEC_X)
-			{
-				Add(cert_name_list, CopyStr(obj->Name));
-			}
-			else if (obj->Type == SEC_K)
-			{
-				Add(key_name_list, CopyStr(obj->Name));
-			}
-		}
-
-		Sort(cert_name_list);
-		Sort(key_name_list);
-
-		*cert_list = ListToTokenList(cert_name_list);
-		*key_list = ListToTokenList(key_name_list);
-
-		// Release the memory
-		FreeStrList(cert_name_list);
-		FreeStrList(key_name_list);
-		FreeEnumSecObject(o);
-	}
-	else
-	{
-		*cert_list = NullToken();
-		*key_list = NullToken();
-	}
-
-	// Log out
-	LogoutSec(sec);
-
-	// Close the session
-	CloseSecSession(sec);
-
-	// Close the device
-	CloseSec(sec);
-
-	return ERR_NO_ERROR;
-}
-
-// Record the certificate and key to secure device
-UINT SecureWrite(UINT device_id, char *cert_name, X *x, char *key_name, K *k, char *pin)
-{
-	SECURE *sec;
-	bool failed;
-	// Validate arguments
-	if (pin == NULL || device_id == 0 || cert_name == NULL || x == NULL || key_name == NULL || k == NULL)
-	{
-		return ERR_INTERNAL_ERROR;
-	}
-
-	// Open the device
-	sec = OpenSec(device_id);
-	if (sec == NULL)
-	{
-		return ERR_SECURE_DEVICE_OPEN_FAILED;
-	}
-
-	// Open the session
-	if (OpenSecSession(sec, 0) == false)
-	{
-		CloseSec(sec);
-		return ERR_SECURE_DEVICE_OPEN_FAILED;
-	}
-
-	// Login
-	if (LoginSec(sec, pin) == false)
-	{
-		CloseSecSession(sec);
-		CloseSec(sec);
-		return ERR_SECURE_PIN_LOGIN_FAILED;
-	}
-
-	// Registration
-	failed = false;
-
-	// Register the certificate
-	if (WriteSecCert(sec, true, cert_name, x) == false)
-	{
-		failed = true;
-	}
-
-	// Register the private key
-	if (WriteSecKey(sec, true, key_name, k) == false)
-	{
-		failed = true;
-	}
-
-	// Log out
-	LogoutSec(sec);
-
-	// Close the session
-	CloseSecSession(sec);
-
-	// Close the device
-	CloseSec(sec);
-
-	if (failed == false)
-	{
-		// Success
-		return ERR_NO_ERROR;
-	}
-	else
-	{
-		// Failure
-		return ERR_SECURE_CANT_WRITE;
-	}
 }
 
 // Attempt to sign by the secure device
@@ -5197,7 +4038,7 @@ bool ClientAdditionalConnect(CONNECTION *c, THREAD *t)
 	TCPSOCK *ts;
 	UINT err;
 	UINT direction;
-	RC4_KEY_PAIR key_pair;
+
 	// Validate arguments
 	if (c == NULL)
 	{
@@ -5261,28 +4102,6 @@ bool ClientAdditionalConnect(CONNECTION *c, THREAD *t)
 	err = GetErrorFromPack(p);
 	direction = PackGetInt(p, "direction");
 
-	if (c->Session->UseFastRC4)
-	{
-		// Get the RC4 key information
-		if (PackGetDataSize(p, "rc4_key_client_to_server") == 16)
-		{
-			PackGetData(p, "rc4_key_client_to_server", key_pair.ClientToServerKey);
-		}
-		if (PackGetDataSize(p, "rc4_key_server_to_client") == 16)
-		{
-			PackGetData(p, "rc4_key_server_to_client", key_pair.ServerToClientKey);
-		}
-		{
-			char key1[64], key2[64];
-			BinToStr(key1, sizeof(key1), key_pair.ClientToServerKey, 16);
-			BinToStr(key2, sizeof(key2), key_pair.ServerToClientKey, 16);
-			Debug(
-				"Client to Server Key: %s\n"
-				"Server to Client Key: %s\n",
-				key1, key2);
-		}
-	}
-
 	FreePack(p);
 	p = NULL;
 
@@ -5310,17 +4129,6 @@ bool ClientAdditionalConnect(CONNECTION *c, THREAD *t)
 
 			Copy(s->BulkSendKey->Data, c->Session->BulkSendKey, c->Session->BulkSendKeySize);
 			s->BulkSendKey->Size = c->Session->BulkSendKeySize;
-
-			if (false)
-			{
-				char tmp1[128];
-				char tmp2[128];
-				BinToStr(tmp1, sizeof(tmp1), s->BulkRecvKey->Data, s->BulkRecvKey->Size);
-				BinToStr(tmp2, sizeof(tmp2), s->BulkSendKey->Data, s->BulkSendKey->Size);
-				Debug("Restore: s->BulkRecvKey->Size = %u, s->BulkSendKey->Size = %u\n",
-					s->BulkRecvKey->Size, s->BulkSendKey->Size);
-				Debug("Restore:\n%s\n%s\n\n", tmp1, tmp2);
-			}			
 		}
 	}
 
@@ -5349,14 +4157,6 @@ bool ClientAdditionalConnect(CONNECTION *c, THREAD *t)
 		Debug("New Half Connection: %s\n",
 			direction == TCP_SERVER_TO_CLIENT ? "TCP_SERVER_TO_CLIENT" : "TCP_CLIENT_TO_SERVER"
 			);
-	}
-
-	if (c->Session->UseFastRC4)
-	{
-		// Set the RC4 encryption key
-		Copy(&ts->Rc4KeyPair, &key_pair, sizeof(RC4_KEY_PAIR));
-
-		InitTcpSockRc4Key(ts, false);
 	}
 
 	// Issue the Cancel to the session
@@ -5494,7 +4294,7 @@ void ClientCheckServerCertThread(THREAD *thread, void *param)
 	NoticeThreadInit(thread);
 
 	// Query for the selection to the user
-	p->Ok = p->CheckCertProc(p->Connection->Session, p->Connection, p->ServerX, &p->Exipred);
+	p->Ok = p->CheckCertProc(p->Connection->Session, p->Connection, p->ServerX, &p->Expired);
 	p->UserSelected = true;
 }
 
@@ -5640,7 +4440,7 @@ bool ClientCheckServerCert(CONNECTION *c, bool *expired)
 
 	if (expired != NULL)
 	{
-		*expired = p->Exipred;
+		*expired = p->Expired;
 	}
 
 	ret = p->Ok;
@@ -5664,7 +4464,6 @@ bool ClientConnect(CONNECTION *c)
 	char session_name[MAX_SESSION_NAME_LEN + 1];
 	char connection_name[MAX_CONNECTION_NAME_LEN + 1];
 	UCHAR session_key[SHA1_SIZE];
-	RC4_KEY_PAIR key_pair;
 	POLICY *policy;
 	bool expired = false;
 	IP server_ip;
@@ -5792,7 +4591,8 @@ REDIRECTED:
 			c->Err = ERR_SERVER_CERT_EXPIRES;
 		}
 
-		if (c->Session->LinkModeClient == false && c->Err == ERR_CERT_NOT_TRUSTED)
+		if (c->Session->LinkModeClient == false && c->Err == ERR_CERT_NOT_TRUSTED
+			&& (c->Session->Account == NULL || ! c->Session->Account->RetryOnServerCert))
 		{
 			c->Session->ForceStopFlag = true;
 		}
@@ -5899,7 +4699,7 @@ REDIRECTED:
 		UINT use_port = 0;
 		UINT current_port = c->ServerPort;
 		UCHAR ticket[SHA1_SIZE];
-		X *server_cert;
+		X *server_cert = NULL;
 		BUF *b;
 
 		// Redirect mode
@@ -6012,10 +4812,6 @@ REDIRECTED:
 		c->Session->UseCompress = PackGetInt(p, "use_compress") == 0 ? false : true;
 		c->Session->UseEncrypt = PackGetInt(p, "use_encrypt") == 0 ? false : true;
 		c->Session->NoSendSignature = PackGetBool(p, "no_send_signature");
-		if (c->Session->UseEncrypt)
-		{
-			c->Session->UseFastRC4 = PackGetInt(p, "use_fast_rc4") == 0 ? false : true;
-		}
 		c->Session->HalfConnection = PackGetInt(p, "half_connection") == 0 ? false : true;
 		c->Session->IsAzureSession = PackGetInt(p, "is_azure_session") == 0 ? false : true;
 		c->Session->Timeout = PackGetInt(p, "timeout");
@@ -6065,8 +4861,7 @@ REDIRECTED:
 		{
 			StrCpy(c->Session->UnderlayProtocol, sizeof(c->Session->UnderlayProtocol), SOCK_UNDERLAY_AZURE);
 
-			AddProtocolDetailsStr(c->Session->ProtocolDetails, sizeof(c->Session->ProtocolDetails),
-				"VPNAzure");
+			AddProtocolDetailsStr(c->Session->ProtocolDetails, sizeof(c->Session->ProtocolDetails), "VPN Azure");
 		}
 
 		if (c->Protocol == CONNECTION_UDP)
@@ -6080,28 +4875,6 @@ REDIRECTED:
 			if (PackGetDataSize(p, "udp_recv_key") == sizeof(c->Session->UdpRecvKey))
 			{
 				PackGetData(p, "udp_recv_key", c->Session->UdpRecvKey);
-			}
-		}
-
-		if (c->Session->UseFastRC4)
-		{
-			// Get the RC4 key information
-			if (PackGetDataSize(p, "rc4_key_client_to_server") == 16)
-			{
-				PackGetData(p, "rc4_key_client_to_server", key_pair.ClientToServerKey);
-			}
-			if (PackGetDataSize(p, "rc4_key_server_to_client") == 16)
-			{
-				PackGetData(p, "rc4_key_server_to_client", key_pair.ServerToClientKey);
-			}
-			{
-				char key1[64], key2[64];
-				BinToStr(key1, sizeof(key1), key_pair.ClientToServerKey, 16);
-				BinToStr(key2, sizeof(key2), key_pair.ServerToClientKey, 16);
-				Debug(
-					"Client to Server Key: %s\n"
-					"Server to Client Key: %s\n",
-					key1, key2);
 			}
 		}
 
@@ -6144,22 +4917,11 @@ REDIRECTED:
 					Copy(sess->BulkRecvKey, s->BulkRecvKey->Data, s->BulkRecvKey->Size);
 					sess->BulkRecvKeySize = s->BulkRecvKey->Size;
 
-					if (false)
-					{
-						char tmp1[128];
-						char tmp2[128];
-						BinToStr(tmp1, sizeof(tmp1), sess->BulkRecvKey, sess->BulkSendKeySize);
-						BinToStr(tmp2, sizeof(tmp2), sess->BulkSendKey, sess->BulkRecvKeySize);
-						Debug("Backup: sess->BulkRecvKeySize = %u, sess->BulkSendKeySize = %u\n",
-							sess->BulkRecvKeySize, sess->BulkSendKeySize);
-						Debug("Backup:\n%s\n%s\n\n", tmp1, tmp2);
-					}			
-
-					AddProtocolDetailsKeyValueInt(sess->ProtocolDetails, sizeof(sess->ProtocolDetails),
-						"RUDP_Bulk_Ver",
-						sess->BulkOnRUDPVersion);
+					AddProtocolDetailsKeyValueInt(sess->ProtocolDetails, sizeof(sess->ProtocolDetails), "RUDP_Bulk_Ver", sess->BulkOnRUDPVersion);
 				}
 			}
+
+			sess->EnableHMacOnBulkOfRUDP = PackGetBool(p, "enable_hmac_on_bulk_of_rudp");
 		}
 
 		Debug("EnableBulkOnRUDP = %u\n", sess->EnableBulkOnRUDP);
@@ -6231,8 +4993,8 @@ REDIRECTED:
 
 							if (UdpAccelInitClient(sess->UdpAccel,
 								sess->UdpAccel->Version == 2 ? udp_acceleration_server_key_v2 : udp_acceleration_server_key,
-								&udp_acceleration_server_ip, udp_acceleration_server_port,
-								server_cookie, client_cookie, &remote_ip) == false)
+								&remote_ip, &udp_acceleration_server_ip, udp_acceleration_server_port,
+								server_cookie, client_cookie) == false)
 							{
 								Debug("UdpAccelInitClient failed.\n");
 							}
@@ -6251,20 +5013,11 @@ REDIRECTED:
 									sess->UdpAccel->UseHMac = true;
 								}
 
-								AddProtocolDetailsKeyValueInt(sess->ProtocolDetails, sizeof(sess->ProtocolDetails),
-									"UDPAccel_Ver",
-									sess->UdpAccel->Version);
+								AddProtocolDetailsKeyValueInt(sess->ProtocolDetails, sizeof(sess->ProtocolDetails), "UDPAccel_Ver", sess->UdpAccel->Version);
 
-								if (sess->UdpAccel->Version >= 2)
-								{
-									AddProtocolDetailsStr(sess->ProtocolDetails, sizeof(sess->ProtocolDetails),
-										Aead_ChaCha20Poly1305_Ietf_IsOpenSSL() ? 
-										"ChachaPoly_OpenSSL" : "ChachaPoly_Self");
-								}
+								AddProtocolDetailsStr(sess->ProtocolDetails, sizeof(sess->ProtocolDetails), sess->UdpAccel->Version > 1 ? "ChaCha20-Poly1305" : "RC4");
 
-								AddProtocolDetailsKeyValueInt(sess->ProtocolDetails, sizeof(sess->ProtocolDetails),
-									"UDPAccel_MSS",
-									UdpAccelCalcMss(sess->UdpAccel));
+								AddProtocolDetailsKeyValueInt(sess->ProtocolDetails, sizeof(sess->ProtocolDetails), "UDPAccel_MSS", UdpAccelCalcMss(sess->UdpAccel));
 							}
 						}
 					}
@@ -6330,7 +5083,9 @@ REDIRECTED:
 	}
 
 	PrintStatus(sess, _UU("STATUS_9"));
-
+#ifdef OS_UNIX
+	UnixVLanSetState(c->Session->ClientOption->DeviceName, true);
+#endif
 	// Shift the connection to the tunneling mode
 	StartTunnelingMode(c);
 	s = NULL;
@@ -6340,25 +5095,6 @@ REDIRECTED:
 		// Processing in the case of half-connection
 		TCPSOCK *ts = (TCPSOCK *)LIST_DATA(c->Tcp->TcpSockList, 0);
 		ts->Direction = TCP_CLIENT_TO_SERVER;
-	}
-
-	if (c->Session->UseFastRC4)
-	{
-		// Set the high-speed RC4 encryption key
-		TCPSOCK *ts = (TCPSOCK *)LIST_DATA(c->Tcp->TcpSockList, 0);
-		Copy(&ts->Rc4KeyPair, &key_pair, sizeof(key_pair));
-
-		InitTcpSockRc4Key(ts, false);
-	}
-
-	// SSL encryption flag
-	if (c->Session->UseEncrypt && c->Session->UseFastRC4 == false)
-	{
-		c->Session->UseSSLDataEncryption = true;
-	}
-	else
-	{
-		c->Session->UseSSLDataEncryption = false;
 	}
 
 	PrintStatus(sess, L"free");
@@ -6462,7 +5198,6 @@ PACK *PackWelcome(SESSION *s)
 	// Parameters
 	PackAddInt(p, "max_connection", s->MaxConnection);
 	PackAddInt(p, "use_encrypt", s->UseEncrypt == false ? 0 : 1);
-	PackAddInt(p, "use_fast_rc4", s->UseFastRC4 == false ? 0 : 1);
 	PackAddInt(p, "use_compress", s->UseCompress == false ? 0 : 1);
 	PackAddInt(p, "half_connection", s->HalfConnection == false ? 0 : 1);
 	PackAddInt(p, "timeout", s->Timeout);
@@ -6520,8 +5255,8 @@ PACK *PackWelcome(SESSION *s)
 		PackAddInt(p, "udp_acceleration_version", s->UdpAccel->Version);
 		PackAddIp(p, "udp_acceleration_server_ip", &s->UdpAccel->MyIp);
 		PackAddInt(p, "udp_acceleration_server_port", s->UdpAccel->MyPort);
-		PackAddData(p, "udp_acceleration_server_key", s->UdpAccel->MyKey, UDP_ACCELERATION_COMMON_KEY_SIZE_V1);
-		PackAddData(p, "udp_acceleration_server_key_v2", s->UdpAccel->MyKey_V2, UDP_ACCELERATION_COMMON_KEY_SIZE_V2);
+		PackAddData(p, "udp_acceleration_server_key", s->UdpAccel->MyKey, sizeof(s->UdpAccel->MyKey));
+		PackAddData(p, "udp_acceleration_server_key_v2", s->UdpAccel->MyKey_V2, sizeof(s->UdpAccel->MyKey_V2));
 		PackAddInt(p, "udp_acceleration_server_cookie", s->UdpAccel->MyCookie);
 		PackAddInt(p, "udp_acceleration_client_cookie", s->UdpAccel->YourCookie);
 		PackAddBool(p, "udp_acceleration_use_encryption", !s->UdpAccel->PlainTextMode);
@@ -6563,17 +5298,6 @@ PACK *PackWelcome(SESSION *s)
 			s->Connection->FirstSock->BulkRecvKey->Size);
 
 		s->BulkRecvKeySize = s->Connection->FirstSock->BulkRecvKey->Size;
-
-		if (false)
-		{
-			char tmp1[128];
-			char tmp2[128];
-			BinToStr(tmp1, sizeof(tmp1), s->BulkRecvKey, s->BulkSendKeySize);
-			BinToStr(tmp2, sizeof(tmp2), s->BulkSendKey, s->BulkRecvKeySize);
-			Debug("Backup: s->BulkRecvKeySize = %u, s->BulkSendKeySize = %u\n",
-				s->BulkRecvKeySize, s->BulkSendKeySize);
-			Debug("Backup:\n%s\n%s\n\n", tmp1, tmp2);
-		}			
 	}
 
 	if (s->IsAzureSession)
@@ -6781,7 +5505,7 @@ void ClientUploadNoop(CONNECTION *c)
 
 	p = PackError(0);
 	PackAddInt(p, "noop", 1);
-	HttpClientSend(c->FirstSock, p);
+	(void)HttpClientSend(c->FirstSock, p);
 	FreePack(p);
 
 	p = HttpClientRecv(c->FirstSock);
@@ -6862,6 +5586,20 @@ bool ClientUploadAuth(CONNECTION *c)
 			}
 			break;
 
+		case CLIENT_AUTHTYPE_OPENSSLENGINE:
+			// Certificate authentication
+			if (a->ClientX != NULL && a->ClientX->is_compatible_bit &&
+				a->ClientX->bits != 0 && (a->ClientX->bits / 8) <= sizeof(sign))
+			{
+				if (RsaSignEx(sign, c->Random, SHA1_SIZE, a->ClientK, a->ClientX->bits))
+				{
+					p = PackLoginWithCert(o->HubName, a->Username, a->ClientX, sign, a->ClientX->bits / 8);
+					c->ClientX = CloneX(a->ClientX);
+				}
+			}
+			break;
+
+
 		case CLIENT_AUTHTYPE_SECURE:
 			// Authentication by secure device
 			if (ClientSecureSign(c, sign, c->Random, &x))
@@ -6914,8 +5652,6 @@ bool ClientUploadAuth(CONNECTION *c)
 	PackAddInt(p, "max_connection", o->MaxConnection);
 	// Flag to use of cryptography
 	PackAddInt(p, "use_encrypt", o->UseEncrypt == false ? 0 : 1);
-	// Fast encryption using flag
-	//	PackAddInt(p, "use_fast_rc4", o->UseFastRC4 == false ? 0 : 1);
 	// Data compression flag
 	PackAddInt(p, "use_compress", o->UseCompress == false ? 0 : 1);
 	// Half connection flag
@@ -6944,25 +5680,18 @@ bool ClientUploadAuth(CONNECTION *c)
 	// UDP acceleration function using flag
 	if (o->NoUdpAcceleration == false && c->Session->UdpAccel != NULL)
 	{
-		IP my_ip;
-
-		Zero(&my_ip, sizeof(my_ip));
-
 		PackAddBool(p, "use_udp_acceleration", true);
 
 		PackAddInt(p, "udp_acceleration_version", c->Session->UdpAccel->Version);
 
-		Copy(&my_ip, &c->Session->UdpAccel->MyIp, sizeof(IP));
-		if (IsLocalHostIP(&my_ip))
+		IP my_ip;
+		if (IsLocalHostIP(&c->Session->UdpAccel->MyIp) == false)
 		{
-			if (IsIP4(&my_ip))
-			{
-				ZeroIP4(&my_ip);
-			}
-			else
-			{
-				ZeroIP6(&my_ip);
-			}
+			Copy(&my_ip, &c->Session->UdpAccel->MyIp, sizeof(my_ip));
+		}
+		else
+		{
+			Zero(&my_ip, sizeof(my_ip));
 		}
 
 		PackAddIp(p, "udp_acceleration_client_ip", &my_ip);
@@ -7086,8 +5815,6 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 	UINT num = 0, max = 19;
 	SERVER *server;
 	char *vpn_http_target = HTTP_VPN_TARGET2;
-	bool check_hostname = false;
-	bool disable_json_api = false;
 	// Validate arguments
 	if (c == NULL)
 	{
@@ -7095,12 +5822,6 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 	}
 
 	server = c->Cedar->Server;
-
-	disable_json_api = server->DisableJsonRpcWebApi;
-
-
-
-
 
 	s = c->FirstSock;
 
@@ -7130,40 +5851,13 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 			return false;
 		}
 
-		if (check_hostname && (StrCmpi(h->Version, "HTTP/1.1") == 0 || StrCmpi(h->Version, "HTTP/1.2") == 0))
-		{
-			HTTP_VALUE *v;
-			char hostname[64];
-
-			Zero(hostname, sizeof(hostname));
-
-			v = GetHttpValue(h, "Host");
-			if (v != NULL)
-			{
-				StrCpy(hostname, sizeof(hostname), v->Data);
-			}
-
-			if (IsEmptyStr(hostname))
-			{
-				// Invalid hostname
-				HttpSendInvalidHostname(s, h->Target);
-				FreeHttpHeader(h);
-				c->Err = ERR_CLIENT_IS_NOT_VPN;
-				*error_detail_str = "Invalid_hostname";
-				return false;
-			}
-		}
-
-
-
-
 		// Interpret
 		if (StrCmpi(h->Method, "POST") == 0)
 		{
 			// Receive the data since it's POST
 			data_size = GetContentLength(h);
 
-			if (disable_json_api == false)
+			if (server->DisableJsonRpcWebApi == false)
 			{
 				if (StrCmpi(h->Target, "/api") == 0 || StrCmpi(h->Target, "/api/") == 0)
 				{
@@ -7249,7 +5943,7 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 		}
 		else if (StrCmpi(h->Method, "OPTIONS") == 0)
 		{
-			if (disable_json_api == false)
+			if (server->DisableJsonRpcWebApi == false)
 			{
 				if (StrCmpi(h->Target, "/api") == 0 || StrCmpi(h->Target, "/api/") == 0 || StartWith(h->Target, "/admin"))
 				{
@@ -7266,9 +5960,7 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 				}
 			}
 		}
-		else if (StrCmpi(h->Method, "SSTP_DUPLEX_POST") == 0 && (server->DisableSSTPServer == false || s->IsReverseAcceptedSocket
-			) &&
-			GetServerCapsBool(server, "b_support_sstp") && GetNoSstp() == false)
+		else if (StrCmpi(h->Method, "SSTP_DUPLEX_POST") == 0 && (ProtoEnabled(server->Proto, "SSTP") || s->IsReverseAcceptedSocket) && GetServerCapsBool(server, "b_support_sstp"))
 		{
 			// SSTP client is connected
 			c->WasSstp = true;
@@ -7277,9 +5969,9 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 			{
 				bool sstp_ret;
 				// Accept the SSTP connection
-				c->Type = CONNECTION_TYPE_SSTP;
+				c->Type = CONNECTION_TYPE_OTHER;
 
-				sstp_ret = AcceptSstp(c);
+				sstp_ret = ProtoHandleConnection(server->Proto, s, "SSTP");
 
 				c->Err = ERR_DISCONNECTED;
 				FreeHttpHeader(h);
@@ -7316,38 +6008,32 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 			}
 			else
 			{
-
 				if (StrCmpi(h->Target, "/") == 0)
 				{
 					// Root directory
-					SERVER *s = c->Cedar->Server;
-
+					BUF *b = NULL;
 					*error_detail_str = "HTTP_ROOT";
 
+					if (server->DisableJsonRpcWebApi == false)
 					{
-						BUF *b = NULL;
-						
-						if (disable_json_api == false)
-						{
-							b = ReadDump("|wwwroot\\index.html");
-						}
+						b = ReadDump("|wwwroot/index.html");
+					}
 
-						if (b != NULL)
-						{
-							FreeHttpHeader(h);
-							h = NewHttpHeader("HTTP/1.1", "202", "OK");
-							AddHttpValue(h, NewHttpValue("Content-Type", HTTP_CONTENT_TYPE4));
-							AddHttpValue(h, NewHttpValue("Connection", "Keep-Alive"));
-							AddHttpValue(h, NewHttpValue("Keep-Alive", HTTP_KEEP_ALIVE));
+					if (b != NULL)
+					{
+						FreeHttpHeader(h);
+						h = NewHttpHeader("HTTP/1.1", "202", "OK");
+						AddHttpValue(h, NewHttpValue("Content-Type", HTTP_CONTENT_TYPE4));
+						AddHttpValue(h, NewHttpValue("Connection", "Keep-Alive"));
+						AddHttpValue(h, NewHttpValue("Keep-Alive", HTTP_KEEP_ALIVE));
 
-							PostHttp(c->FirstSock, h, b->Buf, b->Size);
+						PostHttp(c->FirstSock, h, b->Buf, b->Size);
 
-							FreeBuf(b);
-						}
-						else
-						{
-							HttpSendForbidden(c->FirstSock, h->Target, "");
-						}
+						FreeBuf(b);
+					}
+					else
+					{
+						HttpSendForbidden(c->FirstSock, h->Target, "");
 					}
 				}
 				else
@@ -7371,7 +6057,7 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 
 					}
 
-					if (c->FirstSock->RemoteIP.addr[0] == 127)
+					if (IsLocalHostIP(&c->FirstSock->RemoteIP))
 					{
 						if (StrCmpi(h->Target, HTTP_SAITAMA) == 0)
 						{
@@ -7408,7 +6094,7 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 
 					if (b == false)
 					{
-						if (disable_json_api == false)
+						if (server->DisableJsonRpcWebApi == false)
 						{
 							if (StartWith(h->Target, "/api?") || StartWith(h->Target, "/api/") || StrCmpi(h->Target, "/api") == 0)
 							{
@@ -7440,17 +6126,6 @@ bool ServerDownloadSignature(CONNECTION *c, char **error_detail_str)
 
 								FreeHttpHeader(h);
 
-								continue;
-							}
-						}
-
-						if (false) // TODO
-						{
-							if (StrCmpi(h->Target, "/mvpn") == 0 || StrCmpi(h->Target, "/mvpn/") == 0)
-							{
-								MvpnProcGet(c, s, h, h->Target);
-
-								FreeHttpHeader(h);
 								continue;
 							}
 						}
@@ -7532,7 +6207,7 @@ SOCK *ClientConnectToServer(CONNECTION *c)
 	}
 
 	// Get the socket by connecting
-	s = ClientConnectGetSocket(c, false, (c->DontUseTls1 ? false : true));
+	s = ClientConnectGetSocket(c, false);
 	if (s == NULL)
 	{
 		// Connection failure
@@ -7553,7 +6228,7 @@ SOCK *ClientConnectToServer(CONNECTION *c)
 	SetTimeout(s, CONNECTING_TIMEOUT);
 
 	// Start the SSL communication
-	if (StartSSLEx(s, x, k, (c->DontUseTls1 ? false : true), 0, c->ServerName) == false)
+	if (StartSSLEx(s, x, k, 0, c->ServerName) == false)
 	{
 		// SSL communication start failure
 		Disconnect(s);
@@ -7577,101 +6252,91 @@ SOCK *ClientConnectToServer(CONNECTION *c)
 }
 
 // Return a socket by connecting to the server
-SOCK *ClientConnectGetSocket(CONNECTION *c, bool additional_connect, bool no_tls)
+SOCK *ClientConnectGetSocket(CONNECTION *c, bool additional_connect)
 {
-	SOCK *s = NULL;
-	CLIENT_OPTION *o;
-	char *host_for_direct_connection;
-	UINT port_for_direct_connection;
-	wchar_t tmp[MAX_SIZE];
-	SESSION *sess;
 	volatile bool *cancel_flag = NULL;
-	void *hWnd;
-	UINT nat_t_err = 0;
-	bool is_additonal_rudp_session = false;
-	UCHAR uc = 0;
-	IP ret_ip;
+	char hostname[MAX_HOST_NAME_LEN];
+	bool save_resolved_ip = false;
+	CLIENT_OPTION *o;
+	SESSION *sess;
+	SOCK *sock = NULL;
+	IP resolved_ip;
 	// Validate arguments
-	if (c == NULL)
+	if (c == NULL || c->Session == NULL || c->Session->ClientOption == NULL)
 	{
 		return NULL;
 	}
 
-	Zero(&ret_ip, sizeof(IP));
-
+	cancel_flag = &c->Halt;
 	sess = c->Session;
-
-	if (sess != NULL)
-	{
-		cancel_flag = &sess->CancelConnect;
-		is_additonal_rudp_session = sess->IsRUDPSession;
-	}
-
-	hWnd = c->hWndForUI;
-
 	o = c->Session->ClientOption;
 
-	if (additional_connect)
-	{
-		if (sess != NULL)
-		{
-			Copy(&ret_ip, &sess->ServerIP_CacheForNextConnect, sizeof(IP));
-		}
-	}
+	Zero(&resolved_ip, sizeof(resolved_ip));
 
-	if (c->RestoreServerNameAndPort && additional_connect)
+	if (additional_connect == false && c->RestoreServerNameAndPort)
 	{
-		// Restore to the original server name and port number
+		// Update server name and port number.
+		// At the time of writing this comment RestoreServerNameAndPort is never true.
 		c->RestoreServerNameAndPort = false;
 
 		if (StrCmpi(c->ServerName, o->Hostname) != 0)
 		{
 			StrCpy(c->ServerName, sizeof(c->ServerName), o->Hostname);
-			Zero(&ret_ip, sizeof(IP));
 		}
 
 		c->ServerPort = o->Port;
 	}
 
-	host_for_direct_connection = c->ServerName;
-	port_for_direct_connection = c->ServerPort;
-
-	switch (o->ProxyType)
+	if (IsZeroIP(&sess->ServerIP_CacheForNextConnect) == false)
 	{
-	case PROXY_DIRECT:	// TCP/IP
-		UniFormat(tmp, sizeof(tmp), _UU("STATUS_4"), c->ServerName);
+		IPToStr(hostname, sizeof(hostname), &sess->ServerIP_CacheForNextConnect);
+		Debug("ClientConnectGetSocket(): Using cached IP address %s\n", hostname);
+	}
+	else
+	{
+		IP tmp;
+
+		StrCpy(hostname, sizeof(hostname), o->ProxyType == PROXY_DIRECT ? c->ServerName : o->ProxyName);
+
+		if (StrToIP(&tmp, hostname) == false)
+		{
+			// The hostname is not an IP address
+			save_resolved_ip = true;
+		}
+	}
+
+	if (o->ProxyType == PROXY_DIRECT)
+	{
+		UINT nat_t_err = 0;
+		wchar_t tmp[MAX_SIZE];
+		UniFormat(tmp, sizeof(tmp), _UU("STATUS_4"), hostname);
 		PrintStatus(sess, tmp);
-		// Production job
+
 		if (o->PortUDP == 0)
 		{
-			{
-				// If additional_connect == false, enable trying to NAT-T connection
-				// If additional_connect == true, follow the IsRUDPSession setting in this session
-				s = TcpIpConnectEx(host_for_direct_connection, port_for_direct_connection,
-					(bool *)cancel_flag, hWnd, &nat_t_err, (additional_connect ? (!is_additonal_rudp_session) : false),
-					true, no_tls, &ret_ip);
-			}
+			// If additional_connect == false, enable trying to NAT-T connection
+			// If additional_connect == true, follow the IsRUDPSession setting in this session
+			sock = TcpIpConnectEx(hostname, c->ServerPort,
+				(bool *)cancel_flag, c->hWndForUI, &nat_t_err, (additional_connect ? (!sess->IsRUDPSession) : false),
+				true, &resolved_ip);
 		}
 		else
 		{
 			// Mode to connect with R-UDP directly without using NAT-T server when using UDP
 			IP ip;
-
-			Zero(&ip, sizeof(ip));
-
-			StrToIP(&ip, o->Hostname);
-
-
-			s = NewRUDPClientDirect(VPN_RUDP_SVC_NAME, &ip, o->PortUDP, &nat_t_err,
-				TIMEOUT_TCP_PORT_CHECK, (bool *)cancel_flag, NULL, NULL, 0, false);
-
-			if (s != NULL)
+			if (StrToIP(&ip, hostname))
 			{
-				StrCpy(s->UnderlayProtocol, sizeof(s->UnderlayProtocol), SOCK_UNDERLAY_NAT_T);
-				AddProtocolDetailsStr(s->UnderlayProtocol, sizeof(s->UnderlayProtocol), "NAT-T");
+				sock = NewRUDPClientDirect(VPN_RUDP_SVC_NAME, &ip, o->PortUDP, &nat_t_err,
+					TIMEOUT_TCP_PORT_CHECK, (bool *)cancel_flag, NULL, NULL, 0, false);
+
+				if (sock != NULL)
+				{
+					StrCpy(sock->UnderlayProtocol, sizeof(sock->UnderlayProtocol), SOCK_UNDERLAY_NAT_T);
+				}
 			}
 		}
-		if (s == NULL)
+
+		if (sock == NULL)
 		{
 			// Connection failure
 			if (nat_t_err != RUDP_ERROR_NAT_T_TWO_OR_MORE)
@@ -7682,518 +6347,130 @@ SOCK *ClientConnectGetSocket(CONNECTION *c, bool additional_connect, bool no_tls
 			{
 				c->Err = ERR_NAT_T_TWO_OR_MORE;
 			}
+
 			return NULL;
 		}
-		break;
-
-	case PROXY_HTTP:	// HTTP Proxy
-		host_for_direct_connection = o->ProxyName;
-		port_for_direct_connection = o->ProxyPort;
-
-		UniFormat(tmp, sizeof(tmp), _UU("STATUS_2"), c->ServerName, o->ProxyName);
-		PrintStatus(sess, tmp);
-
-
-		// Proxy connection
-		s = ProxyConnectEx(c, host_for_direct_connection, port_for_direct_connection,
-			c->ServerName, c->ServerPort, o->ProxyUsername, o->ProxyPassword,
-			additional_connect, (bool *)cancel_flag, hWnd);
-		if (s == NULL)
-		{
-			// Connection failure
-			return NULL;
-		}
-		break;
-
-	case PROXY_SOCKS:	// SOCKS Proxy
-		host_for_direct_connection = o->ProxyName;
-
-		port_for_direct_connection = o->ProxyPort;
-
-		UniFormat(tmp, sizeof(tmp), _UU("STATUS_2"), c->ServerName, o->ProxyName);
-		PrintStatus(sess, tmp);
-
-
-		// SOCKS connection
-		s = SocksConnectEx2(c, host_for_direct_connection, port_for_direct_connection,
-			c->ServerName, c->ServerPort, o->ProxyUsername,
-			additional_connect, (bool *)cancel_flag, hWnd, 0, &ret_ip);
-		if (s == NULL)
-		{
-			// Connection failure
-			return NULL;
-		}
-		break;
-	}
-
-	if (s == NULL)
-	{
-		// Connection failure
-		c->Err = ERR_CONNECT_FAILED;
 	}
 	else
-	{
-		// Success to connect
-		// Keep a note of the IP address
-		if (additional_connect == false || IsZeroIP(&s->RemoteIP))
-		{
-			if (((s->IsRUDPSocket || s->IPv6) && IsZeroIP(&s->RemoteIP) == false && o->ProxyType == PROXY_DIRECT) || GetIP(&c->Session->ServerIP, host_for_direct_connection) == false)
-			{
-				Copy(&c->Session->ServerIP, &s->RemoteIP, sizeof(IP));
-			}
-		}
-
-		if (IsZeroIP(&ret_ip) == false)
-		{
-			if (c->Session != NULL)
-			{
-				if (additional_connect == false)
-				{
-					Copy(&c->Session->ServerIP_CacheForNextConnect, &ret_ip, sizeof(IP));
-
-					Debug("Saved ServerIP_CacheForNextConnect: %s = %r\n", c->ServerName, &ret_ip);
-				}
-			}
-		}
-	}
-
-	return s;
-}
-
-// Connect via SOCKS
-SOCK *SocksConnect(CONNECTION *c, char *proxy_host_name, UINT proxy_port,
-				   char *server_host_name, UINT server_port,
-				   char *username, bool additional_connect)
-{
-	return SocksConnectEx(c, proxy_host_name, proxy_port,
-		server_host_name, server_port, username, additional_connect, NULL, NULL);
-}
-SOCK *SocksConnectEx(CONNECTION *c, char *proxy_host_name, UINT proxy_port,
-				   char *server_host_name, UINT server_port,
-				   char *username, bool additional_connect,
-				   bool *cancel_flag, void *hWnd)
-{
-	return SocksConnectEx2(c, proxy_host_name, proxy_port,
-		server_host_name, server_port, username, additional_connect, cancel_flag,
-		hWnd, 0, NULL);
-}
-SOCK *SocksConnectEx2(CONNECTION *c, char *proxy_host_name, UINT proxy_port,
-				   char *server_host_name, UINT server_port,
-				   char *username, bool additional_connect,
-				   bool *cancel_flag, void *hWnd, UINT timeout, IP *ret_ip)
-{
-	SOCK *s = NULL;
-	IP ip;
-	// Validate arguments
-	if (c == NULL || proxy_host_name == NULL || proxy_port == 0 || server_host_name == NULL
-		|| server_port == 0)
-	{
-		if (c != NULL)
-		{
-			c->Err = ERR_PROXY_CONNECT_FAILED;
-		}
-		return NULL;
-	}
-
-	// Get the IP address of the destination server
-	if (GetIP(&ip, server_host_name) == false)
-	{
-		// Failure
-		c->Err = ERR_CONNECT_FAILED;
-		return NULL;
-	}
-
-	if (c->Halt)
-	{
-		// Stop
-		c->Err = ERR_USER_CANCEL;
-		return NULL;
-	}
-
-	// Connection
-	s = TcpConnectEx3(proxy_host_name, proxy_port, timeout, cancel_flag, hWnd, true, NULL, false, false, ret_ip);
-	if (s == NULL)
-	{
-		// Failure
-		c->Err = ERR_PROXY_CONNECT_FAILED;
-		return NULL;
-	}
-
-	// Timeout setting
-	SetTimeout(s, MIN(CONNECTING_TIMEOUT_PROXY, (timeout == 0 ? INFINITE : timeout)));
-
-	if (additional_connect == false)
-	{
-		c->FirstSock = s;
-	}
-
-	// Request packet transmission
-	if (SocksSendRequestPacket(c, s, server_port, &ip, username) == false)
-	{
-		// Failure
-		if (additional_connect == false)
-		{
-			c->FirstSock = NULL;
-		}
-		Disconnect(s);
-		ReleaseSock(s);
-		return NULL;
-	}
-
-	// Receive a response packet
-	if (SocksRecvResponsePacket(c, s) == false)
-	{
-		// Failure
-		if (additional_connect == false)
-		{
-			c->FirstSock = NULL;
-		}
-		Disconnect(s);
-		ReleaseSock(s);
-		return NULL;
-	}
-
-	SetTimeout(s, INFINITE);
-
-	return s;
-}
-
-// Receive a SOCKS response packet
-bool SocksRecvResponsePacket(CONNECTION *c, SOCK *s)
-{
-	BUF *b;
-	UINT size = 8;
-	UCHAR tmp[8];
-	UCHAR vn, cd;
-	// Validate arguments
-	if (c == NULL || s == NULL)
-	{
-		return false;
-	}
-
-	if (RecvAll(s, tmp, sizeof(tmp), false) == false)
-	{
-		c->Err = ERR_DISCONNECTED;
-		return false;
-	}
-
-	b = NewBuf();
-	WriteBuf(b, tmp, sizeof(tmp));
-	SeekBuf(b, 0, 0);
-
-	ReadBuf(b, &vn, 1);
-	ReadBuf(b, &cd, 1);
-
-	FreeBuf(b);
-
-	if (vn != 0)
-	{
-		c->Err = ERR_PROXY_ERROR;
-		return false;
-	}
-
-	switch (cd)
-	{
-	case 90:
-		// Success
-		return true;
-
-	case 93:
-		// Authentication failure
-		c->Err = ERR_PROXY_AUTH_FAILED;
-		return false;
-
-	default:
-		// Connection to the server failure
-		c->Err = ERR_CONNECT_FAILED;
-		return false;
-	}
-}
-
-// Send a SOCKS request packet
-bool SocksSendRequestPacket(CONNECTION *c, SOCK *s, UINT dest_port, IP *dest_ip, char *userid)
-{
-	BUF *b;
-	UCHAR vn, cd;
-	USHORT port;
-	UINT ip;
-	bool ret;
-	// Validate arguments
-	if (s == NULL || dest_port == 0 || dest_ip == NULL || c == NULL)
-	{
-		return false;
-	}
-	if (userid == NULL)
-	{
-		userid = "";
-	}
-
-	b = NewBuf();
-	vn = 4;
-	cd = 1;
-	WriteBuf(b, &vn, 1);
-	WriteBuf(b, &cd, 1);
-	port = Endian16((USHORT)dest_port);
-	ip = IPToUINT(dest_ip);
-	WriteBuf(b, &port, 2);
-	WriteBuf(b, &ip, 4);
-	WriteBuf(b, userid, StrLen(userid) + 1);
-
-	ret = SendAll(s, b->Buf, b->Size, false);
-	if (ret == false)
-	{
-		c->Err = ERR_DISCONNECTED;
-	}
-
-	FreeBuf(b);
-
-	return ret;
-}
-
-// Connect through a proxy
-SOCK *ProxyConnect(CONNECTION *c, char *proxy_host_name, UINT proxy_port,
-				   char *server_host_name, UINT server_port,
-				   char *username, char *password, bool additional_connect)
-{
-	return ProxyConnectEx(c, proxy_host_name, proxy_port,
-		server_host_name, server_port, username, password, additional_connect, NULL, NULL);
-}
-SOCK *ProxyConnectEx(CONNECTION *c, char *proxy_host_name, UINT proxy_port,
-				   char *server_host_name, UINT server_port,
-				   char *username, char *password, bool additional_connect,
-				   bool *cancel_flag, void *hWnd)
-{
-	return ProxyConnectEx2(c, proxy_host_name, proxy_port,
-		server_host_name, server_port, username, password, additional_connect,
-		cancel_flag, hWnd, 0);
-}
-SOCK *ProxyConnectEx2(CONNECTION *c, char *proxy_host_name, UINT proxy_port,
-				   char *server_host_name, UINT server_port,
-				   char *username, char *password, bool additional_connect,
-				   bool *cancel_flag, void *hWnd, UINT timeout)
-{
-	SOCK *s = NULL;
-	bool use_auth = false;
-	char tmp[MAX_SIZE];
-	char auth_tmp_str[MAX_SIZE], auth_b64_str[MAX_SIZE * 2];
-	char basic_str[MAX_SIZE * 2];
-	UINT http_error_code;
-	HTTP_HEADER *h;
-	char server_host_name_tmp[256];
-	UINT i, len;
-	// Validate arguments
-	if (c == NULL || proxy_host_name == NULL || proxy_port == 0 || server_host_name == NULL ||
-		server_port == 0)
-	{
-		if (c != NULL)
-		{
-			c->Err = ERR_PROXY_CONNECT_FAILED;
-		}
-		return NULL;
-	}
-	if (username != NULL && password != NULL &&
-		(StrLen(username) != 0 || StrLen(password) != 0))
-	{
-		use_auth = true;
-	}
-
-	if (c->Halt)
-	{
-		// Stop
-		c->Err = ERR_USER_CANCEL;
-		return NULL;
-	}
-
-	Zero(server_host_name_tmp, sizeof(server_host_name_tmp));
-	StrCpy(server_host_name_tmp, sizeof(server_host_name_tmp), server_host_name);
-
-	len = StrLen(server_host_name_tmp);
-
-	for (i = 0;i < len;i++)
-	{
-		if (server_host_name_tmp[i] == '/')
-		{
-			server_host_name_tmp[i] = 0;
-		}
-	}
-
-	// Connection
-	s = TcpConnectEx3(proxy_host_name, proxy_port, timeout, cancel_flag, hWnd, true, NULL, false, false, NULL);
-	if (s == NULL)
-	{
-		// Failure
-		c->Err = ERR_PROXY_CONNECT_FAILED;
-		return NULL;
-	}
-
-	// Timeout setting
-	SetTimeout(s, MIN(CONNECTING_TIMEOUT_PROXY, (timeout == 0 ? INFINITE : timeout)));
-
-	if (additional_connect == false)
-	{
-		c->FirstSock = s;
-	}
-
-	// HTTP header generation
-	if (IsStrIPv6Address(server_host_name_tmp))
-	{
-		IP ip;
-		char iptmp[MAX_PATH];
-
-		StrToIP(&ip, server_host_name_tmp);
-		IPToStr(iptmp, sizeof(iptmp), &ip);
-
-		Format(tmp, sizeof(tmp), "[%s]:%u", iptmp, server_port);
-	}
-	else
-	{
-		Format(tmp, sizeof(tmp), "%s:%u", server_host_name_tmp, server_port);
-	}
-
-	h = NewHttpHeader("CONNECT", tmp, "HTTP/1.0");
-	AddHttpValue(h, NewHttpValue("User-Agent", (c->Cedar == NULL ? DEFAULT_USER_AGENT : c->Cedar->HttpUserAgent)));
-	AddHttpValue(h, NewHttpValue("Host", server_host_name_tmp));
-	AddHttpValue(h, NewHttpValue("Content-Length", "0"));
-	AddHttpValue(h, NewHttpValue("Proxy-Connection", "Keep-Alive"));
-	AddHttpValue(h, NewHttpValue("Pragma", "no-cache"));
-
-	if (use_auth)
 	{
 		wchar_t tmp[MAX_SIZE];
-		UniFormat(tmp, sizeof(tmp), _UU("STATUS_3"), server_host_name_tmp);
-		// Generate the authentication string
-		Format(auth_tmp_str, sizeof(auth_tmp_str), "%s:%s",
-			username, password);
+		PROXY_PARAM_OUT out;
+		PROXY_PARAM_IN in;
+		UINT ret;
 
-		// Base64 encode
-		Zero(auth_b64_str, sizeof(auth_b64_str));
-		Encode64(auth_b64_str, auth_tmp_str);
-		Format(basic_str, sizeof(basic_str), "Basic %s", auth_b64_str);
+		Zero(&in, sizeof(in));
 
-		AddHttpValue(h, NewHttpValue("Proxy-Authorization", basic_str));
-	}
+		in.Timeout = 0;
 
-	// Transmission
-	if (SendHttpHeader(s, h) == false)
-	{
-		// Failure
-		if (additional_connect == false)
+		StrCpy(in.TargetHostname, sizeof(in.TargetHostname), c->ServerName);
+		in.TargetPort = c->ServerPort;
+
+		StrCpy(in.Hostname, sizeof(in.Hostname), IsEmptyStr(hostname) ? o->ProxyName : hostname);
+		in.Port = o->ProxyPort;
+
+		StrCpy(in.Username, sizeof(in.Username), o->ProxyUsername);
+		StrCpy(in.Password, sizeof(in.Password), o->ProxyPassword);
+
+		StrCpy(in.HttpCustomHeader, sizeof(in.HttpCustomHeader), o->CustomHttpHeader);
+		StrCpy(in.HttpUserAgent, sizeof(in.HttpUserAgent), c->Cedar->HttpUserAgent);
+
+#ifdef OS_WIN32
+		in.Hwnd = c->hWndForUI;
+#endif
+
+		UniFormat(tmp, sizeof(tmp), _UU("STATUS_2"), in.TargetHostname, in.Hostname);
+		PrintStatus(sess, tmp);
+
+		switch (o->ProxyType)
 		{
-			c->FirstSock = NULL;
-		}
-		FreeHttpHeader(h);
-		Disconnect(s);
-		ReleaseSock(s);
-		c->Err = ERR_PROXY_ERROR;
-		return NULL;
-	}
-
-	FreeHttpHeader(h);
-
-	if (c->Halt)
-	{
-		// Stop
-		if (additional_connect == false)
-		{
-			c->FirstSock = NULL;
-		}
-		Disconnect(s);
-		ReleaseSock(s);
-		c->Err = ERR_USER_CANCEL;
-		return NULL;
-	}
-
-	// Receive the results
-	h = RecvHttpHeader(s);
-	if (h == NULL)
-	{
-		// Failure
-		if (additional_connect == false)
-		{
-			c->FirstSock = NULL;
-		}
-		FreeHttpHeader(h);
-		Disconnect(s);
-		ReleaseSock(s);
-		c->Err = ERR_PROXY_ERROR;
-		return NULL;
-	}
-
-	http_error_code = 0;
-	if (StrLen(h->Method) == 8)
-	{
-		if (Cmp(h->Method, "HTTP/1.", 7) == 0)
-		{
-			http_error_code = ToInt(h->Target);
-		}
-	}
-	FreeHttpHeader(h);
-
-	// Check the code
-	switch (http_error_code)
-	{
-	case 401:
-	case 403:
-	case 407:
-		// Authentication failure
-		if (additional_connect == false)
-		{
-			c->FirstSock = NULL;
-		}
-		Disconnect(s);
-		ReleaseSock(s);
-		c->Err = ERR_PROXY_AUTH_FAILED;
-		return NULL;
-
-	default:
-		if ((http_error_code / 100) == 2)
-		{
-			// Success
-			SetTimeout(s, INFINITE);
-			return s;
-		}
-		else
-		{
-			// Receive an unknown result
-			if (additional_connect == false)
-			{
-				c->FirstSock = NULL;
-			}
-			Disconnect(s);
-			ReleaseSock(s);
-			c->Err = ERR_PROXY_ERROR;
+		case PROXY_HTTP:
+			ret = ProxyHttpConnect(&out, &in, cancel_flag);
+			break;
+		case PROXY_SOCKS:
+			ret = ProxySocks4Connect(&out, &in, cancel_flag);
+			break;
+		case PROXY_SOCKS5:
+			ret = ProxySocks5Connect(&out, &in, cancel_flag);
+			break;
+		default:
+			c->Err = ERR_INTERNAL_ERROR;
+			Debug("ClientConnectGetSocket(): Unknown proxy type: %u!\n", o->ProxyType);
 			return NULL;
 		}
+
+		c->Err = ProxyCodeToCedar(ret);
+
+		if (c->Err != ERR_NO_ERROR)
+		{
+			Debug("ClientConnectGetSocket(): Connection via proxy server failed with error %u\n", ret);
+			return NULL;
+		}
+
+		sock = out.Sock;
+
+		CopyIP(&resolved_ip, &out.ResolvedIp);
+	}
+
+	if (additional_connect == false || IsZeroIP(&sock->RemoteIP))
+	{
+		if (((sock->IsRUDPSocket || sock->IPv6) && IsZeroIP(&sock->RemoteIP) == false && o->ProxyType == PROXY_DIRECT) || GetIP(&c->Session->ServerIP, hostname) == false)
+		{
+			Copy(&c->Session->ServerIP, &sock->RemoteIP, sizeof(c->Session->ServerIP));
+		}
+	}
+
+	if (save_resolved_ip && IsZeroIP(&resolved_ip) == false)
+	{
+		Copy(&c->Session->ServerIP_CacheForNextConnect, &resolved_ip, sizeof(c->Session->ServerIP_CacheForNextConnect));
+		Debug("ClientConnectGetSocket(): Saved %s IP address %r for future connections.\n", hostname, &resolved_ip);
+	}
+
+	return sock;
+}
+
+UINT ProxyCodeToCedar(UINT code)
+{
+	switch (code)
+	{
+	case PROXY_ERROR_SUCCESS:
+		return ERR_NO_ERROR;
+	case PROXY_ERROR_GENERIC:
+	case PROXY_ERROR_VERSION:
+		return ERR_PROXY_ERROR;
+	case PROXY_ERROR_CANCELED:
+		return ERR_USER_CANCEL;
+	case PROXY_ERROR_CONNECTION:
+		return ERR_PROXY_CONNECT_FAILED;
+	case PROXY_ERROR_TARGET:
+		return ERR_CONNECT_FAILED;
+	case PROXY_ERROR_DISCONNECTED:
+		return ERR_DISCONNECTED;
+	case PROXY_ERROR_AUTHENTICATION:
+		return ERR_PROXY_AUTH_FAILED;
+	default:
+		return ERR_INTERNAL_ERROR;
 	}
 }
 
 // TCP connection function
-SOCK *TcpConnectEx2(char *hostname, UINT port, UINT timeout, bool *cancel_flag, void *hWnd, bool try_start_ssl, bool ssl_no_tls)
-{
-	return TcpConnectEx3(hostname, port, timeout, cancel_flag, hWnd, false, NULL, try_start_ssl, ssl_no_tls, NULL);
-}
-SOCK *TcpConnectEx3(char *hostname, UINT port, UINT timeout, bool *cancel_flag, void *hWnd, bool no_nat_t, UINT *nat_t_error_code, bool try_start_ssl, bool ssl_no_tls, IP *ret_ip)
+SOCK *TcpConnectEx3(char *hostname, UINT port, UINT timeout, bool *cancel_flag, void *hWnd, bool no_nat_t, UINT *nat_t_error_code, bool try_start_ssl, IP *ret_ip)
 {
 #ifdef	OS_WIN32
 	if (hWnd == NULL)
 	{
 #endif	// OS_WIN32
-		return ConnectEx4(hostname, port, timeout, cancel_flag, (no_nat_t ? NULL : VPN_RUDP_SVC_NAME), nat_t_error_code, try_start_ssl, ssl_no_tls, true, ret_ip);
+		return ConnectEx4(hostname, port, timeout, cancel_flag, (no_nat_t ? NULL : VPN_RUDP_SVC_NAME), nat_t_error_code, try_start_ssl, true, ret_ip);
 #ifdef	OS_WIN32
 	}
 	else
 	{
-		return WinConnectEx3((HWND)hWnd, hostname, port, timeout, 0, NULL, NULL, nat_t_error_code, (no_nat_t ? NULL : VPN_RUDP_SVC_NAME), try_start_ssl, ssl_no_tls);
+		return WinConnectEx3((HWND)hWnd, hostname, port, timeout, 0, NULL, NULL, nat_t_error_code, (no_nat_t ? NULL : VPN_RUDP_SVC_NAME), try_start_ssl);
 	}
 #endif	// OS_WIN32
 }
 
 // Connect with TCP/IP
-SOCK *TcpIpConnect(char *hostname, UINT port, bool try_start_ssl, bool ssl_no_tls)
-{
-	return TcpIpConnectEx(hostname, port, NULL, NULL, NULL, false, try_start_ssl, ssl_no_tls, NULL);
-}
-SOCK *TcpIpConnectEx(char *hostname, UINT port, bool *cancel_flag, void *hWnd, UINT *nat_t_error_code, bool no_nat_t, bool try_start_ssl, bool ssl_no_tls, IP *ret_ip)
+SOCK *TcpIpConnectEx(char *hostname, UINT port, bool *cancel_flag, void *hWnd, UINT *nat_t_error_code, bool no_nat_t, bool try_start_ssl, IP *ret_ip)
 {
 	SOCK *s = NULL;
 	UINT dummy_int = 0;
@@ -8208,7 +6485,7 @@ SOCK *TcpIpConnectEx(char *hostname, UINT port, bool *cancel_flag, void *hWnd, U
 		return NULL;
 	}
 
-	s = TcpConnectEx3(hostname, port, 0, cancel_flag, hWnd, no_nat_t, nat_t_error_code, try_start_ssl, ssl_no_tls, ret_ip);
+	s = TcpConnectEx3(hostname, port, 0, cancel_flag, hWnd, no_nat_t, nat_t_error_code, try_start_ssl, ret_ip);
 	if (s == NULL)
 	{
 		return NULL;
@@ -8383,6 +6660,24 @@ PACK *PackLoginWithPlainPassword(char *hubname, char *username, void *plain_pass
 	return p;
 }
 
+// Generate a packet of WireGuard key login
+PACK *PackLoginWithWireGuardKey(char *key)
+{
+	PACK *p;
+	// Validate arguments
+	if (key == NULL)
+	{
+		return NULL;
+	}
+
+	p = NewPack();
+	PackAddStr(p, "method", "login");
+	PackAddInt(p, "authtype", AUTHTYPE_WIREGUARD_KEY);
+	PackAddStr(p, "key", key);
+
+	return p;
+}
+
 // Generate a packet of OpenVPN certificate login
 PACK *PackLoginWithOpenVPNCertificate(char *hubname, char *username, X *x)
 {
@@ -8403,6 +6698,7 @@ PACK *PackLoginWithOpenVPNCertificate(char *hubname, char *username, X *x)
 	{
 		if (x->subject_name == NULL)
 		{
+			FreePack(p);
 			return NULL;
 		}
 		UniToStr(cn_username, sizeof(cn_username), x->subject_name->CommonName);
@@ -8477,1630 +6773,3 @@ PACK *PackAdditionalConnect(UCHAR *session_key)
 
 	return p;
 }
-
-
-// Generate a RC4 key pair
-void GenerateRC4KeyPair(RC4_KEY_PAIR *k)
-{
-	// Validate arguments
-	if (k == NULL)
-	{
-		return;
-	}
-
-	Rand(k->ClientToServerKey, sizeof(k->ClientToServerKey));
-	Rand(k->ServerToClientKey, sizeof(k->ServerToClientKey));
-}
-
-// MVPN GET Procedure (WebSocket)
-void MvpnProcGet(CONNECTION *c, SOCK *s, HTTP_HEADER *h, char *url_target)
-{
-	HTTP_VALUE *req_upgrade;
-	HTTP_VALUE *req_version;
-	HTTP_VALUE *req_key;
-	char response_key[64];
-	UINT client_ws_version = 0;
-	char *bad_request_body = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\"http://www.w3.org/TR/html4/strict.dtd\">\r\n<HTML><HEAD><TITLE>Bad Request</TITLE>\r\n<META HTTP-EQUIV=\"Content-Type\" Content=\"text/html; charset=us-ascii\"></HEAD>\r\n<BODY><h2>Bad Request</h2>\r\n<hr><p>HTTP Error 400. The request is badly formed.</p>\r\n</BODY></HTML>";
-	if (c == NULL || s == NULL || h == NULL || url_target == NULL)
-	{
-		return;
-	}
-
-	req_upgrade = GetHttpValue(h, "Upgrade");
-	if (req_upgrade == NULL || StrCmpi(req_upgrade->Data, "websocket") != 0)
-	{
-		MvpnSendReply(s, 400, "Bad Request", bad_request_body, StrLen(bad_request_body),
-			NULL, NULL, NULL, h);
-		return;
-	}
-
-	req_version = GetHttpValue(h, "Sec-WebSocket-Version");
-	if (req_version != NULL) client_ws_version = ToInt(req_version->Data);
-	if (client_ws_version != 13)
-	{
-		MvpnSendReply(s, 400, "Bad Request", NULL, 0,
-			NULL, "Sec-WebSocket-Version", "13", h);
-		return;
-	}
-
-	Zero(response_key, sizeof(response_key));
-	req_key = GetHttpValue(h, "Sec-WebSocket-Key");
-	if (req_key != NULL)
-	{
-		char tmp[MAX_SIZE];
-		UCHAR hash[SHA1_SIZE];
-		StrCpy(tmp, sizeof(tmp), req_key->Data);
-		StrCat(tmp, sizeof(tmp), "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-		HashSha1(hash, tmp, StrLen(tmp));
-		B64_Encode(response_key, hash, SHA1_SIZE);
-	}
-	else
-	{
-		MvpnSendReply(s, 400, "Bad Request", NULL, 0,
-			NULL, "Sec-WebSocket-Version", "13", h);
-		return;
-	}
-
-	MvpnSendReply(s, 101, "Switching Protocols", NULL, 0, NULL,
-		"Sec-WebSocket-Accept", response_key, h);
-
-	MvpnAccept(c, s);
-}
-
-// MVPN Send Reply
-bool MvpnSendReply(SOCK *s, UINT status_code, char *status_string, UCHAR *data, UINT data_size, char *content_type,
-				   char *add_header_name, char *add_header_value, HTTP_HEADER *request_headers)
-{
-	HTTP_HEADER *h;
-	char date_str[MAX_SIZE];
-	char error_code_str[16];
-	bool ret = false;
-	HTTP_VALUE *origin;
-	HTTP_VALUE *upgrade;
-	HTTP_VALUE *req_connection;
-	if (s == NULL || status_string == NULL || (data_size != 0 && data == NULL) || request_headers == NULL)
-	{
-		return false;
-	}
-	if (content_type == NULL)
-	{
-		content_type = "text/html; charset=utf-8";
-	}
-
-	req_connection = GetHttpValue(request_headers, "Connection");
-
-	ToStr(error_code_str, status_code);
-	GetHttpDateStr(date_str, sizeof(date_str), SystemTime64());
-
-	h = NewHttpHeader("HTTP/1.1", error_code_str, status_string);
-
-	AddHttpValue(h, NewHttpValue("Cache-Control", "no-cache"));
-	if (data_size != 0)
-	{
-		AddHttpValue(h, NewHttpValue("Content-Type", content_type));
-	}
-	AddHttpValue(h, NewHttpValue("Date", date_str));
-	if (req_connection != NULL)
-	{
-		AddHttpValue(h, NewHttpValue("Connection", req_connection->Data));
-	}
-	else
-	{
-		AddHttpValue(h, NewHttpValue("Connection", "Keep-Alive"));
-	}
-	AddHttpValue(h, NewHttpValue("Access-Control-Allow-Headers", "content-type"));
-	AddHttpValue(h, NewHttpValue("Access-Control-Allow-Headers", "authorization"));
-	AddHttpValue(h, NewHttpValue("Access-Control-Allow-Headers", "x-websocket-extensions"));
-	AddHttpValue(h, NewHttpValue("Access-Control-Allow-Headers", "x-websocket-version"));
-	AddHttpValue(h, NewHttpValue("Access-Control-Allow-Headers", "x-websocket-protocol"));
-	AddHttpValue(h, NewHttpValue("Access-Control-Allow-Credentials", "true"));
-
-	origin = GetHttpValue(request_headers, "Origin");
-	if (origin != NULL)
-	{
-		AddHttpValue(h, NewHttpValue("Access-Control-Allow-Origin", origin->Data));
-	}
-
-	upgrade = GetHttpValue(request_headers, "Upgrade");
-	if (upgrade != NULL)
-	{
-		AddHttpValue(h, NewHttpValue("Upgrade", upgrade->Data));
-	}
-
-	if (add_header_name != NULL && add_header_value != NULL)
-	{
-		AddHttpValue(h, NewHttpValue(add_header_name, add_header_value));
-	}
-
-	ret = PostHttp(s, h, data, data_size);
-
-	FreeHttpHeader(h);
-
-	return ret;
-}
-
-// MVPN Accept
-void MvpnAccept(CONNECTION *c, SOCK *s)
-{
-	WS *w;
-	UINT err;
-	if (c == NULL || s == NULL)
-	{
-		return;
-	}
-
-	w = NewWs(s);
-
-	err = MvpnDoAccept(c, w);
-
-	//while (true)
-	//{
-	//	UINT r;
-	//	Zero(data, sizeof(data));
-	//	r = WsRecvSyncAll(w, data, 7);
-	//	if (!r)
-	//	{
-	//		break;
-	//	}
-	//	Print("WS_Recv: %s\n", data);
-	//	r = WsSendSync(w, data, 7);
-	//	if (!r)
-	//	{
-	//		break;
-	//	}
-	//	Print("WS_Send: %s\n", data);
-	//}
-
-	ReleaseWs(w);
-}
-
-// New WebSocket
-WS *NewWs(SOCK *s)
-{
-	WS *w;
-	if (s == NULL)
-	{
-		return NULL;
-	}
-
-	w = ZeroMalloc(sizeof(WS));
-
-	w->Ref = NewRef();
-
-	w->MaxBufferSize = MAX_BUFFERING_PACKET_SIZE;
-	w->Sock = s;
-	AddRef(w->Sock->ref);
-
-	w->Wsp = NewWsp();
-
-	return w;
-}
-
-// Release WebSocket
-void ReleaseWs(WS *w)
-{
-	if (w == NULL)
-	{
-		return;
-	}
-
-	if (Release(w->Ref) == 0)
-	{
-		CleanupWs(w);
-	}
-}
-
-void CleanupWs(WS *w)
-{
-	if (w == NULL)
-	{
-		return;
-	}
-
-	if (w->Sock != NULL)
-	{
-		Disconnect(w->Sock);
-		ReleaseSock(w->Sock);
-	}
-
-	FreeWsp(w->Wsp);
-
-	Free(w);
-}
-
-// WebSocket: Send a frame in sync mode
-bool WsSendSync(WS *w, void *data, UINT size)
-{
-	UCHAR *send_buf;
-	UINT send_buf_size;
-	if (size == 0)
-	{
-		return !w->Disconnected;
-	}
-	if (w == NULL || data == NULL)
-	{
-		return false;
-	}
-	if (w->Disconnected || w->Wsp->HasError)
-	{
-		Disconnect(w->Sock);
-		return false;
-	}
-
-	WriteFifo(w->Wsp->AppSendFifo, data, size);
-	WspTry(w->Wsp);
-	if (w->Wsp->HasError == false)
-	{
-		send_buf = FifoPtr(w->Wsp->PhysicalSendFifo);
-		send_buf_size = FifoSize(w->Wsp->PhysicalSendFifo);
-		if (SendAll(w->Sock, send_buf, send_buf_size, w->Sock->SecureMode))
-		{
-			ReadFifo(w->Wsp->PhysicalSendFifo, NULL, send_buf_size);
-			return true;
-		}
-	}
-
-	w->Disconnected = true;
-	Disconnect(w->Sock);
-
-	return false;
-}
-
-// WebSocket: Send a frame in async mode
-UINT WsSendAsync(WS *w, void *data, UINT size)
-{
-	bool disconnected = false;
-	UINT ret = 0;
-	if (size == 0)
-	{
-		return !w->Disconnected;
-	}
-	if (w == NULL || data == NULL)
-	{
-		return 0;
-	}
-	if (w->Disconnected || w->Wsp->HasError)
-	{
-		Disconnect(w->Sock);
-		return 0;
-	}
-
-	if (FifoSize(w->Wsp->PhysicalSendFifo) > w->Wsp->MaxBufferSize)
-	{
-		return INFINITE;
-	}
-
-	WriteFifo(w->Wsp->AppSendFifo, data, size);
-
-	if (WsTrySendAsync(w) == false)
-	{
-		ret = 0;
-	}
-	else
-	{
-		ret = size;
-	}
-
-	if (ret == 0)
-	{
-		w->Disconnected = true;
-		Disconnect(w->Sock);
-	}
-
-	return ret;
-}
-
-// WebSocket: Send buffered streams in async mode
-bool WsTrySendAsync(WS *w)
-{
-	bool ret = false;
-	if (w == NULL)
-	{
-		return false;
-	}
-	if (w->Disconnected || w->Wsp->HasError)
-	{
-		Disconnect(w->Sock);
-		return false;
-	}
-
-	WspTry(w->Wsp);
-
-	if (w->Wsp->HasError == false)
-	{
-		while (true)
-		{
-			UINT send_size = FifoSize(w->Wsp->PhysicalSendFifo);
-			UINT r;
-			if (send_size == 0)
-			{
-				ret = true;
-				break;
-			}
-
-			r = Send(w->Sock, FifoPtr(w->Wsp->PhysicalSendFifo), send_size, w->Sock->SecureMode);
-
-			if (r == INFINITE)
-			{
-				ret = true;
-				break;
-			}
-			else if (r == 0)
-			{
-				ret = false;
-				break;
-			}
-			else
-			{
-				ReadFifo(w->Wsp->PhysicalSendFifo, NULL, r);
-			}
-		}
-	}
-	else
-	{
-		ret = false;
-	}
-
-	if (ret == 0)
-	{
-		w->Disconnected = true;
-		Disconnect(w->Sock);
-	}
-
-	return ret;
-}
-
-// WebSocket: Receive a frame in async mode
-UINT WsRecvAsync(WS *w, void *data, UINT size)
-{
-	bool disconnected = false;
-	UINT ret = 0;
-	if (w == NULL || data == NULL || size == 0)
-	{
-		return 0;
-	}
-	if (w->Disconnected || w->Wsp->HasError)
-	{
-		Disconnect(w->Sock);
-		return 0;
-	}
-
-	// Receive all arrived data from the socket
-	while (FifoSize(w->Wsp->PhysicalRecvFifo) < w->MaxBufferSize)
-	{
-		UINT r;
-
-		r = Recv(w->Sock, w->TmpBuf, sizeof(w->TmpBuf), w->Sock->SecureMode);
-		if (r == 0)
-		{
-			// Disconnected
-			disconnected = true;
-			break;
-		}
-		else if (r == INFINITE)
-		{
-			// Pending
-			break;
-		}
-		else
-		{
-			// Received some data
-			WriteFifo(w->Wsp->PhysicalRecvFifo, w->TmpBuf, r);
-		}
-	}
-
-	if (disconnected == false)
-	{
-		UINT sz;
-		WspTry(w->Wsp);
-		if (w->Wsp->HasError)
-		{
-			disconnected = true;
-		}
-		else
-		{
-			sz = FifoSize(w->Wsp->AppRecvFifo);
-			if (sz >= 1)
-			{
-				if (sz > size)
-				{
-					sz = size;
-				}
-				ReadFifo(w->Wsp->AppRecvFifo, data, sz);
-				ret = sz;
-			}
-			else
-			{
-				ret = INFINITE;
-			}
-		}
-	}
-
-	if (disconnected)
-	{
-		w->Disconnected = true;
-		Disconnect(w->Sock);
-		ret = 0;
-	}
-
-	return ret;
-}
-
-// WebSocket: Receive a frame in sync mode until fulfill the buffer
-bool WsRecvSyncAll(WS *w, void *data, UINT size)
-{
-	UINT recv_size;
-	if (w == NULL || data == NULL || size == 0)
-	{
-		return false;
-	}
-
-	recv_size = 0;
-
-	while (true)
-	{
-		UINT sz, ret;
-
-		sz = size - recv_size;
-		ret = WsRecvSync(w, (UCHAR *)data + recv_size, sz);
-		if (ret == 0)
-		{
-			return false;
-		}
-		recv_size += ret;
-		if (recv_size >= size)
-		{
-			return true;
-		}
-	}
-}
-
-// WebSocket: Receive a frame in sync mode
-UINT WsRecvSync(WS *w, void *data, UINT size)
-{
-	if (w == NULL || data == NULL || size == 0)
-	{
-		return 0;
-	}
-	if (w->Disconnected || w->Wsp->HasError)
-	{
-		Disconnect(w->Sock);
-		return 0;
-	}
-
-	while (w->Disconnected == false || w->Wsp->HasError == false)
-	{
-		UINT r;
-		UINT sz;
-		WspTry(w->Wsp);
-		if (w->Wsp->HasError)
-		{
-			break;
-		}
-		sz = FifoSize(w->Wsp->AppRecvFifo);
-		if (sz >= 1)
-		{
-			if (sz > size)
-			{
-				sz = size;
-			}
-			ReadFifo(w->Wsp->AppRecvFifo, data, sz);
-			return sz;
-		}
-		r = Recv(w->Sock, w->TmpBuf, sizeof(w->TmpBuf), w->Sock->SecureMode);
-		if (r == 0 || r == SOCK_LATER)
-		{
-			break;
-		}
-		WriteFifo(w->Wsp->PhysicalRecvFifo, w->TmpBuf, r);
-	}
-
-	w->Disconnected = true;
-	Disconnect(w->Sock);
-
-	return 0;
-}
-
-// New WebSocket protocol
-WSP *NewWsp()
-{
-	WSP *p = ZeroMalloc(sizeof(WSP));
-
-	p->AppRecvFifo = NewFifo();
-	p->AppSendFifo = NewFifo();
-	p->PhysicalRecvFifo = NewFifo();
-	p->PhysicalSendFifo = NewFifo();
-
-	p->MaxBufferSize = MAX_BUFFERING_PACKET_SIZE;
-
-	return p;
-}
-
-// Free WebSocket protocol
-void FreeWsp(WSP *p)
-{
-	if (p == NULL)
-	{
-		return;
-	}
-
-	ReleaseFifo(p->AppRecvFifo);
-	ReleaseFifo(p->AppSendFifo);
-	ReleaseFifo(p->PhysicalRecvFifo);
-	ReleaseFifo(p->PhysicalSendFifo);
-
-	Free(p);
-}
-
-// WebSocket protocol: Try to interpret send/recv buffers
-void WspTry(WSP *p)
-{
-	if (p == NULL)
-	{
-		return;
-	}
-
-	// Physical -> App
-	while (p->HasError == false)
-	{
-		UINT read_buffer_size;
-		BLOCK *b = WspTryRecvNextFrame(p, &read_buffer_size);
-		if (b == NULL)
-		{
-			// No more frames
-			break;
-		}
-
-		if (b->Param1 == WS_OPCODE_CONTINUE || b->Param1 == WS_OPCODE_TEXT || b->Param1 == WS_OPCODE_BIN)
-		{
-			WriteFifo(p->AppRecvFifo, b->Buf, b->Size);
-		}
-		else if (b->Param1 == WS_OPCODE_PING)
-		{
-			if (FifoSize(p->PhysicalSendFifo) <= p->MaxBufferSize)
-			{
-				WspTrySendFrame(p, WS_OPCODE_PONG, b->Buf, b->Size);
-			}
-		}
-		else if (b->Param1 == WS_OPCODE_PONG)
-		{
-		}
-		else
-		{
-			// Error: disconnect
-			p->HasError = true;
-		}
-
-		ReadFifo(p->PhysicalRecvFifo, NULL, read_buffer_size);
-
-		FreeBlock(b);
-	}
-
-	// App -> Physical
-	while (p->HasError == false)
-	{
-		UINT size;
-		UCHAR *data;
-
-		size = FifoSize(p->AppSendFifo);
-		if (size == 0)
-		{
-			// No more data
-			break;
-		}
-
-		if (size > WS_SEND_SINGLE_FRAGMENT_SIZE)
-		{
-			size = WS_SEND_SINGLE_FRAGMENT_SIZE;
-		}
-		data = FifoPtr(p->AppSendFifo);
-
-		WspTrySendFrame(p, WS_OPCODE_BIN, data, size);
-
-		ReadFifo(p->AppSendFifo, NULL, size);
-	}
-}
-
-// WebSocket protocol: Try to send a single frame
-void WspTrySendFrame(WSP *p, UCHAR opcode, void *data, UINT size)
-{
-	BUF *b;
-	UCHAR flag_and_opcode;
-	if (p == NULL || (size != 0 && data == NULL))
-	{
-		return;
-	}
-	if (p->HasError)
-	{
-		return;
-	}
-
-	b = NewBuf();
-
-	flag_and_opcode = 0x80 | (opcode & 0x0F);
-	WriteBufChar(b, flag_and_opcode);
-
-	if (size <= 125)
-	{
-		WriteBufChar(b, size);
-	}
-	else if (size <= 65536)
-	{
-		WriteBufChar(b, 126);
-		WriteBufShort(b, size);
-	}
-	else
-	{
-		WriteBufChar(b, 127);
-		WriteBufInt64(b, size);
-	}
-
-	WriteBuf(b, data, size);
-
-	WriteFifo(p->PhysicalSendFifo, b->Buf, b->Size);
-
-	FreeBuf(b);
-}
-
-// WebSocket protocol: Try to receive a single frame
-BLOCK *WspTryRecvNextFrame(WSP *p, UINT *read_buffer_size)
-{
-	BLOCK *b;
-	UCHAR *buf;
-	UCHAR *buf_pos0;
-	UINT sz;
-	UCHAR flag_and_opcode;
-	UCHAR mask_and_payload_len;
-	UCHAR mask_flag;
-	UINT payload_len;
-	UCHAR mask_key[4];
-	UCHAR *ret_data;
-	if (p == NULL || read_buffer_size == NULL)
-	{
-		return NULL;
-	}
-	if (p->HasError)
-	{
-		return NULL;
-	}
-
-	buf = buf_pos0 = FifoPtr(p->PhysicalRecvFifo);
-	sz = FifoSize(p->PhysicalRecvFifo);
-
-	if (sz < 1)
-	{
-		return NULL;
-	}
-	flag_and_opcode = *buf;
-	buf += 1;
-	sz -= 1;
-
-	if (sz < 1)
-	{
-		return NULL;
-	}
-	mask_and_payload_len = *buf;
-	buf += 1;
-	sz -= 1;
-
-	mask_flag = mask_and_payload_len & 0x80;
-	payload_len = mask_and_payload_len & 0x7F;
-	if (payload_len == 126)
-	{
-		if (sz < sizeof(USHORT))
-		{
-			return NULL;
-		}
-		payload_len = READ_USHORT(buf);
-		buf += sizeof(USHORT);
-		sz -= sizeof(USHORT);
-	}
-	else if (payload_len == 127)
-	{
-		UINT64 u64;
-		if (sz < sizeof(UINT64))
-		{
-			return NULL;
-		}
-		u64 = READ_UINT64(buf);
-		buf += sizeof(UINT64);
-		sz -= sizeof(UINT64);
-		if (u64 > 0x7FFFFFFF)
-		{
-			p->HasError = true;
-			return NULL;
-		}
-		payload_len = (UINT)u64;
-	}
-
-	if (payload_len > WS_MAX_PAYLOAD_LEN_PER_FRAME)
-	{
-		p->HasError = true;
-		return NULL;
-	}
-
-	if (mask_flag)
-	{
-		if (sz < 4)
-		{
-			return NULL;
-		}
-		Copy(mask_key, buf, 4);
-		buf += 4;
-		sz -= 4;
-	}
-
-	if (payload_len >= 1 && sz < payload_len)
-	{
-		return NULL;
-	}
-
-	ret_data = Clone(buf, payload_len);
-	sz -= payload_len;
-	buf += payload_len;
-
-	if (mask_flag)
-	{
-		UINT i;
-		for (i = 0;i < payload_len;i++)
-		{
-			ret_data[i] ^= mask_key[i % 4];
-		}
-	}
-
-	b = NewBlock(ret_data, payload_len, 0);
-	b->Param1 = (flag_and_opcode & 0xF);
-
-	*read_buffer_size = (UINT)(buf - buf_pos0);
-
-	return b;
-}
-
-// WebSocket: Receive a PACK serialized with JSON
-PACK *WsRecvPack(WS *w)
-{
-	USHORT us;
-	UINT size;
-	UCHAR *buf;
-	PACK *p = NULL;
-	if (w == NULL)
-	{
-		return NULL;
-	}
-
-	if (WsRecvSyncAll(w, &us, sizeof(us)))
-	{
-		size = Endian16(us);
-
-		buf = ZeroMalloc(size + 1);
-
-		if (WsRecvSyncAll(w, buf, size))
-		{
-			p = JsonStrToPack(buf);
-		}
-
-		Free(buf);
-	}
-
-	return p;
-}
-
-// WebSocket: Send a PACK serialized with JSON
-bool WsSendPack(WS *w, PACK *p)
-{
-	BUF *b;
-	char *json_str;
-	bool ret = false;
-	if (w == NULL || p == NULL)
-	{
-		return false;
-	}
-
-	json_str = PackToJsonStr(p);
-	if (json_str == NULL)
-	{
-		return false;
-	}
-
-	b = NewBuf();
-
-	WriteBufShort(b, StrLen(json_str));
-	WriteBuf(b, json_str, StrLen(json_str));
-
-	ret = WsSendSync(w, b->Buf, b->Size);
-
-	FreeBuf(b);
-
-	Free(json_str);
-
-	return ret;
-}
-
-// WebSocket: new error pack
-PACK *WsNewErrorPack(UINT err)
-{
-	PACK *p = NewPack();
-	char *error_code_str = WsErrorCodeToString(err);
-	wchar_t *error_message = _E(err);
-
-	PackAddStr(p, "Error", error_code_str);
-	PackAddUniStr(p, "ErrorMessage", error_message);
-
-	return p;
-}
-
-// MVPN: convert error code to string
-char *WsErrorCodeToString(UINT err)
-{
-	char *ret = "e_unknown";
-	switch (err)
-	{
-	case ERR_NO_ERROR:
-		ret = "ok";
-		break;
-	case ERR_PROTOCOL_ERROR:
-		ret = "e_protocol";
-		break;
-	case ERR_INTERNAL_ERROR:
-		ret = "e_internal";
-		break;
-	case ERR_DISCONNECTED:
-	case ERR_AUTO_DISCONNECTED:
-		ret = "e_disconnected";
-		break;
-	case ERR_ACCESS_DENIED:
-		ret = "e_access_denied";
-		break;
-	case ERR_HUB_NOT_FOUND:
-		ret = "e_network_not_found";
-		break;
-	case ERR_HUB_STOPPING:
-		ret = "e_network_disabled";
-		break;
-	case ERR_AUTH_FAILED:
-		ret = "e_auth_failed";
-		break;
-	case ERR_SESSION_TIMEOUT:
-		ret = "e_timeout";
-		break;
-	case ERR_USER_CANCEL:
-		ret = "e_user_cancel";
-		break;
-	case ERR_AUTHTYPE_NOT_SUPPORTED:
-		ret = "e_auth_method_not_supported";
-		break;
-	case ERR_TOO_MANY_CONNECTION:
-		ret = "e_too_many_connection";
-		break;
-	case ERR_HUB_IS_BUSY:
-		ret = "e_too_many_session";
-		break;
-	case ERR_TOO_MANY_USER_SESSION:
-		ret = "e_too_many_user_session";
-		break;
-	case ERR_OBJECT_NOT_FOUND:
-		ret = "e_object_not_found";
-		break;
-	case ERR_NOT_SUPPORTED:
-	case ERR_NOT_SUPPORTED_AUTH_ON_OPENSOURCE:
-		ret = "e_not_supported";
-		break;
-	case ERR_INVALID_PARAMETER:
-		ret = "e_invalid_parameter";
-		break;
-	case ERR_NULL_PASSWORD_LOCAL_ONLY:
-		ret = "e_empty_password_local_only";
-		break;
-	case ERR_MONITOR_MODE_DENIED:
-		ret = "e_mirror_mode_denied";
-		break;
-	case ERR_BRIDGE_MODE_DENIED:
-		ret = "e_bridge_mode_denied";
-		break;
-	case ERR_IP_ADDRESS_DENIED:
-		ret = "e_client_ip_address_denied";
-		break;
-	case ERR_MSCHAP2_PASSWORD_NEED_RESET:
-		ret = "e_user_password_must_reset";
-		break;
-
-	case ERR_DHCP_SERVER_NOT_RUNNING:
-		ret = "e_dhcp_server_not_running";
-		break;
-	}
-	return ret;
-}
-
-// MVPN processing a client
-UINT MvpnDoAccept(CONNECTION *c, WS *w)
-{
-	UINT ret = ERR_INTERNAL_ERROR;
-	PACK *client_hello = NULL;
-	UINT client_ver = 0;
-	char client_impl[256];
-	UCHAR client_nonce[128];
-	char client_hub_name[MAX_HUBNAME_LEN + 1];
-	UINT server_ver = 0;
-	char server_impl[256];
-	UCHAR server_nonce[128];
-	PACK *server_hello = NULL;
-	UINT auth_ret = ERR_INTERNAL_ERROR;
-	IPC *ipc = NULL;
-	UINT i;
-	UINT heartbeat_interval = 0;
-	UINT disconnect_timeout = 0;
-	bool use_udp_acceleration = false;
-	IP client_udp_acceleration_ip = {0};
-	UINT client_udp_acceleration_port = 0;
-	UCHAR client_udp_acceleration_key[UDP_ACCELERATION_COMMON_KEY_SIZE_V2] = {0};
-	UDP_ACCEL *udp_accel = NULL;
-	bool l3_ipv4_enable = false;
-	bool l3_ipv4_dynamic = false;
-	IP l3_ipv4_ip = {0};
-	IP l3_ipv4_mask = {0};
-	IP l3_ipv4_gw = {0};
-	IP l3_ipv4_dns1 = {0};
-	IP l3_ipv4_dns2 = {0};
-	IP l3_ipv4_wins1 = {0};
-	IP l3_ipv4_wins2 = {0};
-	IP l3_ipv4_dhcp_server = {0};
-	char l3_ipv4_classless_routes[4096] = {0};
-	bool l3_ipv4_dhcp_allocated = false;
-
-	if (c == NULL || w == NULL)
-	{
-		return ERR_INTERNAL_ERROR;
-	}
-
-	Rand(server_nonce, sizeof(server_nonce));
-
-	// Phase 1: Receive a Client Hello packet
-	client_hello = WsRecvPack(w);
-	if (client_hello == NULL)
-	{
-		ret = ERR_PROTOCOL_ERROR;
-		goto LABEL_CLEANUP;
-	}
-	client_ver = PackGetInt(client_hello, "MvpnProtocolVersion");
-	if (client_ver < MVPN_VERSION_MIN)
-	{
-		ret = ERR_PROTOCOL_ERROR;
-		goto LABEL_CLEANUP;
-	}
-	server_ver = MIN(MVPN_VERSION_CURRENT, client_ver);
-	if (PackGetData2(client_hello, "Nonce", client_nonce, 128) == false)
-	{
-		ret = ERR_PROTOCOL_ERROR;
-		goto LABEL_CLEANUP;
-	}
-	if (PackGetStr(client_hello, "Implementation", client_impl, sizeof(client_impl)) == false)
-	{
-		ret = ERR_PROTOCOL_ERROR;
-		goto LABEL_CLEANUP;
-	}
-	heartbeat_interval = PackGetInt(client_hello, "HeartBeatInterval");
-
-	if (heartbeat_interval == 0) heartbeat_interval = MVPN_HEARTBEAT_INTERVAL_DEFAULT;
-	heartbeat_interval = MAKESURE(heartbeat_interval, MVPN_HEARTBEAT_INTERVAL_MIN, MVPN_HEARTBEAT_INTERVAL_MAX);
-
-	disconnect_timeout = PackGetInt(client_hello, "DisconnectTimeout");
-	if (disconnect_timeout == 0) disconnect_timeout = MVPN_DISCONNECT_TIMEOUT_DEFAULT;
-	disconnect_timeout = MAKESURE(disconnect_timeout, MVPN_DISCONNECT_TIMEOUT_MIN, MVPN_DISCONNECT_TIMEOUT_MAX);
-
-	heartbeat_interval = MIN(heartbeat_interval, disconnect_timeout / 2);
-
-	use_udp_acceleration = PackGetBool(client_hello, "UseUdpAcceleration");
-	if (use_udp_acceleration)
-	{
-		client_udp_acceleration_port = PackGetInt(client_hello, "UdpAccelerationClientPort");
-		if (client_udp_acceleration_port == 0 ||
-			PackGetIp(client_hello, "UdpAccelerationClientIp", &client_udp_acceleration_ip) == false ||
-			PackGetData2(client_hello, "UdpAccelerationClientKey", client_udp_acceleration_key, sizeof(client_udp_acceleration_key)) == false)
-		{
-			use_udp_acceleration = false;
-		}
-	}
-
-
-	Zero(client_hub_name, sizeof(client_hub_name));
-	PackGetStr(client_hello, "NetworkName", client_hub_name, sizeof(client_hub_name));
-
-	l3_ipv4_enable = PackGetBool(client_hello, "L3HelperIPv4Enable");
-	if (l3_ipv4_enable)
-	{
-		char tmp[256];
-		bool ok = false;
-
-		PackGetStr(client_hello, "L3HelperIPv4AddressType", tmp, sizeof(tmp));
-
-		if (StrCmpi(tmp, MVPN_ADDRESS_TYPE_STATIC) == 0)
-		{
-			// Static IP address
-			l3_ipv4_dynamic = false;
-
-			if (PackGetIp(client_hello, "L3HelperIPv4Address", &l3_ipv4_ip) &&
-				PackGetIp(client_hello, "L3HelperIPv4SubnetMask", &l3_ipv4_mask) &&
-				PackGetIp(client_hello, "L3HelperIPv4Gateway", &l3_ipv4_gw))
-			{
-				ok = true;
-			}
-		}
-		else if (StrCmpi(tmp, MVPN_ADDRESS_TYPE_DYNAMIC) == 0)
-		{
-			// Dynamic IP address
-			l3_ipv4_dynamic = true;
-			ok = true;
-		}
-
-		if (ok == false)
-		{
-			ret = ERR_PROTOCOL_ERROR;
-			goto LABEL_CLEANUP;
-		}
-	}
-
-	// Phase 2: Send a Server Hello packet
-	server_hello = WsNewErrorPack(ERR_NO_ERROR);
-	StrCpy(server_impl, sizeof(server_impl), "Test Server");
-	PackAddInt(server_hello, "MvpnProtocolVersion", server_ver);
-	PackAddData(server_hello, "Nonce", server_nonce, 128);
-	PackAddStr(server_hello, "Implementation", server_impl);
-	PackAddStr(server_hello, "SupportedAuthMethod", MVPN_AUTHTYPE_ALL_SUPPORTED);
-	if (WsSendPack(w, server_hello) == false)
-	{
-		ret = ERR_DISCONNECTED;
-		goto LABEL_CLEANUP;
-	}
-
-	// Phase 3: Receive a Client Auth packet
-	for (i = 0;i < MVPN_MAX_AUTH_RETRY;i++)
-	{
-		bool auth_finish = false;
-		PACK *client_auth = NULL;
-		char auth_method[64] = {0};
-		char auth_username[MAX_USERNAME_LEN + 1];
-		IPC *ipc_tmp = NULL;
-		IPC_PARAM ipc_param;
-		UINT ipc_error_code = 0;
-		UINT mss = INFINITE;
-
-		auth_ret = ERR_INTERNAL_ERROR;
-
-		client_auth = WsRecvPack(w);
-		if (client_auth == NULL)
-		{
-			auth_ret = ERR_PROTOCOL_ERROR;
-			goto LABEL_EXIT_AUTH_RETRY;
-		}
-
-		PackGetStr(client_auth, "AuthMethod", auth_method, sizeof(auth_method));
-		if (IsEmptyStr(auth_method))
-		{
-			auth_ret = ERR_PROTOCOL_ERROR;
-			goto LABEL_EXIT_AUTH_RETRY;
-		}
-
-		PackGetStr(client_auth, "AuthUsername", auth_username, sizeof(auth_username));
-		if (IsEmptyStr(auth_method))
-		{
-			auth_ret = ERR_PROTOCOL_ERROR;
-			goto LABEL_EXIT_AUTH_RETRY;
-		}
-
-		Zero(&ipc_param, sizeof(ipc_param));
-		StrCpy(ipc_param.ClientName, sizeof(ipc_param.ClientName), MVPN_CLIENT_NAME);
-
-		if (IsEmptyStr(client_impl) == false)
-		{
-			StrCat(ipc_param.ClientName, sizeof(ipc_param.ClientName), " - ");
-			StrCat(ipc_param.ClientName, sizeof(ipc_param.ClientName), client_impl);
-		}
-
-		StrCpy(ipc_param.Postfix, sizeof(ipc_param.Postfix), NVPN_POSTFIX);
-		StrCpy(ipc_param.HubName, sizeof(ipc_param.HubName), client_hub_name);
-		StrCpy(ipc_param.UserName, sizeof(ipc_param.UserName), auth_username);
-		CopyIP(&ipc_param.ClientIp, &w->Sock->RemoteIP);
-		ipc_param.ClientPort = w->Sock->RemotePort;
-		CopyIP(&ipc_param.ServerIp, &w->Sock->LocalIP);
-		ipc_param.ServerPort = w->Sock->LocalPort;
-		StrCpy(ipc_param.ClientHostname, sizeof(ipc_param.ClientHostname), w->Sock->RemoteHostname);
-		StrCpy(ipc_param.CryptName, sizeof(ipc_param.CryptName), w->Sock->CipherName);
-		ipc_param.Layer = IPC_LAYER_3; // TODO
-		ipc_param.BridgeMode = false; // TODO
-
-		// MSS
-		if (udp_accel != NULL) mss = MIN(mss, UdpAccelCalcMss(udp_accel));
-		if (mss == INFINITE)
-		{
-			mss = 0;
-		}
-		ipc_param.Mss = mss;
-
-		if (StrCmpi(auth_method, MVPN_AUTHTYPE_ANONYMOUS) == 0)
-		{
-			// Anonymous
-		}
-		else if (StrCmpi(auth_method, MVPN_AUTHTYPE_PASSWORD_PLAIN) == 0)
-		{
-			// Plaintext
-			char pw[MAX_PASSWORD_LEN + 1];
-			PackGetStr(client_auth, "AuthPlainPassword", pw, sizeof(pw));
-			StrCpy(ipc_param.Password, sizeof(ipc_param.Password), pw);
-		}
-		else
-		{
-			// Unknown auth method
-			auth_ret = ERR_AUTHTYPE_NOT_SUPPORTED;
-			goto LABEL_EXIT_AUTH_RETRY;
-		}
-
-		ipc_tmp = NewIPCByParam(c->Cedar, &ipc_param, &ipc_error_code);
-
-		if (ipc_tmp == NULL)
-		{
-			auth_ret = ipc_error_code;
-			goto LABEL_EXIT_AUTH_RETRY;
-		}
-		else
-		{
-			ipc = ipc_tmp;
-			auth_finish = true;
-		}
-
-		auth_ret = ERR_NO_ERROR;
-
-LABEL_EXIT_AUTH_RETRY:
-		if (auth_ret != ERR_NO_ERROR)
-		{
-			// Phase 4: Send a Server Auth Response
-			PACK *error_pack = WsNewErrorPack(auth_ret);
-			UINT remain_retry = MVPN_MAX_AUTH_RETRY - 1 - i;
-			PackAddInt(error_pack, "RetryAllowedCount", remain_retry);
-			WsSendPack(w, error_pack);
-			FreePack(error_pack);
-		}
-		FreePack(client_auth);
-		if (auth_finish)
-		{
-			break;
-		}
-	}
-
-	if (ipc != NULL)
-	{
-		AddProtocolDetailsStr(ipc->IpcSessionShared->ProtocolDetails, sizeof(ipc->IpcSessionShared->ProtocolDetails),
-			"ModernVPN");
-		AddProtocolDetailsKeyValueStr(ipc->IpcSessionShared->ProtocolDetails, sizeof(ipc->IpcSessionShared->ProtocolDetails),
-			"Transport", "TCP_WebSocket");
-	}
-
-	if (ipc != NULL && l3_ipv4_enable)
-	{
-		// L3 IPv4 helper is enabled
-		if (l3_ipv4_dynamic == false)
-		{
-			// Static IP
-			IPCSetIPv4Parameters(ipc, &l3_ipv4_ip, &l3_ipv4_mask,
-				&l3_ipv4_gw, NULL);
-		}
-		else
-		{
-			// Dynamic IP
-			DHCP_OPTION_LIST cao;
-
-			Zero(&cao, sizeof(cao));
-
-			if (IPCDhcpAllocateIP(ipc, &cao, NULL) == false)
-			{
-				// DHCP alloc failed
-				ret = ERR_DHCP_SERVER_NOT_RUNNING;
-				goto LABEL_CLEANUP;
-			}
-
-			l3_ipv4_dhcp_allocated = true;
-
-			UINTToIP(&l3_ipv4_dhcp_server, cao.ServerAddress);
-
-			UINTToIP(&l3_ipv4_ip, cao.ClientAddress);
-			UINTToIP(&l3_ipv4_mask, cao.SubnetMask);
-			UINTToIP(&l3_ipv4_gw, cao.Gateway);
-			UINTToIP(&l3_ipv4_dns1, cao.DnsServer);
-			UINTToIP(&l3_ipv4_dns2, cao.DnsServer2);
-			UINTToIP(&l3_ipv4_wins1, cao.WinsServer);
-			UINTToIP(&l3_ipv4_wins2, cao.WinsServer2);
-
-			BuildClasslessRouteTableStr(l3_ipv4_classless_routes, sizeof(l3_ipv4_classless_routes),
-				&cao.ClasslessRoute);
-
-			IPCSetIPv4Parameters(ipc, &l3_ipv4_ip, &l3_ipv4_mask,
-				&l3_ipv4_gw, &cao.ClasslessRoute);
-		}
-	}
-
-	if (ipc != NULL && use_udp_acceleration)
-	{
-		udp_accel = NewUdpAccel(c->Cedar, (c->FirstSock->IsRUDPSocket ? NULL : &c->FirstSock->LocalIP),
-			false, false, false);
-
-		udp_accel->Version = 2;
-
-		udp_accel->FastDetect = true;
-		udp_accel->ReadRawFlagMode = true;
-
-		if (UdpAccelInitServer(udp_accel, client_udp_acceleration_key,
-			&client_udp_acceleration_ip, client_udp_acceleration_port, NULL) == false)
-		{
-			FreeUdpAccel(udp_accel);
-			udp_accel = NULL;
-		}
-	}
-
-	if (ipc != NULL)
-	{
-		// Phase 4: Send auth OK response
-		PACK *ok_pack = WsNewErrorPack(ERR_NO_ERROR);
-		PackAddInt(ok_pack, "HeartBeatInterval", heartbeat_interval);
-		PackAddInt(ok_pack, "DisconnectTimeout", disconnect_timeout);
-		PackAddStr(ok_pack, "NetworkName", ipc->HubName);
-
-		if (udp_accel != NULL)
-		{
-			PackAddBool(ok_pack, "UseUdpAcceleration", true);
-			PackAddIp(ok_pack, "UdpAccelerationServerIp", &udp_accel->MyIp);
-			PackAddInt(ok_pack, "UdpAccelerationServerPort", udp_accel->MyPort);
-			PackAddData(ok_pack, "UdpAccelerationServerKey", udp_accel->MyKey_V2, sizeof(udp_accel->MyKey_V2));
-			PackAddInt(ok_pack, "UdpAccelerationServerCookie", udp_accel->MyCookie);
-			PackAddInt(ok_pack, "UdpAccelerationClientCookie", udp_accel->YourCookie);
-		}
-		else
-		{
-			PackAddBool(ok_pack, "UseUdpAcceleration", false);
-		}
-
-		PackAddBool(ok_pack, "L3HelperIPv4Enable", l3_ipv4_enable);
-
-		if (l3_ipv4_enable)
-		{
-			PackAddStr(ok_pack, "L3HelperIPv4AddressType",
-				l3_ipv4_dynamic ? MVPN_ADDRESS_TYPE_DYNAMIC : MVPN_ADDRESS_TYPE_STATIC);
-			PackAddIp(ok_pack, "L3HelperIPv4Address", &l3_ipv4_ip);
-			PackAddIp(ok_pack, "L3HelperIPv4SubnetMask", &l3_ipv4_mask);
-			PackAddIp(ok_pack, "L3HelperIPv4Gateway", &l3_ipv4_gw);
-			PackAddIp(ok_pack, "L3HelperIPv4DnsServer1", &l3_ipv4_dns1);
-			PackAddIp(ok_pack, "L3HelperIPv4DnsServer2", &l3_ipv4_dns2);
-			PackAddIp(ok_pack, "L3HelperIPv4WinsServer1", &l3_ipv4_wins1);
-			PackAddIp(ok_pack, "L3HelperIPv4WinsServer2", &l3_ipv4_wins2);
-			PackAddStr(ok_pack, "L3HelperIPv4PushedStaticRoutes", l3_ipv4_classless_routes);
-		}
-
-		WsSendPack(w, ok_pack);
-		FreePack(ok_pack);
-
-		// Session main loop
-		if (true)
-		{
-			SOCK *sock = w->Sock;
-			SOCK_EVENT *sock_event = NewSockEvent();
-			FIFO *send_fifo = NewFifo();
-			FIFO *recv_fifo = NewFifo();
-			bool has_error = false;
-			UINT magic_number = Endian32(MVPN_PACKET_MAGIC_NUMBER);
-			UINT64 last_sent_heartbeat = 0;
-			UINT tmp_buf_size = 256000;
-			UCHAR *tmp_buf = ZeroMalloc(tmp_buf_size);
-			UINT64 last_comm_recv = Tick64();
-
-			SetTimeout(sock, TIMEOUT_INFINITE);
-			JoinSockToSockEvent(sock, sock_event);
-			if (udp_accel != NULL)
-			{
-				JoinSockToSockEvent(udp_accel->UdpSock, sock_event);
-			}
-			IPCSetSockEventWhenRecvL2Packet(ipc, sock_event);
-
-			while (true)
-			{
-				UINT next_interval = INFINITE;
-				UINT send_ret = 0;
-				UINT64 now = Tick64();
-				UINT r;
-
-				if (udp_accel != NULL)
-				{
-					UdpAccelSetTick(udp_accel, now);
-					UdpAccelPoll(udp_accel);
-					ipc->IpcSessionShared->EnableUdpAccel = true;
-					ipc->IpcSessionShared->UsingUdpAccel = UdpAccelIsSendReady(udp_accel, true);
-				}
-				else
-				{
-					ipc->IpcSessionShared->EnableUdpAccel = false;
-					ipc->IpcSessionShared->UsingUdpAccel = false;
-				}
-
-				// Send heartbeat
-				if (last_sent_heartbeat == 0 || (last_sent_heartbeat + (UINT64)heartbeat_interval) <= now)
-				{
-					last_sent_heartbeat = now;
-					if (FifoSize(send_fifo) <= MAX_BUFFERING_PACKET_SIZE)
-					{
-						UCHAR packet_type = MVPN_PACKET_TYPE_HEARTBEAT;
-						USHORT packet_size = 0;
-						WriteFifo(send_fifo, &magic_number, 4);
-						WriteFifo(send_fifo, &packet_type, 1);
-						WriteFifo(send_fifo, &packet_size, 2);
-					}
-				}
-
-				// IPC --> send_fifo or UDP accelerator
-				if (l3_ipv4_enable == false)
-				{
-					// Ethernet
-					while (true)
-					{
-						BLOCK *l2_packet = IPCRecvL2(ipc);
-						UCHAR packet_type;
-						USHORT packet_size;
-						if (l2_packet == NULL)
-						{
-							break;
-						}
-						if (UdpAccelIsSendReady(udp_accel, true))
-						{
-							// Send via UDP accelerator
-							UdpAccelSend(udp_accel, l2_packet->Buf, l2_packet->Size,
-								MVPN_PACKET_TYPE_ETHERNET, udp_accel->MaxUdpPacketSize,
-								false);
-						}
-						else
-						{
-							// Send via WebSocket
-							if (FifoSize(send_fifo) <= MAX_BUFFERING_PACKET_SIZE)
-							{
-								packet_size = Endian16(l2_packet->Size);
-								packet_type = MVPN_PACKET_TYPE_ETHERNET;
-								WriteFifo(send_fifo, &magic_number, 4);
-								WriteFifo(send_fifo, &packet_type, 1);
-								WriteFifo(send_fifo, &packet_size, 2);
-								WriteFifo(send_fifo, l2_packet->Buf, (USHORT)l2_packet->Size);
-							}
-						}
-						FreeBlock(l2_packet);
-					}
-				}
-				else
-				{
-					UINT num = 0;
-
-L_V4_RETRY:
-					// IPv4
-					IPCProcessL3Events(ipc);
-
-					while (true)
-					{
-						BLOCK *l3_packet = IPCRecvIPv4(ipc);
-						UCHAR packet_type;
-						USHORT packet_size;
-						if (l3_packet == NULL)
-						{
-							num++;
-							if (num <= 1)
-							{
-								goto L_V4_RETRY;
-							}
-							break;
-						}
-						if (UdpAccelIsSendReady(udp_accel, true))
-						{
-							// Send via UDP accelerator
-							UdpAccelSend(udp_accel, l3_packet->Buf, l3_packet->Size,
-								MVPN_PACKET_TYPE_IPV4, udp_accel->MaxUdpPacketSize,
-								false);
-						}
-						else
-						{
-							// Send via WebSocket
-							if (FifoSize(send_fifo) <= MAX_BUFFERING_PACKET_SIZE)
-							{
-								packet_size = Endian16(l3_packet->Size);
-								packet_type = MVPN_PACKET_TYPE_IPV4;
-								WriteFifo(send_fifo, &magic_number, 4);
-								WriteFifo(send_fifo, &packet_type, 1);
-								WriteFifo(send_fifo, &packet_size, 2);
-								WriteFifo(send_fifo, l3_packet->Buf, (USHORT)l3_packet->Size);
-							}
-						}
-						FreeBlock(l3_packet);
-					}
-				}
-
-				// send_fifo --> MVPN Client
-				while (FifoSize(send_fifo) >= 1)
-				{
-					UINT r = WsSendAsync(w, ((UCHAR *)send_fifo->p) + send_fifo->pos, send_fifo->size);
-					if (r == 0)
-					{
-						has_error = true;
-						break;
-					}
-					else if (r == INFINITE)
-					{
-						break;
-					}
-					else
-					{
-						ReadFifo(send_fifo, NULL, r);
-					}
-				}
-
-				if (WsTrySendAsync(w) == false)
-				{
-					has_error = true;
-				}
-
-				// MVPN Client --> recv_fifo
-				while (FifoSize(recv_fifo) <= MAX_BUFFERING_PACKET_SIZE)
-				{
-					r = WsRecvAsync(w, tmp_buf, tmp_buf_size);
-					if (r == 0)
-					{
-						has_error = true;
-						break;
-					}
-					else if (r == INFINITE)
-					{
-						break;
-					}
-					else
-					{
-						//Debug("recv %u\n", r);
-						WriteFifo(recv_fifo, tmp_buf, r);
-					}
-				}
-
-				// recv_fifo --> IPC
-				while (true)
-				{
-					UINT u32;
-					UINT packet_size;
-					UCHAR packet_type;
-					UCHAR *packet_data;
-					if (FifoSize(recv_fifo) < 7)
-					{
-						break;
-					}
-					packet_size = READ_USHORT(FifoPtr(recv_fifo) + 5);
-					if (FifoSize(recv_fifo) < (7 + packet_size))
-					{
-						break;
-					}
-
-					ReadFifo(recv_fifo, &u32, 4);
-					if (u32 != magic_number)
-					{
-						break;
-					}
-
-					ReadFifo(recv_fifo, &packet_type, 1);
-					ReadFifo(recv_fifo, NULL, 2);
-
-					packet_data = Malloc(packet_size);
-
-					ReadFifo(recv_fifo, packet_data, packet_size);
-
-					if (packet_type == MVPN_PACKET_TYPE_ETHERNET)
-					{
-						if (l3_ipv4_enable == false)
-						{
-							IPCSendL2(ipc, packet_data, packet_size);
-						}
-					}
-					else if (packet_type == MVPN_PACKET_TYPE_IPV4)
-					{
-						if (l3_ipv4_enable)
-						{
-							IPCSendIPv4(ipc, packet_data, packet_size);
-						}
-					}
-
-					Free(packet_data);
-
-					last_comm_recv = now;
-				}
-
-				// UDP Accel --> IPC
-				if (udp_accel != NULL)
-				{
-					while (true)
-					{
-						UINT packet_size;
-						UCHAR packet_type;
-						UCHAR *packet_data;
-						BLOCK *b = GetNext(udp_accel->RecvBlockQueue);
-						if (b == NULL)
-						{
-							break;
-						}
-
-						packet_type = b->RawFlagRetUdpAccel;
-						packet_data = b->Buf;
-						packet_size = b->Size;
-
-						if (packet_type == MVPN_PACKET_TYPE_ETHERNET)
-						{
-							if (l3_ipv4_enable == false)
-							{
-								IPCSendL2(ipc, packet_data, packet_size);
-							}
-						}
-						else if (packet_type == MVPN_PACKET_TYPE_IPV4)
-						{
-							if (l3_ipv4_enable)
-							{
-								IPCSendIPv4(ipc, packet_data, packet_size);
-							}
-						}
-
-						FreeBlock(b);
-					}
-				}
-
-				if (IsIPCConnected(ipc) == false)
-				{
-					has_error = true;
-				}
-
-				if (now > (last_comm_recv + (UINT64)disconnect_timeout))
-				{
-					has_error = true;
-				}
-
-				IPCProcessInterrupts(ipc);
-
-				if (has_error)
-				{
-					break;
-				}
-
-				// Wait until the next event occurs
-				next_interval = GetNextIntervalForInterrupt(ipc->Interrupt);
-				next_interval = MIN(next_interval, SELECT_TIME);
-				next_interval = MIN(next_interval, (UINT)((last_sent_heartbeat + (UINT64)heartbeat_interval) - now));
-				WaitSockEvent(sock_event, next_interval);
-			}
-
-			ReleaseSockEvent(sock_event);
-			ReleaseFifo(send_fifo);
-			ReleaseFifo(recv_fifo);
-			Free(tmp_buf);
-		}
-	}
-
-	if (l3_ipv4_dhcp_allocated)
-	{
-		IPCDhcpFreeIP(ipc, &l3_ipv4_dhcp_server);
-		IPCProcessL3Events(ipc);
-	}
-
-LABEL_CLEANUP:
-	if (ret != ERR_NO_ERROR)
-	{
-		PACK *ret_pack = WsNewErrorPack(ret);
-		WsSendPack(w, ret_pack);
-		FreePack(ret_pack);
-	}
-	FreeUdpAccel(udp_accel);
-	FreeIPC(ipc);
-	FreePack(client_hello);
-	FreePack(server_hello);
-
-	return 0;
-}
-
-
-
-
-
-
-
-

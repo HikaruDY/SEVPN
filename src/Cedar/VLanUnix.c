@@ -1,131 +1,43 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// Contributors:
-// - nattoheaven (https://github.com/nattoheaven)
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // VLanUnix.c
 // Virtual device driver library for UNIX
 
-#include <GlobalConst.h>
+#ifdef UNIX
 
-#ifdef	VLAN_C
+#include "VLanUnix.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-#include <stdarg.h>
-#include <time.h>
+#include "Connection.h"
+#include "Session.h"
+
+#include "Mayaqua/FileIO.h"
+#include "Mayaqua/Mayaqua.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/TunTap.h"
+
+#ifdef UNIX_BSD
+// For "sockaddr" in <net/if_arp.h>
+#include <sys/socket.h>
+#endif
+
 #include <errno.h>
-#include <Mayaqua/Mayaqua.h>
-#include <Cedar/Cedar.h>
-#ifdef	UNIX_MACOS
+#include <fcntl.h> 
+#include <net/if_arp.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+
+#ifdef UNIX_OPENBSD
+#include <netinet/if_ether.h>
+#else
 #include <net/ethernet.h>
 #endif
 
-#ifdef	OS_UNIX
-
 static LIST *unix_vlan = NULL;
 
-#ifndef	NO_VLAN
+#ifndef NO_VLAN
 
 // Get the PACKET_ADAPTER
 PACKET_ADAPTER *VLanGetPacketAdapter()
@@ -351,7 +263,7 @@ void FreeVLan(VLAN *v)
 }
 
 // Create a tap
-VLAN *NewTap(char *name, char *mac_address)
+VLAN *NewTap(char *name, char *mac_address, bool create_up)
 {
 	int fd;
 	VLAN *v;
@@ -361,7 +273,7 @@ VLAN *NewTap(char *name, char *mac_address)
 		return NULL;
 	}
 
-	fd = UnixCreateTapDeviceEx(name, "tap", mac_address);
+	fd = UnixCreateTapDeviceEx(name, "tap", mac_address, create_up);
 	if (fd == -1)
 	{
 		return NULL;
@@ -414,35 +326,36 @@ VLAN *NewVLan(char *instance_name, VLAN_PARAM *param)
 	return v;
 }
 
-// Create a tap device
-int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
+// Generate TUN interface name
+void GenerateTunName(char *name, char *prefix, char *tun_name, size_t tun_name_len)
 {
-	int fd;
-	struct ifreq ifr;
-	char eth_name[MAX_SIZE];
 	char instance_name_lower[MAX_SIZE];
-	struct sockaddr sa;
-	char *tap_name = TAP_FILENAME_1;
-	int s;
-#ifdef	UNIX_MACOS
-	char tap_macos_name[256] = TAP_MACOS_DIR TAP_MACOS_FILENAME;
-#endif
+
+	// Generate the device name
+	StrCpy(instance_name_lower, sizeof(instance_name_lower), name);
+	Trim(instance_name_lower);
+	StrLower(instance_name_lower);
+	Format(tun_name, tun_name_len, "%s_%s", prefix, instance_name_lower);
+
+	tun_name[15] = 0;
+}
+// Create a tap device
+int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address, bool create_up)
+{
+	int fd = -1, s = -1;
+	char tap_name[MAX_SIZE], tap_path[MAX_SIZE];
+	struct ifreq ifr;
+
 	// Validate arguments
 	if (name == NULL)
 	{
 		return -1;
 	}
 
-	// Generate the device name
-	StrCpy(instance_name_lower, sizeof(instance_name_lower), name);
-	Trim(instance_name_lower);
-	StrLower(instance_name_lower);
-	Format(eth_name, sizeof(eth_name), "%s_%s", prefix, instance_name_lower);
-
-	eth_name[15] = 0;
+	GenerateTunName(name, prefix, tap_name, sizeof(tap_name));
 
 	// Open the tun / tap
-#ifndef	UNIX_MACOS
+#ifndef	UNIX_BSD
 	if (GetOsInfo()->OsType == OSTYPE_LINUX)
 	{
 		// Linux
@@ -457,7 +370,7 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 			Run("chmod", tmp, true, true);
 		}
 	}
-	// Other than MacOS X
+
 	fd = open(TAP_FILENAME_1, O_RDWR);
 	if (fd == -1)
 	{
@@ -467,36 +380,33 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 		{
 			return -1;
 		}
-		tap_name = TAP_FILENAME_2;
 	}
-#else	// UNIX_MACOS
+#else	// UNIX_BSD
 	{
-		int i;
-		fd = -1;
-		for (i = 0; i < TAP_MACOS_NUMBER; i++) {
-			sprintf(tap_macos_name + strlen(TAP_MACOS_DIR TAP_MACOS_FILENAME), "%d", i);
-			fd = open(tap_macos_name, O_RDWR);
+		sprintf(tap_path, "%s", TAP_DIR TAP_NAME);
+		for (int i = 0; i < TAP_MAX; i++) {
+			sprintf(tap_path + StrLen(TAP_DIR TAP_NAME), "%d", i);
+			fd = open(tap_path, O_RDWR);
 			if (fd != -1)
 			{
-				tap_name = tap_macos_name;
 				break;
 			}
 		}
+
 		if (fd == -1)
 		{
 			return -1;
 		}
 	}
-#endif	// UNIX_MACOS
+#endif	// UNIX_BSD
 
 #ifdef	UNIX_LINUX
-	// Create a tap for Linux
+	// Create a TAP device for Linux
 
-	// Set the device name
+	// Set the name and the flags
 	Zero(&ifr, sizeof(ifr));
-
+	StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), tap_name);
 	ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-	StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), eth_name);
 
 	if (ioctl(fd, TUNSETIFF, &ifr) == -1)
 	{
@@ -505,60 +415,76 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 		return -1;
 	}
 
-	// MAC address setting
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s != -1)
 	{
+		// Set the MAC address
 		if (mac_address != NULL)
 		{
 			Zero(&ifr, sizeof(ifr));
-			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), eth_name);
+			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), tap_name);
 			ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
-			Copy(&ifr.ifr_addr.sa_data, mac_address, 6);
+			Copy(&ifr.ifr_hwaddr.sa_data, mac_address, ETHER_ADDR_LEN);
 			ioctl(s, SIOCSIFHWADDR, &ifr);
 		}
 
-		Zero(&ifr, sizeof(ifr));
-		StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), eth_name);
-		ioctl(s, SIOCGIFFLAGS, &ifr);
-
-		ifr.ifr_flags |= IFF_UP;
-		ioctl(s, SIOCSIFFLAGS, &ifr);
+		if (create_up)
+		{
+			Zero(&ifr, sizeof(ifr));
+			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), tap_name);
+			ioctl(s, SIOCGIFFLAGS, &ifr);
+			ifr.ifr_flags |= IFF_UP;
+			ioctl(s, SIOCSIFFLAGS, &ifr);
+		}
 
 		close(s);
 	}
+#endif	// UNIX_LINUX
 
-#else	// UNIX_LINUX
-#ifdef	UNIX_MACOS
-	// MAC address setting
+#ifdef	UNIX_BSD
+	// Create a TAP device for BSD
+	Zero(&ifr, sizeof(ifr));
+
+	// Get the current name
+	StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), tap_path + StrLen(TAP_DIR));
+
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s != -1)
 	{
-		char *macos_eth_name;
-		macos_eth_name = tap_macos_name + strlen(TAP_MACOS_DIR);
+		// Set the name, if possible
+#ifdef	SIOCSIFNAME
+		ifr.ifr_data = tap_name;
+		ioctl(s, SIOCSIFNAME, &ifr);
+#else	// SIOCSIFNAME
+		StrCpy(tap_name, sizeof(tap_name), ifr.ifr_name);
+#endif	// SIOCSIFNAME
 
+		// Set the MAC address
 		if (mac_address != NULL)
 		{
 			Zero(&ifr, sizeof(ifr));
-			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), macos_eth_name);
+			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), tap_name);
 			ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
 			ifr.ifr_addr.sa_family = AF_LINK;
 			Copy(&ifr.ifr_addr.sa_data, mac_address, ETHER_ADDR_LEN);
 			ioctl(s, SIOCSIFLLADDR, &ifr);
 		}
 
-		Zero(&ifr, sizeof(ifr));
-		StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), macos_eth_name);
-		ioctl(s, SIOCGIFFLAGS, &ifr);
-
-		ifr.ifr_flags |= IFF_UP;
-		ioctl(s, SIOCSIFFLAGS, &ifr);
+		if (create_up)
+		{
+			Zero(&ifr, sizeof(ifr));
+			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), tap_name);
+			ioctl(s, SIOCGIFFLAGS, &ifr);
+			ifr.ifr_flags |= IFF_UP;
+			ioctl(s, SIOCSIFFLAGS, &ifr);
+		}
 
 		close(s);
 	}
-#endif	// UNIX_MACOS
+#endif	// UNIX_BSD
+
 #ifdef	UNIX_SOLARIS
-	// Create a tap for Solaris
+	// Create a TAP device for Solaris
 	{
 		int ip_fd;
 		int tun_fd;
@@ -622,15 +548,13 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 		close(tun_fd);
 		close(ip_fd);
 	}
-
 #endif	// UNIX_SOLARIS
-#endif	// UNIX_LINUX
 
 	return fd;
 }
-int UnixCreateTapDevice(char *name, UCHAR *mac_address)
+int UnixCreateTapDevice(char *name, UCHAR *mac_address, bool create_up)
 {
-	return UnixCreateTapDeviceEx(name, "vpn", mac_address);
+	return UnixCreateTapDeviceEx(name, "vpn", mac_address, create_up);
 }
 
 // Close the tap device
@@ -651,11 +575,11 @@ void UnixCloseTapDevice(int fd)
 {
 }
 
-int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
+int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address, bool create_up)
 {
 	return -1;
 }
-int UnixCreateTapDevice(char *name, UCHAR *mac_address)
+int UnixCreateTapDevice(char *name, UCHAR *mac_address, bool create_up)
 {
 	return -1;
 }
@@ -687,7 +611,7 @@ void UnixVLanInit()
 }
 
 // Create a VLAN
-bool UnixVLanCreateEx(char *name, char *prefix, UCHAR *mac_address)
+bool UnixVLanCreateEx(char *name, char *prefix, UCHAR *mac_address, bool create_up)
 {
 	// Validate arguments
 	char tmp[MAX_SIZE];
@@ -718,7 +642,7 @@ bool UnixVLanCreateEx(char *name, char *prefix, UCHAR *mac_address)
 		}
 
 		// Create a tap device
-		fd = UnixCreateTapDeviceEx(name, prefix, mac_address);
+		fd = UnixCreateTapDeviceEx(name, prefix, mac_address, create_up);
 		if (fd == -1)
 		{
 			// Failure to create
@@ -736,9 +660,63 @@ bool UnixVLanCreateEx(char *name, char *prefix, UCHAR *mac_address)
 
 	return true;
 }
-bool UnixVLanCreate(char *name, UCHAR *mac_address)
+bool UnixVLanCreate(char *name, UCHAR *mac_address, bool create_up)
 {
-	return UnixVLanCreateEx(name, "vpn", mac_address);
+	return UnixVLanCreateEx(name, "vpn", mac_address, create_up);
+}
+
+// Set a VLAN up/down
+bool UnixVLanSetState(char* name, bool state_up)
+{
+#ifdef UNIX_LINUX
+	UNIX_VLAN_LIST *t, tt;
+	struct ifreq ifr;
+	int s;
+	char eth_name[MAX_SIZE];
+
+	LockList(unix_vlan);
+	{
+		int result;
+		// Find a device with the same name
+		Zero(&tt, sizeof(tt));
+		StrCpy(tt.Name, sizeof(tt.Name), name);
+
+		t = Search(unix_vlan, &tt);
+		if (t == NULL)
+		{
+			// No such device
+			UnlockList(unix_vlan);
+			return false;
+		}
+
+		GenerateTunName(name, "vpn", eth_name, sizeof(eth_name));
+		Zero(&ifr, sizeof(ifr));
+		StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), eth_name);
+
+		s = socket(AF_INET, SOCK_DGRAM, 0);
+		if (s == -1)
+		{
+			// Failed to create socket
+			UnlockList(unix_vlan);
+			return false;
+		}
+
+		ioctl(s, SIOCGIFFLAGS, &ifr);
+		if (state_up)
+		{
+			ifr.ifr_flags |= IFF_UP;
+		}
+		else
+		{
+			ifr.ifr_flags &= ~IFF_UP;
+		}
+		result = ioctl(s, SIOCSIFFLAGS, &ifr);
+		close(s);
+	}
+	UnlockList(unix_vlan);
+#endif // UNIX_LINUX
+
+	return true;
 }
 
 // Enumerate VLANs
@@ -844,7 +822,4 @@ void UnixVLanFree()
 	unix_vlan = NULL;
 }
 
-#endif	// OS_UNIX
-
-#endif	// VLAN_C
-
+#endif
