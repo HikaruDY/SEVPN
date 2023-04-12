@@ -106,8 +106,8 @@
 #define	SERVER_H
 
 // Default ports
-#define	SERVER_DEF_PORTS_1				0
-#define	SERVER_DEF_PORTS_2				994
+#define	SERVER_DEF_PORTS_1				443
+#define	SERVER_DEF_PORTS_2				992
 #define	SERVER_DEF_PORTS_3				1194
 #define	SERVER_DEF_PORTS_4				GC_DEFAULT_PORT
 

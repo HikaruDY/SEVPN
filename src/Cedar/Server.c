@@ -1444,11 +1444,11 @@ void GetServerCapsMain(SERVER *s, CAPSLIST *t)
 
 		max_clients = INFINITE;
 		max_bridges = INFINITE;
-		max_sessions = INFINITE; //*** SERVER_MAX_SESSIONS_FOR_CARRIER_EDITION;
+		max_sessions = SERVER_MAX_SESSIONS_FOR_CARRIER_EDITION;
 		max_user_creations = INFINITE;
 
 		// Maximum number of virtual HUBs
-		AddCapsInt(t, "i_max_hubs", INFINITE); //*** SERVER_MAX_SESSIONS_FOR_CARRIER_EDITION);
+		AddCapsInt(t, "i_max_hubs", SERVER_MAX_SESSIONS_FOR_CARRIER_EDITION);
 
 		// The maximum number of concurrent sessions
 		AddCapsInt(t, "i_max_sessions", max_sessions);
@@ -1465,13 +1465,13 @@ void GetServerCapsMain(SERVER *s, CAPSLIST *t)
 		if (s->ServerType != SERVER_TYPE_FARM_MEMBER)
 		{
 			// Maximum number of registrable users / Virtual HUB
-			AddCapsInt(t, "i_max_users_per_hub", INFINITE); //***MAX_USERS);
+			AddCapsInt(t, "i_max_users_per_hub", MAX_USERS);
 
 			// Maximum number of registrable groups / Virtual HUB
-			AddCapsInt(t, "i_max_groups_per_hub", INFINITE); //***MAX_GROUPS);
+			AddCapsInt(t, "i_max_groups_per_hub", MAX_GROUPS);
 
 			// Maximum number of registrable access list entries / Virtual HUB
-			AddCapsInt(t, "i_max_access_lists", INFINITE); //***MAX_ACCESSLISTS);
+			AddCapsInt(t, "i_max_access_lists", MAX_ACCESSLISTS);
 		}
 		else
 		{
@@ -1507,7 +1507,7 @@ void GetServerCapsMain(SERVER *s, CAPSLIST *t)
 		AddCapsBool(t, "b_support_openvpn", (s->ServerType == SERVER_TYPE_STANDALONE));
 
 		// DDNS
-		AddCapsBool(t, "b_support_ddns", false); //*** (s->DDnsClient != NULL));
+		AddCapsBool(t, "b_support_ddns", (s->DDnsClient != NULL));
 
 		if (s->DDnsClient != NULL)
 		{
@@ -2253,8 +2253,8 @@ void SiInitListenerList(SERVER *s)
 	SiLockListenerList(s);
 	{
 		{
-			// Register the 4 ports (994,  1194, 5555) as the default port
-//***			SiAddListener(s, SERVER_DEF_PORTS_1, true);
+			// Register the 4 ports (443, 992, 1194, 8888) as the default port
+			SiAddListener(s, SERVER_DEF_PORTS_1, true);
 			SiAddListener(s, SERVER_DEF_PORTS_2, true);
 			SiAddListener(s, SERVER_DEF_PORTS_3, true);
 			SiAddListener(s, SERVER_DEF_PORTS_4, true);
@@ -2623,7 +2623,7 @@ void SiLoadInitialConfiguration(SERVER *s)
 	Zero(&k, sizeof(k));
 
 	{
-		k.UseKeepConnect = false; //*** true;
+		k.UseKeepConnect = true;
 	}
 	k.KeepConnectPort = 80;
 	StrCpy(k.KeepConnectHost, sizeof(k.KeepConnectHost), CLIENT_DEFAULT_KEEPALIVE_HOST);
@@ -2661,7 +2661,7 @@ void SiLoadInitialConfiguration(SERVER *s)
 	if (s->Cedar->Bridge == false)
 	{
 		// Create a DDNS client
-		s->DDnsClient = 0; //*** NewDDNSClient(s->Cedar, NULL, NULL);
+		s->DDnsClient = NewDDNSClient(s->Cedar, NULL, NULL);
 	}
 
 
@@ -2826,7 +2826,7 @@ void SiInitConfiguration(SERVER *s)
 		SLog(s->Cedar, "LS_LOAD_CONFIG_2");
 	}
 
-	s->CfgRw->DontBackup = true; //*** s->DontBackupConfig;
+	s->CfgRw->DontBackup = s->DontBackupConfig;
 
 	// The arp_filter in Linux
 	if (GetOsInfo()->OsType == OSTYPE_LINUX)
@@ -2851,9 +2851,9 @@ void SiInitConfiguration(SERVER *s)
 	// Create a VPN Azure client
 	if (s->DDnsClient != NULL && s->Cedar->Bridge == false && s->ServerType == SERVER_TYPE_STANDALONE)
 	{
-		s->AzureClient = 0; //*** NewAzureClient(s->Cedar, s);
+		s->AzureClient = NewAzureClient(s->Cedar, s);
 
-		//*** AcSetEnable(s->AzureClient, s->EnableVpnAzure);
+		AcSetEnable(s->AzureClient, s->EnableVpnAzure);
 	}
 
 	// Reduce the storage interval in the case of user mode
@@ -3035,8 +3035,6 @@ bool SiLoadConfigurationCfg(SERVER *s, FOLDER *root)
 		SiLoadIPsec(s, f7);
 	}
 
-	/***
-
 	if (s->Cedar->Bridge == false)
 	{
 		if (f8 == NULL)
@@ -3093,7 +3091,6 @@ bool SiLoadConfigurationCfg(SERVER *s, FOLDER *root)
 		}
 	}
 
-	***/
 
 	{
 		HUB *h = NULL;
@@ -3409,8 +3406,6 @@ FOLDER *SiWriteConfigurationToCfg(SERVER *s)
 		SiWriteIPsec(CfgCreateFolder(root, "IPsec"), s);
 	}
 
-	/***
-
 	if (s->Cedar->Bridge == false)
 	{
 		FOLDER *ddns_folder = CfgCreateFolder(root, "DDnsClient");
@@ -3449,8 +3444,6 @@ FOLDER *SiWriteConfigurationToCfg(SERVER *s)
 			}
 		}
 	}
-
-	***/
 
 	CfgAddBool(root, "IPsecMessageDisplayed", s->IPsecMessageDisplayed);
 
@@ -4143,7 +4136,7 @@ void SiLoadHubOptionCfg(FOLDER *f, HUB_OPTION *o)
 	o->DisableUserModeSecureNAT = CfgGetBool(f, "DisableUserModeSecureNAT");
 	o->DisableCheckMacOnLocalBridge = CfgGetBool(f, "DisableCheckMacOnLocalBridge");
 	o->DisableCorrectIpOffloadChecksum = CfgGetBool(f, "DisableCorrectIpOffloadChecksum");
-	o->SuppressClientUpdateNotification = 1; //***  = CfgGetBool(f, "SuppressClientUpdateNotification");
+	o->SuppressClientUpdateNotification = CfgGetBool(f, "SuppressClientUpdateNotification");
 	o->AssignVLanIdByRadiusAttribute = CfgGetBool(f, "AssignVLanIdByRadiusAttribute");
 	o->DenyAllRadiusLoginWithNoVlanAssign = CfgGetBool(f, "DenyAllRadiusLoginWithNoVlanAssign");
 	o->SecureNAT_RandomizeAssignIp = CfgGetBool(f, "SecureNAT_RandomizeAssignIp");
@@ -4225,8 +4218,6 @@ void SiWriteHubOptionCfg(FOLDER *f, HUB_OPTION *o)
 	CfgAddBool(f, "DoNotSaveHeavySecurityLogs", o->DoNotSaveHeavySecurityLogs);
 	CfgAddBool(f, "DropBroadcastsInPrivacyFilterMode", o->DropBroadcastsInPrivacyFilterMode);
 	CfgAddBool(f, "DropArpInPrivacyFilterMode", o->DropArpInPrivacyFilterMode);
-
-	o->SuppressClientUpdateNotification = 1; //***
 	CfgAddBool(f, "SuppressClientUpdateNotification", o->SuppressClientUpdateNotification);
 	CfgAddBool(f, "AssignVLanIdByRadiusAttribute", o->AssignVLanIdByRadiusAttribute);
 	CfgAddBool(f, "DenyAllRadiusLoginWithNoVlanAssign", o->DenyAllRadiusLoginWithNoVlanAssign);
@@ -4237,7 +4228,6 @@ void SiWriteHubOptionCfg(FOLDER *f, HUB_OPTION *o)
 	CfgAddInt(f, "AdjustTcpMssValue", o->AdjustTcpMssValue);
 	CfgAddBool(f, "DisableAdjustTcpMss", o->DisableAdjustTcpMss);
 	CfgAddBool(f, "NoDhcpPacketLogOutsideHub", o->NoDhcpPacketLogOutsideHub);
-	o->DisableHttpParsing = 1; //***
 	CfgAddBool(f, "DisableHttpParsing", o->DisableHttpParsing);
 	CfgAddBool(f, "DisableUdpAcceleration", o->DisableUdpAcceleration);
 	CfgAddBool(f, "DisableUdpFilterForLocalBridgeNic", o->DisableUdpFilterForLocalBridgeNic);
@@ -5610,13 +5600,13 @@ void SiLoadIPsec(SERVER *s, FOLDER *f)
 	CfgGetStr(f, "IPsec_Secret", sl.IPsec_Secret, sizeof(sl.IPsec_Secret));
 	CfgGetStr(f, "L2TP_DefaultHub", sl.L2TP_DefaultHub, sizeof(sl.L2TP_DefaultHub));
 
-//***	if (s->ServerType == SERVER_TYPE_STANDALONE)
-//***	{
+	if (s->ServerType == SERVER_TYPE_STANDALONE)
+	{
 		// IPsec feature only be enabled on a standalone server
 		sl.L2TP_Raw = CfgGetBool(f, "L2TP_Raw");
 		sl.L2TP_IPsec = CfgGetBool(f, "L2TP_IPsec");
 		sl.EtherIP_IPsec = CfgGetBool(f, "EtherIP_IPsec");
-//***	}
+	}
 
 	IPsecServerSetServices(s->IPsecServer, &sl);
 
@@ -5689,9 +5679,9 @@ void SiWriteIPsec(FOLDER *f, SERVER *s)
 	CfgAddStr(f, "IPsec_Secret", sl.IPsec_Secret);
 	CfgAddStr(f, "L2TP_DefaultHub", sl.L2TP_DefaultHub);
 
-	CfgAddBool(f, "L2TP_Raw", true); //*** sl.L2TP_Raw);
-	CfgAddBool(f, "L2TP_IPsec", true); //*** sl.L2TP_IPsec);
-	CfgAddBool(f, "EtherIP_IPsec", true); //*** sl.EtherIP_IPsec);
+	CfgAddBool(f, "L2TP_Raw", sl.L2TP_Raw);
+	CfgAddBool(f, "L2TP_IPsec", sl.L2TP_IPsec);
+	CfgAddBool(f, "EtherIP_IPsec", sl.EtherIP_IPsec);
 
 	list_folder = CfgCreateFolder(f, "EtherIP_IDSettingsList");
 
@@ -5865,7 +5855,7 @@ void SiLoadServerCfg(SERVER *s, FOLDER *f)
 		SetGetIpThreadMaxNum(DEFAULT_GETIP_THREAD_MAX_NUM);
 	}
 
-	s->DontBackupConfig = true; //*** CfgGetBool(f, "DontBackupConfig");
+	s->DontBackupConfig = CfgGetBool(f, "DontBackupConfig");
 
 	if (CfgIsItem(f, "BackupConfigOnlyWhenModified"))
 	{
@@ -5899,7 +5889,7 @@ void SiLoadServerCfg(SERVER *s, FOLDER *f)
 
 			// Keep-alive related
 			Zero(&k, sizeof(k));
-			k.UseKeepConnect = false; //*** CfgGetBool(f, "UseKeepConnect");
+			k.UseKeepConnect = CfgGetBool(f, "UseKeepConnect");
 			CfgGetStr(f, "KeepConnectHost", k.KeepConnectHost, sizeof(k.KeepConnectHost));
 			k.KeepConnectPort = CfgGetInt(f, "KeepConnectPort");
 			k.KeepConnectProtocol = CfgGetInt(f, "KeepConnectProtocol");
@@ -5928,8 +5918,8 @@ void SiLoadServerCfg(SERVER *s, FOLDER *f)
 			Lock(s->Keep->lock);
 			{
 				KEEP *keep = s->Keep;
-				keep->Enable = false; //*** k.UseKeepConnect;
-				keep->Server = false; //*** true;
+				keep->Enable = k.UseKeepConnect;
+				keep->Server = true;
 				StrCpy(keep->ServerName, sizeof(keep->ServerName), k.KeepConnectHost);
 				keep->ServerPort = k.KeepConnectPort;
 				keep->UdpMode = k.KeepConnectProtocol;
@@ -6192,7 +6182,7 @@ void SiLoadServerCfg(SERVER *s, FOLDER *f)
 		}
 
 		// Configuration of VPN Azure Client
-		s->EnableVpnAzure = false; //*** CfgGetBool(f, "EnableVpnAzure");
+		s->EnableVpnAzure = CfgGetBool(f, "EnableVpnAzure");
 
 		// Disable GetHostName when accepting TCP
 		s->DisableGetHostNameWhenAcceptTcp = CfgGetBool(f, "DisableGetHostNameWhenAcceptTcp");
@@ -6326,7 +6316,7 @@ void SiWriteServerCfg(FOLDER *f, SERVER *s)
 
 	CfgAddInt(f, "AutoSaveConfigSpan", s->AutoSaveConfigSpanSaved / 1000);
 
-	CfgAddBool(f, "DontBackupConfig", true); //*** s->DontBackupConfig);
+	CfgAddBool(f, "DontBackupConfig", s->DontBackupConfig);
 	CfgAddBool(f, "BackupConfigOnlyWhenModified", s->BackupConfigOnlyWhenModified);
 
 	if (s->Logger != NULL)
@@ -6352,13 +6342,11 @@ void SiWriteServerCfg(FOLDER *f, SERVER *s)
 		Lock(s->Keep->lock);
 		{
 			KEEP *k = s->Keep;
-			/***
 			CfgAddBool(f, "UseKeepConnect", k->Enable);
 			CfgAddStr(f, "KeepConnectHost", k->ServerName);
 			CfgAddInt(f, "KeepConnectPort", k->ServerPort);
 			CfgAddInt(f, "KeepConnectProtocol", k->UdpMode);
 			CfgAddInt(f, "KeepConnectInterval", k->Interval / 1000);
-			***/
 		}
 		Unlock(s->Keep->lock);
 
@@ -6560,9 +6548,6 @@ void SiWriteServerCfg(FOLDER *f, SERVER *s)
 void SiLoadTraffic(FOLDER *parent, char *name, TRAFFIC *t)
 {
 	FOLDER *f;
-
-	return; //***
-
 	// Validate arguments
 	if (t != NULL)
 	{
@@ -6612,9 +6597,6 @@ void SiLoadTrafficInner(FOLDER *parent, char *name, TRAFFIC_ENTRY *e)
 void SiWriteTraffic(FOLDER *parent, char *name, TRAFFIC *t)
 {
 	FOLDER *f;
-
-	return; //***
-
 	// Validate arguments
 	if (parent == NULL || name == NULL || t == NULL)
 	{
@@ -7583,7 +7565,7 @@ void SiCalledUpdateHub(SERVER *s, PACK *p)
 	o.DoNotSaveHeavySecurityLogs = PackGetBool(p, "DoNotSaveHeavySecurityLogs");
 	o.DropBroadcastsInPrivacyFilterMode = PackGetBool(p, "DropBroadcastsInPrivacyFilterMode");
 	o.DropArpInPrivacyFilterMode = PackGetBool(p, "DropArpInPrivacyFilterMode");
-	o.SuppressClientUpdateNotification = 1; //*** PackGetBool(p, "SuppressClientUpdateNotification");
+	o.SuppressClientUpdateNotification = PackGetBool(p, "SuppressClientUpdateNotification");
 	o.AssignVLanIdByRadiusAttribute = PackGetBool(p, "AssignVLanIdByRadiusAttribute");
 	o.DenyAllRadiusLoginWithNoVlanAssign = PackGetBool(p, "DenyAllRadiusLoginWithNoVlanAssign");
 	o.SecureNAT_RandomizeAssignIp = PackGetBool(p, "SecureNAT_RandomizeAssignIp");
@@ -7611,7 +7593,7 @@ void SiCalledUpdateHub(SERVER *s, PACK *p)
 	o.AdjustTcpMssValue = PackGetInt(p, "AdjustTcpMssValue");
 	o.DisableAdjustTcpMss = PackGetBool(p, "DisableAdjustTcpMss");
 	o.NoDhcpPacketLogOutsideHub = PackGetBool(p, "NoDhcpPacketLogOutsideHub");
-	o.DisableHttpParsing = 1; //*** PackGetBool(p, "DisableHttpParsing");
+	o.DisableHttpParsing = PackGetBool(p, "DisableHttpParsing");
 	o.DisableUdpAcceleration = PackGetBool(p, "DisableUdpAcceleration");
 	o.DisableUdpFilterForLocalBridgeNic = PackGetBool(p, "DisableUdpFilterForLocalBridgeNic");
 	o.ApplyIPv4AccessListOnArpPacket = PackGetBool(p, "ApplyIPv4AccessListOnArpPacket");
@@ -9430,8 +9412,6 @@ void SiPackAddCreateHub(PACK *p, HUB *h)
 	PackAddBool(p, "DoNotSaveHeavySecurityLogs", h->Option->DoNotSaveHeavySecurityLogs);
 	PackAddBool(p, "DropBroadcastsInPrivacyFilterMode", h->Option->DropBroadcastsInPrivacyFilterMode);
 	PackAddBool(p, "DropArpInPrivacyFilterMode", h->Option->DropArpInPrivacyFilterMode);
-
-	h->Option->SuppressClientUpdateNotification = 1; //***
 	PackAddBool(p, "SuppressClientUpdateNotification", h->Option->SuppressClientUpdateNotification);
 	PackAddBool(p, "AssignVLanIdByRadiusAttribute", h->Option->AssignVLanIdByRadiusAttribute);
 	PackAddBool(p, "DenyAllRadiusLoginWithNoVlanAssign", h->Option->DenyAllRadiusLoginWithNoVlanAssign);
@@ -9459,7 +9439,6 @@ void SiPackAddCreateHub(PACK *p, HUB *h)
 	PackAddInt(p, "AdjustTcpMssValue", h->Option->AdjustTcpMssValue);
 	PackAddBool(p, "DisableAdjustTcpMss", h->Option->DisableAdjustTcpMss);
 	PackAddBool(p, "NoDhcpPacketLogOutsideHub", h->Option->NoDhcpPacketLogOutsideHub);
-	h->Option->DisableHttpParsing = 1; //***
 	PackAddBool(p, "DisableHttpParsing", h->Option->DisableHttpParsing);
 	PackAddBool(p, "DisableUdpAcceleration", h->Option->DisableUdpAcceleration);
 	PackAddBool(p, "DisableUdpFilterForLocalBridgeNic", h->Option->DisableUdpFilterForLocalBridgeNic);
@@ -10932,12 +10911,12 @@ bool SiIsEnterpriseFunctionsRestrictedOnOpenSource(CEDAR *c)
 
 
 	SiGetCurrentRegion(c, region, sizeof(region));
-/***
+
 	if (StrCmpi(region, "JP") == 0 || StrCmpi(region, "CN") == 0)
 	{
 		ret = true;
 	}
-*/
+
 	return ret;
 }
 
@@ -11047,8 +11026,8 @@ SERVER *SiNewServerEx(bool bridge, bool in_client_inner_server, bool relay_serve
 	s->Keep = StartKeep();
 
 	// Log related
-	//*** MakeDir(bridge == false ? SERVER_LOG_DIR_NAME : BRIDGE_LOG_DIR_NAME);
-	//*** s->Logger = NewLog(bridge == false ? SERVER_LOG_DIR_NAME : BRIDGE_LOG_DIR_NAME, SERVER_LOG_PERFIX, LOG_SWITCH_DAY);
+	MakeDir(bridge == false ? SERVER_LOG_DIR_NAME : BRIDGE_LOG_DIR_NAME);
+	s->Logger = NewLog(bridge == false ? SERVER_LOG_DIR_NAME : BRIDGE_LOG_DIR_NAME, SERVER_LOG_PERFIX, LOG_SWITCH_DAY);
 
 	SLog(s->Cedar, "L_LINE");
 	SLog(s->Cedar, "LS_START_2", s->Cedar->ServerStr, s->Cedar->VerString);
