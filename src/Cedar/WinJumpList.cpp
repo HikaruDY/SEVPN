@@ -1,186 +1,29 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // WinJumpList.cpp
 // HTML display module source code for Win32
 
-#include <GlobalConst.h>
+#ifdef OS_WIN32
 
-#ifdef	WIN32
+#define NTDDI_VERSION NTDDI_WIN7
+#define _WIN32_WINNT _WIN32_WINNT_WIN7
 
-//#define NTDDI_WIN7                          0x06010000
-//#define	_WIN32_WINNT	_WIN32_WINNT_VISTA
-//#define NTDDI_VERSION NTDDI_VISTA  // Specifies that the minimum required platform is Windows 7.
-#define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers
-#define STRICT_TYPED_ITEMIDS      // Utilize strictly typed IDLists
-
-//#include <objectarray.h>
-#include <shobjidl.h>
-#include <propkey.h>
-#include <propvarutil.h>
-//#include <knownfolders.h>
-//#include <shlobj.h>
-
-
-#ifdef StrCpy
-#undef StrCpy
-#endif
-
-#ifdef StrCat
-#undef StrCat
-#endif
-
-#ifdef StrCmp
-#undef StrCmp
-#endif
-
-
-#define	WIN32COM_CPP
-
-//#define	_WIN32_WINNT		0x0502
-//#define	WINVER				0x0502
-#include <winsock2.h>
-#include <windows.h>
-#include <wincrypt.h>
-#include <wininet.h>
-#include <comdef.h>
-#include <Mshtmhst.h>
-//#include <shlobj.h>
-#include <commctrl.h>
-#include <Dbghelp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-#include <stdarg.h>
-#include <time.h>
-#include <errno.h>
+#include "Win32Com.h"
 
 extern "C"
 {
-#include <Mayaqua/Mayaqua.h>
-#include <Cedar/Cedar.h>
+#include "Mayaqua/Str.h"
 }
-#include "../PenCore/resource.h"
+
+#define STRICT_TYPED_ITEMIDS // Utilize strictly typed IDLists
+
+#include <ShObjIdl.h>
+#include <propvarutil.h>
 
 extern "C"
 {
-
-	//////////////////////////////////////////////////////////////////////////
-	//JumpList
-	//#define NTDDI_WIN7                          0x06010000
-	//#define NTDDI_VERSION NTDDI_WIN7  // Specifies that the minimum required platform is Windows 7.
-	//#define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers
-	//#define STRICT_TYPED_ITEMIDS      // Utilize strictly typed IDLists
-	//
-	//
-	//#include <shobjidl.h>
-	//#include <propkey.h>
-	//#include <propvarutil.h>
-	//#include <knownfolders.h>
-	//#include <shlobj.h>
-	//
-	//#pragma comment(lib, "propsys.lib")
-	//#pragma comment(lib, "shlwapi.lib")
-
 	#define CREATE_PROPERTYKEY(l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
 
 
@@ -209,29 +52,7 @@ extern "C"
 	JL_HRESULT JL_CreateCustomDestinationList(JL_PCustomDestinationList* poc, wchar_t* appID)
 	{
 		ICustomDestinationList *pcdl;
-
-		//CLSID_DestinationList = 6332DEBF-87B5-4670-90C0-5E57-B408-A49E
-
-		GUID destList;
-
-		destList.Data1 = 2012286192;
-		destList.Data2 = 15797;
-		destList.Data3 = 18790;
-
-		destList.Data4[0] = 181;
-		destList.Data4[1] = 32;
-		destList.Data4[2] = 183;
-		destList.Data4[3] = 197;
-		destList.Data4[4] = 79;
-		destList.Data4[5] = 211;
-		destList.Data4[6] = 94;
-		destList.Data4[7] = 214;
-
-		//destList = CLSID_DestinationList;
-
-		//HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pcdl));
-		HRESULT hr = CoCreateInstance(destList, 
-			NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pcdl));
+		HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pcdl));
 
 		if (SUCCEEDED(hr))
 		{

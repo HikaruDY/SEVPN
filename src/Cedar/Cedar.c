@@ -1,109 +1,39 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Cedar.c
 // Cedar Communication Module
 
+#include "Cedar.h"
 
-#include "CedarPch.h"
+#include "Admin.h"
+#include "Bridge.h"
+#include "Connection.h"
+#include "Layer3.h"
+#include "Link.h"
+#include "Listener.h"
+#include "Protocol.h"
+#include "Sam.h"
+#include "Server.h"
+#include "Session.h"
+#include "VLanWin32.h"
+#include "WebUI.h"
+
+#include "Mayaqua/Cfg.h"
+#include "Mayaqua/Encrypt.h"
+#include "Mayaqua/FileIO.h"
+#include "Mayaqua/HTTP.h"
+#include "Mayaqua/Mayaqua.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Microsoft.h"
+#include "Mayaqua/Object.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/Table.h"
+#include "Mayaqua/Tick64.h"
+#include "Mayaqua/Win32.h"
+
+#include <sodium.h>
 
 static UINT init_cedar_counter = 0;
 static REF *cedar_log_ref = NULL;
@@ -256,23 +186,11 @@ bool IsSupportedWinVer(RPC_WINVER *v)
 
 	if ((v->VerMajor == 6 && v->VerMinor == 4) || (v->VerMajor == 10 && v->VerMinor == 0))
 	{
-		if (v->IsServer == false)
+		// Windows 10 or Windows Server 2016
+		if (v->ServicePack <= 0)
 		{
-			// Windows 10 (not Windows Server 2016)
-			if (v->ServicePack <= 0)
-			{
-				// SP0 only
-				return true;
-			}
-		}
-		else
-		{
-			// Windows Server 2016
-			if (v->ServicePack <= 0)
-			{
-				// SP0 only
-				return true;
-			}
+			// SP0 only
+			return true;
 		}
 	}
 
@@ -378,34 +296,6 @@ int CompareNoSslList(void *p1, void *p2)
 		return 0;
 	}
 	return CmpIpAddr(&n1->IpAddress, &n2->IpAddress);
-}
-
-// Check whether the specified IP address is in Non-SSL connection list
-bool IsInNoSsl(CEDAR *c, IP *ip)
-{
-	bool ret = false;
-	// Validate arguments
-	if (c == NULL || ip == NULL)
-	{
-		return false;
-	}
-
-	LockList(c->NonSslList);
-	{
-		NON_SSL *n = SearchNoSslList(c, ip);
-
-		if (n != NULL)
-		{
-			if (n->EntryExpires > Tick64() && n->Count > NON_SSL_MIN_COUNT)
-			{
-				n->EntryExpires = Tick64() + (UINT64)NON_SSL_ENTRY_EXPIRES;
-				ret = true;
-			}
-		}
-	}
-	UnlockList(c->NonSslList);
-
-	return ret;
 }
 
 // Decrement connection count of Non-SSL connection list entry 
@@ -562,42 +452,6 @@ void FreeNoSslList(CEDAR *c)
 	c->NonSslList = NULL;
 }
 
-// Write a message into Cedar log
-void CedarLog(char *str)
-{
-	char *tmp;
-	// Validate arguments
-	if (str == NULL)
-	{
-		return;
-	}
-	if (cedar_log_ref == NULL)
-	{
-		return;
-	}
-
-	tmp = CopyStr(str);
-
-	if (StrLen(tmp) > 1)
-	{
-		if (tmp[StrLen(tmp) - 1] == '\n')
-		{
-			tmp[StrLen(tmp) - 1] = 0;
-		}
-		if (StrLen(tmp) > 1)
-		{
-			if (tmp[StrLen(tmp) - 1] == '\r')
-			{
-				tmp[StrLen(tmp) - 1] = 0;
-			}
-		}
-	}
-
-	InsertStringRecord(cedar_log, tmp);
-
-	Free(tmp);
-}
-
 // Start Cedar log
 void StartCedarLog()
 {
@@ -654,37 +508,6 @@ UINT64 GetTrafficPacketNum(TRAFFIC *t)
 
 	return t->Recv.BroadcastCount + t->Recv.UnicastCount +
 		t->Send.BroadcastCount + t->Send.UnicastCount;
-}
-
-// Get whether hidden password is changed in UI
-bool IsHiddenPasswordChanged(char *str)
-{
-	// Validate arguments
-	if (str == NULL)
-	{
-		return true;
-	}
-
-	if (StrCmpi(str, HIDDEN_PASSWORD) == 0)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-// Initialize hidden password in UI
-void InitHiddenPassword(char *str, UINT size)
-{
-	// Validate arguments
-	if (str == NULL)
-	{
-		return;
-	}
-
-	StrCpy(str, size, HIDDEN_PASSWORD);
 }
 
 // Check whether the certificate is signed by CA which is trusted by the hub 
@@ -879,47 +702,6 @@ void DelConnection(CEDAR *cedar, CONNECTION *c)
 		}
 	}
 	UnlockList(cedar->ConnectionList);
-}
-
-// Get the number of unestablished connections
-UINT GetUnestablishedConnections(CEDAR *cedar)
-{
-	UINT i, ret;
-	// Validate arguments
-	if (cedar == NULL)
-	{
-		return 0;
-	}
-
-	ret = 0;
-
-	LockList(cedar->ConnectionList);
-	{
-		for (i = 0;i < LIST_NUM(cedar->ConnectionList);i++)
-		{
-			CONNECTION *c = LIST_DATA(cedar->ConnectionList, i);
-
-			switch (c->Type)
-			{
-			case CONNECTION_TYPE_CLIENT:
-			case CONNECTION_TYPE_INIT:
-			case CONNECTION_TYPE_LOGIN:
-			case CONNECTION_TYPE_ADDITIONAL:
-				switch (c->Status)
-				{
-				case CONNECTION_STATUS_ACCEPTED:
-				case CONNECTION_STATUS_NEGOTIATION:
-				case CONNECTION_STATUS_USERAUTH:
-					ret++;
-					break;
-				}
-				break;
-			}
-		}
-	}
-	UnlockList(cedar->ConnectionList);
-
-	return ret + Count(cedar->AcceptingSockets);
 }
 
 // Add connection to Cedar
@@ -1339,12 +1121,13 @@ void CleanupCedar(CEDAR *c)
 	WuFreeWebUI(c->WebUI);
 	FreeCedarLayer3(c);
 
-/*
-	for (i = 0;i < LIST_NUM(c->HubList);i++)
+	for (i = 0; i < LIST_NUM(c->WgkList); ++i)
 	{
-		HUB *h = LIST_DATA(c->HubList, i);
+		WGK *wgk = LIST_DATA(c->WgkList, i);
+		Free(wgk);
 	}
-*/
+	ReleaseList(c->WgkList);
+
 	for (i = 0;i < LIST_NUM(c->CaList);i++)
 	{
 		X *x = LIST_DATA(c->CaList, i);
@@ -1628,18 +1411,6 @@ void SetCedarCert(CEDAR *c, X *server_x, K *server_k)
 	Unlock(c->lock);
 }
 
-// Enable debug log
-void EnableDebugLog(CEDAR *c)
-{
-	// Validate arguments
-	if (c == NULL || c->DebugLog != NULL)
-	{
-		return;
-	}
-
-	c->DebugLog = NewLog("cedar_debug_log", "cedar", LOG_SWITCH_NO);
-}
-
 // Set the Cedar into VPN Bridge mode
 void SetCedarVpnBridge(CEDAR *c)
 {
@@ -1668,9 +1439,12 @@ void GetCedarVersion(char *tmp, UINT size)
 		return;
 	}
 
-	Format(tmp, size, "%u.%02u.%u",
-		CEDAR_VER / 100, CEDAR_VER - (CEDAR_VER / 100) * 100,
-		CEDAR_BUILD);
+	Format(tmp, size, "%u.%02u.%u", CEDAR_VERSION_MAJOR, CEDAR_VERSION_MINOR, CEDAR_VERSION_BUILD);
+}
+
+UINT GetCedarVersionNumber()
+{
+	return CEDAR_VERSION_MAJOR * 100 + CEDAR_VERSION_MINOR;
 }
 
 // Create Cedar object
@@ -1680,7 +1454,6 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 	char tmp[MAX_SIZE];
 	char tmp2[MAX_SIZE];
 	char *beta_str;
-	char ssl_lib_ver[MAX_PATH] = CLEAN;
 
 	CedarForceLink();
 
@@ -1693,8 +1466,6 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 	c->CedarSuperLock = NewLock();
 
 	c->CurrentRegionLock = NewLock();
-
-	StrCpy(c->OpenVPNDefaultClientOption, sizeof(c->OpenVPNDefaultClientOption), OVPN_DEF_CLIENT_OPTION_STRING);
 
 #ifdef	BETA_NUMBER
 	c->Beta = BETA_NUMBER;
@@ -1733,8 +1504,8 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 		c->ServerX = CloneX(server_x);
 	}
 
-	c->Version = CEDAR_VER;
-	c->Build = CEDAR_BUILD;
+	c->Version = GetCedarVersionNumber();
+	c->Build = CEDAR_VERSION_BUILD;
 	c->ServerStr = CopyStr(CEDAR_SERVER_STR);
 
 	GetMachineName(tmp, sizeof(tmp));
@@ -1748,6 +1519,7 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 	c->Traffic = NewTraffic();
 	c->TrafficLock = NewLock();
 	c->CaList = NewList(CompareCert);
+	c->WgkList = NewList(CompareWgk);
 
 	c->TrafficDiffList = NewList(NULL);
 
@@ -1756,6 +1528,8 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 	c->ClientId = _II("CLIENT_ID");
 
 	c->UdpPortList = NewIntList(false);
+
+	c->DhParamBits = DH_PARAM_BITS_DEFAULT;
 
 	InitNetSvcList(c);
 
@@ -1778,8 +1552,7 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 	ToStr(tmp2, c->Beta);
 
 	Format(tmp, sizeof(tmp), "Version %u.%02u Build %u %s %s (%s)",
-		CEDAR_VER / 100, CEDAR_VER - (CEDAR_VER / 100) * 100,
-		CEDAR_BUILD,
+		CEDAR_VERSION_MAJOR, CEDAR_VERSION_MINOR, CEDAR_VERSION_BUILD,
 		c->Beta == 0 ? "" : beta_str,
 		c->Beta == 0 ? "" : tmp2,
 		_SS("LANGSTR"));
@@ -1799,48 +1572,12 @@ CEDAR *NewCedar(X *server_x, K *server_k)
 
 	c->VerString = CopyStr(tmp);
 
-	GetSslLibVersion(ssl_lib_ver, sizeof(ssl_lib_ver));
-
-	Format(tmp, sizeof(tmp), "Compiled %04u/%02u/%02u %02u:%02u:%02u by %s at %s with %s",
-		BUILD_DATE_Y, BUILD_DATE_M, BUILD_DATE_D, BUILD_DATE_HO, BUILD_DATE_MI, BUILD_DATE_SE, BUILDER_NAME, BUILD_PLACE, ssl_lib_ver);
+	Format(tmp, sizeof(tmp), "Compiled %04u/%02u/%02u %02u:%02u:%02u by %s at %s",
+		BUILD_DATE_Y, BUILD_DATE_M, BUILD_DATE_D, BUILD_DATE_HO, BUILD_DATE_MI, BUILD_DATE_SE, BUILDER_NAME, BUILD_PLACE);
 
 	c->BuildInfo = CopyStr(tmp);
 
 	return c;
-}
-
-// Check whether the Cedar was build after the specified date
-bool IsLaterBuild(CEDAR *c, UINT64 t)
-{
-	SYSTEMTIME sb, st;
-	UINT64 b;
-	// Validate arguments
-	if (c == NULL)
-	{
-		return false;
-	}
-
-	Zero(&sb, sizeof(sb));
-	Zero(&st, sizeof(st));
-
-	UINT64ToSystem(&sb, c->BuiltDate);
-	UINT64ToSystem(&st, t);
-
-	// Ignore time of the day
-	sb.wHour = sb.wMinute = sb.wSecond = sb.wMilliseconds = 0;
-	st.wHour = st.wMinute = st.wSecond = st.wMilliseconds = 0;
-
-	b = SystemToUINT64(&sb);
-	t = SystemToUINT64(&st);
-
-	if (b > t)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
 }
 
 // Cumulate traffic size
@@ -1889,6 +1626,12 @@ void InitCedar()
 {
 	if ((init_cedar_counter++) > 0)
 	{
+		return;
+	}
+
+	if (sodium_init() == -1)
+	{
+		Debug("InitCedar(): sodium_init() failed!\n");
 		return;
 	}
 

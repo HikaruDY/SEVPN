@@ -1,118 +1,23 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Mayaqua Kernel
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Str.c
 // String processing routine
 
-#include <GlobalConst.h>
+#include "Str.h"
 
+#include "Cfg.h"
+#include "Internat.h"
+#include "Mayaqua.h"
+#include "Memory.h"
+#include "Object.h"
+#include "Tracking.h"
+
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wchar.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <time.h>
-#include <errno.h>
-#include <Mayaqua/Mayaqua.h>
 
 // Locking for call the token handling function
 LOCK *token_lock = NULL;
@@ -133,369 +38,6 @@ static BYTESTR bytestr[] =
 	{0, "KBytes"},
 	{0, "Bytes"},
 };
-
-void RemoveBomFromStr(char* str)
-{
-	UINT len;
-	if (str == NULL)
-	{
-		return;
-	}
-
-	len = StrLen(str);
-	if (len >= 3)
-	{
-		if ((UCHAR)str[0] == 0xEF && (UCHAR)str[1] == 0xBB && (UCHAR)str[2] == 0xBF)
-		{
-			memmove(str, str + 3, len - 3 + 1);
-		}
-	}
-}
-
-char* GetFirstFilledStrFromBuf(BUF* buf)
-{
-	UINT size;
-	char* tmp;
-	char* ret;
-	if (buf == NULL)
-	{
-		return CopyStr("");
-	}
-
-	size = buf->Size + 8;
-	tmp = ZeroMalloc(size);
-	Copy(tmp, buf->Buf, buf->Size);
-
-	ret = GetFirstFilledStrFromStr(tmp);
-
-	Free(tmp);
-
-	return ret;
-}
-
-char* GetFirstFilledStrFromStr(char* str)
-{
-	UINT i;
-	char* ret = NULL;
-	TOKEN_LIST* t = StrToLinesList(str);
-	if (t == NULL)
-	{
-		return CopyStr("");
-	}
-
-	for (i = 0;i < t->NumTokens;i++)
-	{
-		char* line = t->Token[i];
-
-		if (IsFilledStr(line))
-		{
-			ret = CopyStr(line);
-			break;
-		}
-	}
-
-	FreeToken(t);
-
-	if (ret == NULL)
-	{
-		ret = CopyStr("");
-	}
-
-	return ret;
-}
-
-TOKEN_LIST* StrToLinesList(char* str)
-{
-	BUF* buf;
-	LIST* o;
-	UINT i;
-	TOKEN_LIST* ret;
-
-	if (str == NULL) str = "";
-
-	buf = NewBuf();
-	WriteBuf(buf, str, StrLen(str));
-
-	o = NewList(NULL);
-
-	SeekBufToBegin(buf);
-
-	while (true)
-	{
-		char* line = CfgReadNextLine(buf);
-		if (line == NULL)
-		{
-			break;
-		}
-
-		Add(o, line);
-	}
-
-	ret = ZeroMalloc(sizeof(TOKEN_LIST));
-	ret->NumTokens = LIST_NUM(o);
-	ret->Token = ZeroMalloc(sizeof(char*) * ret->NumTokens);
-	for (i = 0;i < LIST_NUM(o);i++)
-	{
-		char* line = LIST_DATA(o, i);
-		ret->Token[i] = line;
-	}
-
-	FreeBuf(buf);
-	ReleaseList(o);
-
-	return ret;
-}
-
-bool CheckStrListIncludedInOtherStrMac(char *str1, char *str2)
-{
-	bool ret = false;
-	UINT tmp1_size = StrSize(str1) * 2 + 4096;
-	UINT tmp2_size = StrSize(str2) * 2 + 4096;
-	char *tmp1 = ZeroMalloc(tmp1_size);
-	char *tmp2 = ZeroMalloc(tmp2_size);
-
-	NormalizeMacAddressListStr(tmp1, tmp1_size, str1);
-	NormalizeMacAddressListStr(tmp2, tmp2_size, str2);
-
-	ret = CheckStrListIncludedInOtherStr(tmp1, tmp2);
-
-	Free(tmp1);
-	Free(tmp2);
-	return ret;
-}
-
-bool CheckStrListIncludedInOtherStr(char *str1, char *str2)
-{
-	bool ret = false;
-
-	LIST *o1 = GetStrListFromLines(str1);
-	LIST *o2 = GetStrListFromLines(str2);
-
-	ret = CheckStrListIncludedInOther(o1, o2);
-
-	FreeStrList(o1);
-	FreeStrList(o2);
-
-	return ret;
-}
-bool CheckStrListIncludedInOther(LIST *o1, LIST *o2)
-{
-	bool ret = false;
-
-	if (o1 != NULL && o2 != NULL)
-	{
-		UINT i, j;
-
-		for (i = 0;i < LIST_NUM(o1);i++)
-		{
-			for (j = 0;j < LIST_NUM(o2);j++)
-			{
-				char *s1 = LIST_DATA(o1, i);
-				char *s2 = LIST_DATA(o2, j);
-
-				if (IsEmptyStr(s1) == false && IsEmptyStr(s2) == false)
-				{
-					if (StrCmpi(s1, s2) == 0)
-					{
-						ret = true;
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	return ret;
-}
-
-LIST *GetStrListFromLines(char *str)
-{
-	LIST *o = NewStrList();
-	BUF *buf;
-
-	buf = NewBuf();
-	WriteBuf(buf, str, StrLen(str));
-	WriteBuf(buf, "\r\n", 2);
-	SeekBufToBegin(buf);
-
-	while (true)
-	{
-		char *line = CfgReadNextLine(buf);
-
-		if (line == NULL)
-		{
-			break;
-		}
-
-		if (IsEmptyStr(line) == false)
-		{
-			UINT comment_index = SearchStrEx(line, "#", 0, false);
-			if (comment_index != INFINITE)
-			{
-				line[comment_index] = 0;
-			}
-			comment_index = SearchStrEx(line, "//", 0, false);
-			if (comment_index != INFINITE)
-			{
-				line[comment_index] = 0;
-			}
-
-			Trim(line);
-
-			AddStrToStrListDistinct(o, line);
-		}
-
-		Free(line);
-	}
-
-	FreeBuf(buf);
-
-	return o;
-}
-
-bool NormalizeMacAddressListStr(char *dst, UINT size, char *src)
-{
-	BUF *buf;
-	bool ret = false;
-	LIST *o = NULL;
-	UINT i;
-	char* tmp = NULL;
-	UINT tmp_size = 0;
-
-	if (dst == NULL || src == NULL)
-	{
-		ClearStr(dst, size);
-		return false;
-	}
-
-	o = NewStrList();
-
-	buf = NewBuf();
-	WriteBuf(buf, src, StrLen(src));
-	WriteBuf(buf, "\r\n", 2);
-	SeekBufToBegin(buf);
-
-	while (true)
-	{
-		char *line = CfgReadNextLine(buf);
-		UCHAR address[6];
-		UINT comment_index;
-
-		if (line == NULL)
-		{
-			break;
-		}
-
-		comment_index = SearchStrEx(line, "#", 0, false);
-		if (comment_index != INFINITE)
-		{
-			line[comment_index] = 0;
-		}
-		comment_index = SearchStrEx(line, "//", 0, false);
-		if (comment_index != INFINITE)
-		{
-			line[comment_index] = 0;
-		}
-
-		Trim(line);
-
-		if (StrToMac(address, line))
-		{
-			char tmp[64];
-
-			MacToStr(tmp, sizeof(tmp), address);
-
-			AddStrToStrListDistinct(o, tmp);
-		}
-
-		Free(line);
-	}
-
-	FreeBuf(buf);
-
-	tmp_size = StrSize(src) * 2 + 4096;
-
-	tmp = ZeroMalloc(tmp_size);
-
-	for (i = 0;i < LIST_NUM(o);i++)
-	{
-		char *mac = LIST_DATA(o, i);
-
-		StrCat(tmp, size, mac);
-		StrCat(tmp, size, "\r\n");
-
-		ret = true;
-	}
-
-	ReleaseStrList(o);
-
-	StrCpy(dst, size, tmp);
-
-	Free(tmp);
-
-	return ret;
-}
-
-bool CheckPasswordComplexity(char *str)
-{
-	UINT len;
-	UINT i;
-	UINT type0 = 0;
-	UINT type1 = 0;
-	UINT type2 = 0;
-	UINT type3 = 0;
-	if (str == NULL)
-	{
-		return false;
-	}
-
-	len = StrLen(str);
-
-	if (len < 8)
-	{
-		return false;
-	}
-
-	if (len >= 24)
-	{
-		return true;
-	}
-
-	for (i = 0;i < len;i++)
-	{
-		char c = str[i];
-
-		if (c >= 'a' && c <= 'z')
-		{
-			type0 = 1;
-		}
-		else if (c >= 'A' && c <= 'Z')
-		{
-			type1 = 1;
-		}
-		else if (c >= '0' && c <= '9')
-		{
-			type2 = 1;
-		}
-		else
-		{
-			type3 = 1;
-		}
-	}
-
-	if ((type0 + type1 + type2 + type3) >= 3)
-	{
-		return true;
-	}
-	else if (((type0 + type1 + type2 + type3) >= 2) && (len >= 16))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
 
 // Decode URL string
 char *UrlDecode(char *url_str)
@@ -685,40 +227,6 @@ UINT SearchAsciiInBinary(void *data, UINT size, char *str, bool case_sensitive)
 	return ret;
 }
 
-// Convert the HEX string to a 64 bit integer
-UINT64 HexToInt64(char *str)
-{
-	UINT len, i;
-	UINT64 ret = 0;
-	// Validate arguments
-	if (str == NULL)
-	{
-		return 0;
-	}
-
-	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
-	{
-		str += 2;
-	}
-
-	len = StrLen(str);
-	for (i = 0;i < len;i++)
-	{
-		char c = str[i];
-
-		if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
-		{
-			ret = ret * 16ULL + (UINT64)HexTo4Bit(c);
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	return ret;
-}
-
 // Convert the HEX string to a 32 bit integer
 UINT HexToInt(char *str)
 {
@@ -751,43 +259,6 @@ UINT HexToInt(char *str)
 	}
 
 	return ret;
-}
-
-// Convert a 64 bit integer to a HEX
-void ToHex64(char *str, UINT64 value)
-{
-	char tmp[MAX_SIZE];
-	UINT wp = 0;
-	UINT len, i;
-	// Validate arguments
-	if (str == NULL)
-	{
-		return;
-	}
-
-	// Set to empty character
-	StrCpy(tmp, 0, "");
-
-	// Append from the last digit
-	while (true)
-	{
-		UINT a = (UINT)(value % (UINT64)16);
-		value = value / (UINT)16;
-		tmp[wp++] = FourBitToHex(a);
-		if (value == 0)
-		{
-			tmp[wp++] = 0;
-			break;
-		}
-	}
-
-	// Reverse order
-	len = StrLen(tmp);
-	for (i = 0;i < len;i++)
-	{
-		str[len - i - 1] = tmp[i];
-	}
-	str[len] = 0;
 }
 
 // Convert a 32 bit integer into HEX
@@ -988,45 +459,6 @@ bool InStrList(char *target_str, char *tokens, char *splitter, bool case_sensiti
 	return ret;
 }
 
-// Confirm whether the specified string is in the token list
-bool IsStrInStrTokenList(char *str_list, char *str, char *split_chars, bool case_sensitive)
-{
-	TOKEN_LIST *t;
-	bool ret = false;
-	UINT i;
-	// Validate arguments
-	if (str_list == NULL || str == NULL)
-	{
-		return false;
-	}
-
-	t = ParseTokenWithoutNullStr(str_list, split_chars);
-
-	if (t != NULL)
-	{
-		for (i = 0;i < t->NumTokens;i++)
-		{
-			if ((case_sensitive == false) && (StrCmpi(t->Token[i], str) == 0))
-			{
-				ret = true;
-			}
-			if ((case_sensitive) && (StrCmp(t->Token[i], str) == 0))
-			{
-				ret = true;
-			}
-
-			if (ret)
-			{
-				break;
-			}
-		}
-
-		FreeToken(t);
-	}
-
-	return ret;
-}
-
 // Cut out the token from string (Ignore blanks between delimiters)
 TOKEN_LIST *ParseTokenWithoutNullStr(char *str, char *split_chars)
 {
@@ -1137,23 +569,6 @@ UINT IniIntValue(LIST *o, char *key)
 
 	return ToInt(e->Value);
 }
-UINT64 IniInt64Value(LIST *o, char *key)
-{
-	INI_ENTRY *e;
-	// Validate arguments
-	if (o == NULL || key == NULL)
-	{
-		return 0;
-	}
-
-	e = GetIniEntry(o, key);
-	if (e == NULL)
-	{
-		return 0;
-	}
-
-	return ToInt64(e->Value);
-}
 char *IniStrValue(LIST *o, char *key)
 {
 	INI_ENTRY *e;
@@ -1170,72 +585,6 @@ char *IniStrValue(LIST *o, char *key)
 	}
 
 	return e->Value;
-}
-wchar_t *IniUniStrValue(LIST *o, char *key)
-{
-	INI_ENTRY *e;
-	// Validate arguments
-	if (o == NULL || key == NULL)
-	{
-		return 0;
-	}
-
-	e = GetIniEntry(o, key);
-	if (e == NULL)
-	{
-		return L"";
-	}
-
-	return e->UnicodeValue;
-}
-
-void GetDomainSuffixFromFqdn(char *dst, UINT size, char *fqdn)
-{
-	TOKEN_LIST *t;
-	UINT i;
-
-	ClearStr(dst, size);
-	if (dst == NULL || fqdn == NULL)
-	{
-		return;
-	}
-
-	t = ParseTokenWithoutNullStr(fqdn, ".");
-
-	for (i = 0;i < t->NumTokens;i++)
-	{
-		if (i >= 1)
-		{
-			StrCat(dst, size, t->Token[i]);
-
-			if (i < (t->NumTokens - 1))
-			{
-				StrCat(dst, size, ".");
-			}
-		}
-	}
-
-	FreeToken(t);
-}
-
-// Check whether the specified value is in the INI
-bool IniHasValue(LIST *o, char *key)
-{
-	INI_ENTRY *e;
-	// Validate arguments
-	if (o == NULL || key == NULL)
-	{
-		return false;
-	}
-
-	e = GetIniEntry(o, key);
-
-	if (e == NULL)
-	{
-		return false;
-	}
-
-	return true;
 }
 
 // Release the INI
@@ -1518,54 +867,6 @@ bool IsAllUpperStr(char *str)
 	return true;
 }
 
-// Normalize the line breaks
-char *NormalizeCrlf(char *str)
-{
-	char *ret;
-	UINT ret_size, i, len, wp;
-	// Validate arguments
-	if (str == NULL)
-	{
-		return NULL;
-	}
-
-	len = StrLen(str);
-	ret_size = sizeof(char) * (len + 32) * 2;
-	ret = Malloc(ret_size);
-
-	wp = 0;
-
-	for (i = 0;i < len;i++)
-	{
-		char c = str[i];
-
-		switch (c)
-		{
-		case '\r':
-			if (str[i + 1] == '\n')
-			{
-				i++;
-			}
-			ret[wp++] = '\r';
-			ret[wp++] = '\n';
-			break;
-
-		case '\n':
-			ret[wp++] = '\r';
-			ret[wp++] = '\n';
-			break;
-
-		default:
-			ret[wp++] = c;
-			break;
-		}
-	}
-
-	ret[wp++] = 0;
-
-	return ret;
-}
-
 // Remove duplications from the token list
 TOKEN_LIST *UniqueToken(TOKEN_LIST *t)
 {
@@ -1797,30 +1098,6 @@ bool IsEmptyStr(char *str)
 		return false;
 	}
 }
-bool IsFilledStr(char* str)
-{
-	return !IsEmptyStr(str);
-}
-
-// Convert the token list to a string list
-LIST *TokenListToList(TOKEN_LIST *t)
-{
-	UINT i;
-	LIST *o;
-	// Validate arguments
-	if (t == NULL)
-	{
-		return NULL;
-	}
-
-	o = NewListFast(NULL);
-	for (i = 0;i < t->NumTokens;i++)
-	{
-		Insert(o, CopyStr(t->Token[i]));
-	}
-
-	return o;
-}
 
 // Convert a string list to a token list
 TOKEN_LIST *ListToTokenList(LIST *o)
@@ -1861,33 +1138,6 @@ void FreeStrList(LIST *o)
 	}
 
 	ReleaseList(o);
-}
-
-// Convert the string list to a string
-BUF *StrListToStr(LIST *o)
-{
-	BUF *b;
-	UINT i;
-	char c;
-	// Validate arguments
-	if (o == NULL)
-	{
-		return NULL;
-	}
-	b = NewBuf();
-
-	for (i = 0;i < LIST_NUM(o);i++)
-	{
-		char *s = LIST_DATA(o, i);
-		WriteBuf(b, s, StrLen(s) + 1);
-	}
-
-	c = 0;
-	WriteBuf(b, &c, 1);
-
-	SeekBuf(b, 0, 0);
-
-	return b;
 }
 
 // Convert a (NULL delimited) string to a list
@@ -2214,6 +1464,7 @@ UINT64 ToInt64(char *str)
 
 	return ret;
 }
+
 
 UINT64 Json_ToInt64Ex(char *str, char **endptr, bool *error)
 {
@@ -2618,21 +1869,6 @@ void Bit160ToStr(char *str, UCHAR *data)
 		data[10], data[11], data[12], data[13], data[14], data[15], data[16], data[17], data[18], data[19]);
 }
 
-// Make a string from a 128-bit sequence
-void Bit128ToStr(char *str, UCHAR *data)
-{
-	// Validate arguments
-	if (str == NULL || data == NULL)
-	{
-		return;
-	}
-
-	Format(str, 0,
-		"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-		data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], 
-		data[10], data[11], data[12], data[13], data[14], data[15]);
-}
-
 // Copy a string
 char *CopyStr(char *str)
 {
@@ -2694,30 +1930,6 @@ bool IsPrintableAsciiChar(char c)
 	{
 		return false;
 	}
-	return true;
-}
-
-// Check whether the string that can be displayed
-bool IsPrintableAsciiStr(char *str)
-{
-	UINT i, len;
-	// Validate arguments
-	if (str == NULL)
-	{
-		return false;
-	}
-
-	len = StrLen(str);
-	for (i = 0;i < len;i++)
-	{
-		char c = str[i];
-
-		if (IsPrintableAsciiChar(c) == false)
-		{
-			return false;
-		}
-	}
-
 	return true;
 }
 
@@ -2831,6 +2043,53 @@ void EnSafeStr(char *str, char replace)
 			*str = replace;
 		}
 		str++;
+	}
+}
+
+// Replace '\r' and '\n' with the specified character.
+// If the specified character is a space (unsafe), the original character is removed.
+void EnSafeHttpHeaderValueStr(char *str, char replace)
+{
+	UINT length = 0;
+	UINT index = 0;
+
+	// Validate arguments
+	if (str == NULL)
+	{
+		return;
+	}
+
+	length = StrLen(str);
+	while (index < length)
+	{
+		if (str[index] == '\r' || str[index] == '\n')
+		{
+			if (replace == ' ')
+			{
+				Move(&str[index], &str[index + 1], length - index);
+			}
+			else
+			{
+				str[index] = replace;
+			}
+		}
+		else if (str[index] == '\\')
+		{
+			if (str[index + 1] == 'r' || str[index + 1] == 'n')
+			{
+				if (replace == ' ')
+				{
+					Move(&str[index], &str[index + 2], length - index);
+					index--;
+				}
+				else
+				{
+					str[index] = str[index + 1] = replace;
+					index++;
+				}
+			}
+		}
+		index++;
 	}
 }
 
@@ -2999,35 +2258,6 @@ UINT CalcReplaceStrEx(char *string, char *old_keyword, char *new_keyword, bool c
 UINT SearchStr(char *string, char *keyword, UINT start)
 {
 	return SearchStrEx(string, keyword, start, true);
-}
-
-// Search for a string (Don't distinguish between upper / lower case)
-UINT SearchStri(char *string, char *keyword, UINT start)
-{
-	return SearchStrEx(string, keyword, start, false);
-}
-
-// Examine whether the string contains the specified character
-bool InChar(char *string, char c)
-{
-	UINT i, len;
-	// Validate arguments
-	if (string == NULL)
-	{
-		return false;
-	}
-
-	len = StrLen(string);
-
-	for (i = 0;i < len;i++)
-	{
-		if (string[i] == c)
-		{
-			return true;
-		}
-	}
-
-	return false;
 }
 
 // Return the position of the first found keyword in the string
@@ -3202,6 +2432,33 @@ void TrimCrlf(char *str)
 	}
 }
 
+// Remove quotes at the beginning and at the end of the string
+void TrimQuotes(char *str)
+{
+	UINT len = 0;
+	// Validate arguments
+	if (str == NULL)
+	{
+		return;
+	}
+
+	len = StrLen(str);
+	if (len == 0)
+	{
+		return;
+	}
+
+	if (str[len - 1] == '\"')
+	{
+		str[len - 1] = 0;
+	}
+
+	if (str[0] == '\"')
+	{
+		Move(str, str + 1, len);
+	}
+}
+
 // Remove white spaces of the both side of the string
 void Trim(char *str)
 {
@@ -3223,7 +2480,6 @@ void TrimRight(char *str)
 {
 	char *buf, *tmp;
 	UINT len, i, wp, wp2;
-	BOOL flag;
 	// Validate arguments
 	if (str == NULL)
 	{
@@ -3241,10 +2497,9 @@ void TrimRight(char *str)
 
 	buf = Malloc(len + 1);
 	tmp = Malloc(len + 1);
-	flag = FALSE;
 	wp = 0;
 	wp2 = 0;
-	for (i = 0;i < len;i++)
+	for (i = 0; i < len; ++i)
 	{
 		if (str[i] != ' ' && str[i] != '\t')
 		{
@@ -3269,7 +2524,7 @@ void TrimLeft(char *str)
 {
 	char *buf;
 	UINT len, i, wp;
-	BOOL flag;
+	bool flag;
 	// Validate arguments
 	if (str == NULL)
 	{
@@ -3286,13 +2541,13 @@ void TrimLeft(char *str)
 	}
 
 	buf = Malloc(len + 1);
-	flag = FALSE;
+	flag = false;
 	wp = 0;
 	for (i = 0;i < len;i++)
 	{
 		if (str[i] != ' ' && str[i] != '\t')
 		{
-			flag = TRUE;
+			flag = true;
 		}
 		if (flag)
 		{
@@ -3302,24 +2557,6 @@ void TrimLeft(char *str)
 	buf[wp] = 0;
 	StrCpy(str, 0, buf);
 	Free(buf);
-}
-
-// Convert an integer to a hexadecimal string (8-digit fixed)
-void ToStrx8(char *str, UINT i)
-{
-	sprintf(str, "0x%08x", i);
-}
-
-// Convert an integer to a hexadecimal string
-void ToStrx(char *str, UINT i)
-{
-	sprintf(str, "0x%02x", i);
-}
-
-// Convert a signed integer to a string
-void ToStri(char *str, int i)
-{
-	sprintf(str, "%i", i);
 }
 
 // Convert an integer to a string
@@ -3410,33 +2647,6 @@ UINT ToInt(char *str)
 	}
 
 	return (UINT)strtoul(str, NULL, 0);
-}
-
-// Replace a format string for 64-bit integer
-char *ReplaceFormatStringFor64(char *fmt)
-{
-	char *tmp;
-	char *ret;
-	UINT tmp_size;
-	// Validate arguments
-	if (fmt == NULL)
-	{
-		return NULL;
-	}
-
-	tmp_size = StrSize(fmt) * 2;
-	tmp = ZeroMalloc(tmp_size);
-
-#ifdef	OS_WIN32
-	ReplaceStrEx(tmp, tmp_size, fmt, "%ll", "%I64", false);
-#else	// OS_WIN32
-	ReplaceStrEx(tmp, tmp_size, fmt, "%I64", "%ll", false);
-#endif	// OS_WIN32
-
-	ret = CopyStr(tmp);
-	Free(tmp);
-
-	return ret;
 }
 
 // Display the string on the screen
@@ -3530,48 +2740,6 @@ void Debug(char *fmt, ...)
 	DebugArgs(fmt, args);
 
 	va_end(args);
-}
-
-// Format the string, and return the result
-char *CopyFormat(char *fmt, ...)
-{
-	char *buf;
-	char *ret;
-	UINT size;
-	va_list args;
-	// Validate arguments
-	if (fmt == NULL)
-	{
-		return NULL;
-	}
-
-	size = MAX(StrSize(fmt) * 10, MAX_SIZE * 10);
-	buf = Malloc(size);
-
-	va_start(args, fmt);
-	FormatArgs(buf, size, fmt, args);
-
-	ret = CopyStr(buf);
-	Free(buf);
-
-	va_end(args);
-	return ret;
-}
-
-// Make format safe string
-void MakeFormatSafeString(char* str)
-{
-	UINT i, len;
-	if (str == NULL) return;
-
-	len = StrLen(str);
-	for (i = 0;i < len;i++)
-	{
-		if (str[i] == '%')
-		{
-			str[i] = '_';
-		}
-	}
 }
 
 // Format the string
@@ -3809,7 +2977,7 @@ UINT StrCpy(char *dst, UINT size, char *src)
 
 	// Check the length
 	len = StrLen(src);
-	if ((len <= (size - 1)) || (size == 0x7fffffff))
+	if (len <= (size - 1))
 	{
 		Copy(dst, src, len + 1);
 	}
@@ -3874,18 +3042,6 @@ UINT StrCpyAllowOverlap(char *dst, UINT size, char *src)
 	return len;
 }
 
-// Check whether the string buffer is within the specified size
-bool StrCheckSize(char *str, UINT size)
-{
-	// Validate arguments
-	if (str == NULL || size == 0)
-	{
-		return false;
-	}
-
-	return StrCheckLen(str, size - 1);
-}
-
 // Make sure that the string is within the specified length
 bool StrCheckLen(char *str, UINT len)
 {
@@ -3940,6 +3096,10 @@ UINT StrLen(char *str)
 
 	return (UINT)strlen(str);
 }
+
+
+
+
 
 
 // *** JSON strings support

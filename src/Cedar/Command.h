@@ -1,109 +1,18 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
-
+// © 2020 Nokia
 
 // Command.h
 // Header of Command.c
 
 #ifndef	COMMAND_H
 #define	COMMAND_H
+
+#include "CedarType.h"
+
+#include "Mayaqua/Network.h"
+
+#include <stddef.h>
 
 // Constants
 #define	TRAFFIC_DEFAULT_PORT		9821
@@ -122,8 +31,6 @@
 #define	VPNCMD_BOOTSTRAP_REG_VALUENAME_VER	"InstalledVersion"
 #define	VPNCMD_BOOTSTRAP_REG_VALUENAME_PATH	"InstalledPath"
 #define	VPNCMD_BOOTSTRAP_FILENAME		"|vpncmdsys.exe"
-#define	VPNCMD_BOOTSTRAP_FILENAME_X64	"|vpncmdsys_x64.exe"
-#define	VPNCMD_BOOTSTRAP_FILENAME_IA64	"|vpncmdsys_ia64.exe"
 
 
 // Traffic test results
@@ -311,12 +218,9 @@ void CtPrint(CT *ct, CONSOLE *c);
 void CtPrintStandard(CT *ct, CONSOLE *c);
 void CtPrintRow(CONSOLE *c, UINT num, UINT *widths, wchar_t **strings, bool *rights, char separate_char);
 void VpnCmdInitBootPath();
-void OutRpcTtResult(PACK *p, TT_RESULT *t);
-void InRpcTtResult(PACK *p, TT_RESULT *t);
 
 void CmdPrintError(CONSOLE *c, UINT err);
 void CmdPrintAbout(CONSOLE *c);
-void CmdPrintRow(CONSOLE *c, wchar_t *title, wchar_t *tag, ...);
 wchar_t *CmdPromptPort(CONSOLE *c, void *param);
 wchar_t *CmdPromptChoosePassword(CONSOLE *c, void *param);
 bool CmdEvalPort(CONSOLE *c, wchar_t *str, void *param);
@@ -327,7 +231,7 @@ char *CmdPasswordPrompt(CONSOLE *c);
 bool CmdEvalIp(CONSOLE *c, wchar_t *str, void *param);
 wchar_t *PsClusterSettingMemberPromptIp(CONSOLE *c, void *param);
 bool CmdEvalHostAndPort(CONSOLE *c, wchar_t *str, void *param);
-LIST *StrToPortList(char *str);
+LIST *StrToPortList(char *str, bool limit_range);
 bool CmdEvalPortList(CONSOLE *c, wchar_t *str, void *param);
 wchar_t *PsClusterSettingMemberPromptPorts(CONSOLE *c, void *param);
 K *CmdLoadKey(CONSOLE *c, wchar_t *filename);
@@ -336,11 +240,8 @@ bool CmdEvalTcpOrUdp(CONSOLE *c, wchar_t *str, void *param);
 wchar_t *GetConnectionTypeStr(UINT type);
 bool CmdEvalHostAndSubnetMask4(CONSOLE *c, wchar_t *str, void *param);
 bool CmdEvalNetworkAndSubnetMask4(CONSOLE *c, wchar_t *str, void *param);
-bool CmdEvalNetworkAndSubnetMask6(CONSOLE *c, wchar_t *str, void *param);
-bool CmdEvalNetworkAndSubnetMask46(CONSOLE *c, wchar_t *str, void *param);
 bool CmdEvalIpAndMask4(CONSOLE *c, wchar_t *str, void *param);
 bool CmdEvalIpAndMask6(CONSOLE *c, wchar_t *str, void *param);
-bool CmdEvalIpAndMask46(CONSOLE *c, wchar_t *str, void *param);
 wchar_t *GetLogSwitchStr(UINT i);
 wchar_t *GetPacketLogNameStr(UINT i);
 UINT StrToLogSwitchType(char *str);
@@ -450,11 +351,17 @@ UINT PcAccountEncryptDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *par
 UINT PcAccountEncryptEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountCompressEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountCompressDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountHttpHeaderAdd(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountHttpHeaderDelete(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountHttpHeaderGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountProxyNone(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountProxyHttp(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountProxySocks(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountProxySocks5(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountServerCertEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountServerCertDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountRetryOnServerCertEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountRetryOnServerCertDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountServerCertSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountServerCertDelete(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountServerCertGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
@@ -467,6 +374,7 @@ UINT PcAccountNicSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountStatusShow(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountStatusHide(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountSecureCertSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PcAccountOpensslEngineCertSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountRetrySet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountStartupSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PcAccountStartupRemove(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
@@ -492,6 +400,10 @@ UINT PsListenerDelete(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsListenerList(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsListenerEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsListenerDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsPortsUDPSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsPortsUDPGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsProtoOptionsSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsProtoOptionsGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsServerPasswordSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsClusterSettingGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsClusterSettingStandalone(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
@@ -540,6 +452,9 @@ UINT PsRouterTableAdd(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsRouterTableDel(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsLogFileList(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsLogFileGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsWgkAdd(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsWgkDelete(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsWgkEnum(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsHubCreate(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsHubCreateDynamic(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsHubCreateStatic(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
@@ -550,6 +465,7 @@ UINT PsHubList(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsHub(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsOnline(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsOffline(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsSetStaticNetwork(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsSetMaxSession(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsSetHubPassword(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsSetEnumAllow(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
@@ -582,9 +498,13 @@ UINT PsCascadeEncryptEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *para
 UINT PsCascadeEncryptDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeCompressEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeCompressDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsCascadeHttpHeaderAdd(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsCascadeHttpHeaderDelete(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsCascadeHttpHeaderGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeProxyNone(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeProxyHttp(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeProxySocks(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
+UINT PsCascadeProxySocks5(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeServerCertEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeServerCertDisable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsCascadeServerCertSet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
@@ -674,11 +594,7 @@ UINT PsIPsecGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsEtherIpClientAdd(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsEtherIpClientDelete(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsEtherIpClientList(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
-UINT PsOpenVpnEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
-UINT PsOpenVpnGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsOpenVpnMakeConfig(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
-UINT PsSstpEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
-UINT PsSstpGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsServerCertRegenerate(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsVpnOverIcmpDnsEnable(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);
 UINT PsVpnOverIcmpDnsGet(CONSOLE *c, char *cmd_name, wchar_t *str, void *param);

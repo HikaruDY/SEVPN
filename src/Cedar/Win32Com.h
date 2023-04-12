@@ -1,120 +1,16 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Win32Com.h
 // Header of Win32Com.c
 
-#ifndef	WIN32COM_H
-#define	WIN32COM_H
+#ifdef OS_WIN32
 
-#ifdef	WIN32COM_CPP
+#ifndef WIN32COM_H
+#define WIN32COM_H
 
-// Internal function
-
-#endif	// WIN32COM_CPP
-
-// For external function
-
-#pragma comment(lib,"htmlhelp.lib")
-#pragma comment(lib,"Urlmon.lib")
+#include "Mayaqua/MayaType.h"
 
 #if	defined(__cplusplus)
 extern "C"
@@ -314,106 +210,10 @@ typedef struct CT_RectF_c
 void CT_DrawImage(UCHAR* dest, CT_RectF_c destRect, int destWidth, int destHeight,
 				  UCHAR* src, CT_RectF_c srcRect, int srcWidth, int srcHeight);
 
-
-
 #if	defined(__cplusplus)
 }
 #endif
 
+#endif // WIN32COM_H
 
-//EXTERN_C const IID IID_IObjectCollection;
-//EXTERN_C const IID IID_ICustomDestinationList;
-
-#if defined(__cplusplus)
-
-
-#ifndef	__IObjectArray_INTERFACE_DEFINED__
-#define	__IObjectArray_INTERFACE_DEFINED__
-
-MIDL_INTERFACE("92CA9DCD-5622-4bba-A805-5E9F541BD8C9")
-IObjectArray : public IUnknown
-{
-public:
-	virtual HRESULT STDMETHODCALLTYPE GetCount( 
-		/* [out] */ __RPC__out UINT *pcObjects) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE GetAt( 
-		/* [in] */ UINT uiIndex,
-		/* [in] */ __RPC__in REFIID riid,
-		/* [iid_is][out] */ __RPC__deref_out_opt void **ppv) = 0;
-
-};
-
-MIDL_INTERFACE("5632b1a4-e38a-400a-928a-d4cd63230295")
-IObjectCollection : public IObjectArray
-{
-public:
-	virtual HRESULT STDMETHODCALLTYPE AddObject( 
-		/* [in] */ __RPC__in_opt IUnknown *punk) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE AddFromArray( 
-		/* [in] */ __RPC__in_opt IObjectArray *poaSource) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE RemoveObjectAt( 
-		/* [in] */ UINT uiIndex) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE Clear( void) = 0;
-
-};
-
-#endif	// __IObjectArray_INTERFACE_DEFINED__
-
-#ifndef	__ICustomDestinationList_INTERFACE_DEFINED__
-#define	__ICustomDestinationList_INTERFACE_DEFINED__
-
-typedef /* [v1_enum] */ 
-enum KNOWNDESTCATEGORY
-{	
-	KDC_FREQUENT	= 1,
-	KDC_RECENT	= ( KDC_FREQUENT + 1 ) 
-} 	KNOWNDESTCATEGORY;
-
-MIDL_INTERFACE("6332debf-87b5-4670-90c0-5e57b408a49e")
-ICustomDestinationList : public IUnknown
-{
-public:
-	virtual HRESULT STDMETHODCALLTYPE SetAppID( 
-		/* [string][in] */ __RPC__in_string LPCWSTR pszAppID) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE BeginList( 
-		/* [out] */ __RPC__out UINT *pcMinSlots,
-		/* [in] */ __RPC__in REFIID riid,
-		/* [iid_is][out] */ __RPC__deref_out_opt void **ppv) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE AppendCategory( 
-		/* [string][in] */ __RPC__in_string LPCWSTR pszCategory,
-		/* [in] */ __RPC__in_opt IObjectArray *poa) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE AppendKnownCategory( 
-		/* [in] */ KNOWNDESTCATEGORY category) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE AddUserTasks( 
-		/* [in] */ __RPC__in_opt IObjectArray *poa) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE CommitList( void) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE GetRemovedDestinations( 
-		/* [in] */ __RPC__in REFIID riid,
-		/* [iid_is][out] */ __RPC__deref_out_opt void **ppv) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE DeleteList( 
-		/* [string][unique][in] */ __RPC__in_opt_string LPCWSTR pszAppID) = 0;
-
-	virtual HRESULT STDMETHODCALLTYPE AbortList( void) = 0;
-
-};
-
-
-#endif	// __ICustomDestinationList_INTERFACE_DEFINED__
-
-
-#endif //defined(__cplusplus)
-
-
-
-#endif	// WIN32COM_H
+#endif // OS_WIN32
