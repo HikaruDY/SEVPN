@@ -67,11 +67,8 @@ Thumbs.db
 /src/BuildUtil
 /src/Ham
 /src/hamcorebuilder
-/src/Neo
 /src/Neo6
 /src/See
-/src/SeLow
-/src/VGate
 /src/vpn16
 /src/vpnbrand
 /src/vpnbridge
@@ -85,4 +82,3 @@ Thumbs.db
 /src/vpnsetup
 /src/vpnsmgr
 /src/vpnweb
-/src/Wfp
