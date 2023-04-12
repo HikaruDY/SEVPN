@@ -1,108 +1,22 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Account.c
 // Account Manager
 
-#include "CedarPch.h"
+#include "Account.h"
+
+#include "Hub.h"
+#include "Layer3.h"
+#include "Proto_PPP.h"
+
+#include "Mayaqua/Internat.h"
+#include "Mayaqua/Kernel.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Object.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/Table.h"
 
 // Policy items
 POLICY_ITEM policy_item[] =
@@ -149,18 +63,6 @@ POLICY_ITEM policy_item[] =
 	{36,	false,	false,	0,	0,	0,		NULL},			// NoIPv6DefaultRouterInRAWhenIPv6
 	{37,	true,	true,	1,	4095,	0,	"POL_INT_VLAN"},	// VLanId
 };
-
-// Normalize policy name
-char *NormalizePolicyName(char *name)
-{
-	// Validate arguments
-	if (name == NULL)
-	{
-		return NULL;
-	}
-
-	return PolicyIdToStr(PolicyStrToId(name));
-}
 
 // Format policy value
 void FormatPolicyValue(wchar_t *str, UINT size, UINT id, UINT value)
@@ -339,6 +241,7 @@ UINT PolicyNum()
 // Check the name is valid for account name
 bool IsUserName(char *name)
 {
+	UINT i, len;
 	char tmp[MAX_SIZE];
 	// Validate arguments
 	if (name == NULL)
@@ -351,7 +254,8 @@ bool IsUserName(char *name)
 
 	Trim(name);
 
-	if (StrLen(name) == 0)
+	len = StrLen(name);
+	if (len == 0)
 	{
 		return false;
 	}
@@ -361,14 +265,12 @@ bool IsUserName(char *name)
 		return true;
 	}
 
-	if (IsSafeStr(name) == false)
+	for (i = 0; i < len; i++)
 	{
-		return false;
-	}
-
-	if (StrCmpi(name, "link") == 0)
-	{
-		return false;
+		if (IsSafeChar(name[i]) == false && name[i] != '@')
+		{
+			return false;
+		}
 	}
 
 	if (StrCmpi(name, LINK_USER_NAME) == 0)
@@ -508,32 +410,6 @@ void SetUserPolicy(USER *u, POLICY *policy)
 		OverwritePolicy(&u->Policy, policy);
 	}
 	Unlock(u->lock);
-}
-
-// Get user policy
-POLICY *GetUserPolicy(USER *u)
-{
-	POLICY *ret;
-	// Validate arguments
-	if (u == NULL)
-	{
-		return NULL;
-	}
-
-	Lock(u->lock);
-	{
-		if (u->Policy == NULL)
-		{
-			ret = NULL;
-		}
-		else
-		{
-			ret = ClonePolicy(u->Policy);
-		}
-	}
-	Unlock(u->lock);
-
-	return ret;
 }
 
 // Set group policy
@@ -692,7 +568,7 @@ void HashPassword(void *dst, char *username, char *password)
 	StrUpper(username_upper);
 	WriteBuf(b, password, StrLen(password));
 	WriteBuf(b, username_upper, StrLen(username_upper));
-	Hash(dst, b->Buf, b->Size, true);
+	Sha0(dst, b->Buf, b->Size);
 
 	FreeBuf(b);
 	Free(username_upper);
@@ -837,38 +713,6 @@ void SetUserAuthData(USER *u, UINT authtype, void *authdata)
 		// Set new authentication data
 		u->AuthType = authtype;
 		u->AuthData = authdata;
-	}
-	Unlock(u->lock);
-}
-
-// Cumulate group traffic data
-void AddGroupTraffic(USERGROUP *g, TRAFFIC *diff)
-{
-	// Validate arguments
-	if (g == NULL || diff == NULL)
-	{
-		return;
-	}
-
-	Lock(g->lock);
-	{
-		AddTraffic(g->Traffic, diff);
-	}
-	Unlock(g->lock);
-}
-
-// Cumulate user traffic data
-void AddUserTraffic(USER *u, TRAFFIC *diff)
-{
-	// Validate arguments
-	if (u == NULL || diff == NULL)
-	{
-		return;
-	}
-
-	Lock(u->lock);
-	{
-		AddTraffic(u->Traffic, diff);
 	}
 	Unlock(u->lock);
 }
@@ -1203,7 +1047,7 @@ void CleanupUser(USER *u)
 		ReleaseGroup(u->Group);
 	}
 
-	// Free authntication data
+	// Free authentication data
 	FreeAuthData(u->AuthType, u->AuthData);
 
 	if (u->Policy)
@@ -1217,7 +1061,7 @@ void CleanupUser(USER *u)
 	Free(u);
 }
 
-// Free authntication data
+// Free authentication data
 void FreeAuthData(UINT authtype, void *authdata)
 {
 	AUTHPASSWORD *pw = (AUTHPASSWORD *)authdata;
@@ -1486,3 +1330,39 @@ bool GetUserMacAddressFromUserNote(UCHAR *mac, wchar_t *note)
 	return ret;
 }
 
+// Get the static IPv4 address from the user's note string
+UINT GetUserIPv4AddressFromUserNote32(wchar_t *note)
+{
+	bool ret = false;
+	UINT ip32 = 0;
+
+	UINT i = UniSearchStrEx(note, USER_IPV4_STR_PREFIX, 0, false);
+	if (i != INFINITE)
+	{
+		wchar_t *ipv4str_start = &note[i + UniStrLen(USER_IPV4_STR_PREFIX)];
+		wchar_t ipv4str2[MAX_SIZE];
+		UNI_TOKEN_LIST *tokens;
+		
+		UniStrCpy(ipv4str2, sizeof(ipv4str2), ipv4str_start);
+		UniTrim(ipv4str2);
+
+		tokens = UniParseToken(ipv4str2, L" ,/()[]");
+		if (tokens != NULL)
+		{
+			if (tokens->NumTokens >= 1)
+			{
+				wchar_t *ipv4str = tokens->Token[0];
+				if (UniIsEmptyStr(ipv4str) == false)
+				{
+					char ipv4str_a[MAX_SIZE];
+					UniToStr(ipv4str_a, sizeof(ipv4str_a), ipv4str);
+					ip32 = StrToIP32(ipv4str_a);
+				}
+			}
+
+			UniFreeToken(tokens);
+		}
+	}
+
+	return ip32;
+}

@@ -1,112 +1,24 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// Contributors:
-// - ELIN (https://github.com/el1n)
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // CMInner.h
 // Internal header for the CM.c
 
+#include "Client.h"
+#include "CM.h"
+#include "Command.h"
+#include "WinUi.h"
+
+#include "Mayaqua/Table.h"
+
+#include <stdlib.h>
+
 #define STARTUP_MUTEX_NAME	GC_SW_SOFTETHER_PREFIX "vpncmgr_startup_mutex"
 
 #define	NAME_OF_VPN_CLIENT_MANAGER	"vpncmgr"
+
+typedef struct LVB LVB;
 
 void CmVoice(char *name);
 
@@ -199,7 +111,7 @@ typedef struct CM
 	bool CheckedAndShowedAdminPackMessage;
 	INSTANCE *StartupMutex;
 	bool BadProcessChecked;
-	bool MenuPopuping;
+	bool PopupMenuOpen;
 	WINUI_UPDATE *Update;
 } CM;
 
@@ -227,6 +139,7 @@ typedef struct CM_ACCOUNT
 	CLIENT_AUTH *ClientAuth;			// Authentication data
 	bool Startup;						// Startup account
 	bool CheckServerCert;				// Check the server certificate
+	bool RetryOnServerCert;				// Retry on invalid server certificate
 	X *ServerCert;						// Server certificate
 	char old_server_name[MAX_HOST_NAME_LEN + 1];	// Old server name
 	bool Inited;						// Initialization flag
@@ -278,6 +191,14 @@ typedef struct CM_TRAFFIC_DLG
 	EVENT *ResultShowEvent;	// Display result event
 	bool CloseDialogAfter;	// Flag of whether or not to close the dialog
 } CM_TRAFFIC_DLG;
+
+typedef struct CM_PROXY_HTTP_HEADER_DLG
+{
+	CLIENT_OPTION *ClientOption;
+	HWND EditBox;
+	UINT CurrentItem;
+	UINT CurrentSubItem;
+} CM_PROXY_HTTP_HEADER_DLG;
 
 // Internet connection settings
 typedef struct CM_INTERNET_SETTING
@@ -469,7 +390,7 @@ void CmPolicyDlg(HWND hWnd, CM_STATUS *st);
 UINT CmPolicyDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *param);
 void CmPolicyDlgPrint(HWND hWnd, CM_POLICY *p);
 void CmPolicyDlgPrintEx(HWND hWnd, CM_POLICY *p, bool cascade_mode);
-void CmPolicyDlgPrintEx2(HWND hWnd, CM_POLICY *p, bool cascade_mode, bool ver);
+void CmPolicyDlgPrintEx2(HWND hWnd, CM_POLICY *p, bool cascade_mode, UINT ver);
 void CmNewAccount(HWND hWnd);
 void CmEditAccount(HWND hWnd, wchar_t *account_name);
 void CmGenerateNewAccountName(HWND hWnd, wchar_t *name, UINT size);
@@ -488,7 +409,6 @@ void CmEditAccountDlgInit(HWND hWnd, CM_ACCOUNT *a);
 void CmEditAccountDlgOnOk(HWND hWnd, CM_ACCOUNT *a);
 void CmEditAccountDlgStartEnumHub(HWND hWnd, CM_ACCOUNT *a);
 bool CmLoadXAndK(HWND hWnd, X **x, K **k);
-bool CmLoadK(HWND hWnd, K **k);
 bool CmLoadKEx(HWND hWnd, K **k, char *filename, UINT size);
 bool CmLoadKExW(HWND hWnd, K **k, wchar_t *filename, UINT size);
 bool CmLoadXFromFileOrSecureCard(HWND hWnd, X **x);
@@ -629,4 +549,8 @@ void CmProxyDlgSet(HWND hWnd, CLIENT_OPTION *o, CM_INTERNET_SETTING *setting);
 bool CmGetProxyServerNameAndPortFromIeProxyRegStr(char *name, UINT name_size, UINT *port, char *str, char *server_type);
 void *CmUpdateJumpList(UINT start_id);
 
-
+void CmProxyHttpHeaderDlgUpdate(HWND hWnd);
+void CmProxyHttpHeaderDlgRefresh(HWND hWnd, CM_PROXY_HTTP_HEADER_DLG *d);
+void CmProxyHttpHeaderDlgInit(HWND hWnd, CM_PROXY_HTTP_HEADER_DLG *d);
+UINT CmProxyHttpHeaderDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *param);
+bool CmProxyHttpHeaderDlg(HWND hWnd, CLIENT_OPTION *a);

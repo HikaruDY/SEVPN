@@ -1,109 +1,17 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
-
+// © 2020 Nokia
 
 // Connection.h
 // Header of Connection.c
 
 #ifndef	CONNECTION_H
 #define	CONNECTION_H
+
+#include "Cedar.h"
+
+#include "Mayaqua/Encrypt.h"
+#include "Mayaqua/Proxy.h"
 
 // Magic number indicating that the packet is compressed
 #define	CONNECTION_BULK_COMPRESS_SIGNATURE	0xDEADBEEFCAFEFACEULL
@@ -154,35 +62,35 @@ struct RC4_KEY_PAIR
 // Client Options
 struct CLIENT_OPTION
 {
-	wchar_t AccountName[MAX_ACCOUNT_NAME_LEN + 1];	// Connection setting name
-	char Hostname[MAX_HOST_NAME_LEN + 1];			// Host name
-	UINT Port;										// Port number
-	UINT PortUDP;									// UDP port number (0: Use only TCP)
-	UINT ProxyType;									// Type of proxy
-	char ProxyName[MAX_HOST_NAME_LEN + 1];			// Proxy server name
-	UINT ProxyPort;									// Port number of the proxy server
-	char ProxyUsername[MAX_PROXY_USERNAME_LEN + 1];	// Maximum user name length
-	char ProxyPassword[MAX_PROXY_PASSWORD_LEN + 1];	// Maximum password length
-	UINT NumRetry;									// Automatic retries
-	UINT RetryInterval;								// Retry interval
-	char HubName[MAX_HUBNAME_LEN + 1];				// HUB name
-	UINT MaxConnection;								// Maximum number of concurrent TCP connections
-	bool UseEncrypt;								// Use encrypted communication
-	bool UseCompress;								// Use data compression
-	bool HalfConnection;							// Use half connection in TCP
-	bool NoRoutingTracking;							// Disable the routing tracking
-	char DeviceName[MAX_DEVICE_NAME_LEN + 1];		// VLAN device name
-	UINT AdditionalConnectionInterval;				// Connection attempt interval when additional connection establish
-	UINT ConnectionDisconnectSpan;					// Disconnection interval
-	bool HideStatusWindow;							// Hide the status window
-	bool HideNicInfoWindow;							// Hide the NIC status window
-	bool RequireMonitorMode;						// Monitor port mode
-	bool RequireBridgeRoutingMode;					// Bridge or routing mode
-	bool DisableQoS;								// Disable the VoIP / QoS function
-	bool FromAdminPack;								// For Administration Pack
-	bool NoTls1;									// Do not use TLS 1.0
-	bool NoUdpAcceleration;							// Do not use UDP acceleration mode
-	UCHAR HostUniqueKey[SHA1_SIZE];					// Host unique key
+	wchar_t AccountName[MAX_ACCOUNT_NAME_LEN + 1];			// Connection setting name
+	char Hostname[MAX_HOST_NAME_LEN + 1];					// Host name
+	UINT Port;												// Port number
+	UINT PortUDP;											// UDP port number (0: Use only TCP)
+	UINT ProxyType;											// Type of proxy
+	char ProxyName[MAX_HOST_NAME_LEN + 1];					// Proxy server name
+	UINT ProxyPort;											// Port number of the proxy server
+	char ProxyUsername[PROXY_MAX_USERNAME_LEN + 1];			// Maximum user name length
+	char ProxyPassword[PROXY_MAX_PASSWORD_LEN + 1];			// Maximum password length
+	char CustomHttpHeader[HTTP_CUSTOM_HEADER_MAX_SIZE + 1];	// Custom HTTP proxy header
+	UINT NumRetry;											// Automatic retries
+	UINT RetryInterval;										// Retry interval
+	char HubName[MAX_HUBNAME_LEN + 1];						// HUB name
+	UINT MaxConnection;										// Maximum number of concurrent TCP connections
+	bool UseEncrypt;										// Use encrypted communication
+	bool UseCompress;										// Use data compression
+	bool HalfConnection;									// Use half connection in TCP
+	bool NoRoutingTracking;									// Disable the routing tracking
+	char DeviceName[MAX_DEVICE_NAME_LEN + 1];				// VLAN device name
+	UINT AdditionalConnectionInterval;						// Connection attempt interval when additional connection establish
+	UINT ConnectionDisconnectSpan;							// Disconnection interval
+	bool HideStatusWindow;									// Hide the status window
+	bool HideNicInfoWindow;									// Hide the NIC status window
+	bool RequireMonitorMode;								// Monitor port mode
+	bool RequireBridgeRoutingMode;							// Bridge or routing mode
+	bool DisableQoS;										// Disable the VoIP / QoS function
+	bool FromAdminPack;										// For Administration Pack
+	bool NoUdpAcceleration;									// Do not use UDP acceleration mode
+	UCHAR HostUniqueKey[SHA1_SIZE];							// Host unique key
 };
 
 // Client authentication data
@@ -196,6 +104,8 @@ struct CLIENT_AUTH
 	K *ClientK;										// Client private key
 	char SecurePublicCertName[MAX_SECURE_DEVICE_FILE_LEN + 1];	// Secure device certificate name
 	char SecurePrivateKeyName[MAX_SECURE_DEVICE_FILE_LEN + 1];	// Secure device secret key name
+	char OpensslEnginePrivateKeyName[MAX_SECURE_DEVICE_FILE_LEN + 1];	// Secure device secret key name
+	char OpensslEngineName[MAX_SECURE_DEVICE_FILE_LEN + 1];	// Secure device secret key name
 	CHECK_CERT_PROC *CheckCertProc;					// Server certificate confirmation procedure
 	SECURE_SIGN_PROC *SecureSignProc;				// Security signing procedure
 };
@@ -244,7 +154,7 @@ struct UDP
 // Data block
 struct BLOCK
 {
-	BOOL Compressed;				// Compression flag
+	bool Compressed;				// Compression flag
 	UINT Size;						// Block size
 	UINT SizeofData;				// Data size
 	UCHAR *Buf;						// Buffer
@@ -300,10 +210,8 @@ struct CONNECTION
 	char *CipherName;				// Encryption algorithm name
 	UINT64 ConnectedTick;			// Time it is connected
 	IP ClientIp;					// Client IP address
-	UINT ClientPort;				// Client Port number
 	char ClientHostname[MAX_HOST_NAME_LEN + 1];	// Client host name
 	UINT Type;						// Type
-	bool DontUseTls1;				// Do not use TLS 1.0
 	void *hWndForUI;				// Parent window
 	bool IsInProc;					// In-process
 	char InProcPrefix[64];			// Prefix
@@ -349,8 +257,7 @@ void SendKeepAlive(CONNECTION *c, TCPSOCK *ts);
 void DisconnectUDPSockets(CONNECTION *c);
 void PutUDPPacketData(CONNECTION *c, void *data, UINT size);
 void SendDataWithUDP(SOCK *s, CONNECTION *c);
-void InsertReveicedBlockToQueue(CONNECTION *c, BLOCK *block, bool no_lock);
-void InitTcpSockRc4Key(TCPSOCK *ts, bool server_mode);
+void InsertReceivedBlockToQueue(CONNECTION *c, BLOCK *block, bool no_lock);
 UINT TcpSockRecv(SESSION *s, TCPSOCK *ts, void *data, UINT size);
 UINT TcpSockSend(SESSION *s, TCPSOCK *ts, void *data, UINT size);
 void WriteSendFifo(SESSION *s, TCPSOCK *ts, void *data, UINT size);

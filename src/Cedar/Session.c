@@ -1,108 +1,38 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
-
+// © 2020 Nokia
 
 // Session.c
 // Session Manager
 
-#include "CedarPch.h"
+#include "Session.h"
+
+#include "BridgeUnix.h"
+#include "BridgeWin32.h"
+#include "Client.h"
+#include "Connection.h"
+#include "Hub.h"
+#include "Link.h"
+#include "Nat.h"
+#include "Protocol.h"
+#include "SecureNAT.h"
+#include "Server.h"
+#include "UdpAccel.h"
+#include "VLanUnix.h"
+
+#include "Mayaqua/Internat.h"
+#include "Mayaqua/Kernel.h"
+#include "Mayaqua/Mayaqua.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Microsoft.h"
+#include "Mayaqua/Object.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/Table.h"
+#include "Mayaqua/TcpIp.h"
+#include "Mayaqua/Tick64.h"
+
+// TODO: Mayaqua should not depend on Cedar.
+#include "Cedar/WinUi.h"
 
 // Main routine of the session
 void SessionMain(SESSION *s)
@@ -130,6 +60,8 @@ void SessionMain(SESSION *s)
 	SOCK *nicinfo_sock = NULL;
 	bool is_server_session = false;
 	bool lock_receive_blocks_queue = false;
+	UINT static_ip = 0;
+
 	// Validate arguments
 	if (s == NULL)
 	{
@@ -203,11 +135,11 @@ void SessionMain(SESSION *s)
 		s->NextConnectionTime = Tick64() + (UINT64)((UINT64)s->ClientOption->AdditionalConnectionInterval * (UINT64)1000);
 	}
 
-	s->NumConnectionsEatablished++;
+	s->NumConnectionsEstablished++;
 	s->CurrentConnectionEstablishTime = Tick64();
-	if (s->FirstConnectionEstablisiedTime == 0)
+	if (s->FirstConnectionEstablisiedTime == 0) /* !!! Do not correct the spelling to keep the backward protocol compatibility !!!  */
 	{
-		s->FirstConnectionEstablisiedTime = Tick64();
+		s->FirstConnectionEstablisiedTime = Tick64(); /* !!! Do not correct the spelling to keep the backward protocol compatibility !!!  */
 	}
 
 	if (s->ServerMode == false && s->Cedar->Client != NULL)
@@ -397,6 +329,13 @@ void SessionMain(SESSION *s)
 
 				if (b->Size >= 14)
 				{
+					UINT ip;
+					if( (ip = PrepareDHCPRequestForStaticIPv4( s, b )) != 0 )
+					{
+						// Remember the static IP address to remove it from the leased IP address list later
+						static_ip = ip;
+					}
+
 					if (b->Buf[0] & 0x01)
 					{
 						if (is_server_session == false)
@@ -700,6 +639,9 @@ CLEANUP:
 		// Update the user information
 		IncrementUserTraffic(s->Hub, s->UserNameReal, s);
 
+		// Clear the DHCP lease record if assigned as a static client IP address
+		ClearDHCPLeaseRecordForIPv4(s, static_ip);
+
 		DelSession(s->Hub, s);
 	}
 
@@ -910,7 +852,7 @@ void IncrementUserTraffic(HUB *hub, char *username, SESSION *s)
 	Unlock(s->TrafficLock);
 }
 
-// Cummulate the traffic information of the connection
+// Cumulate the traffic information of the connection
 void AddTrafficForSession(SESSION *s, TRAFFIC *t)
 {
 	HUB *h;
@@ -971,7 +913,7 @@ void ClientAdditionalConnectChance(SESSION *s)
 		return;
 	}
 
-	if (s->IsRUDPSession && (s->Connection->AdditionalConnectionFailedCounter > MAX_ADDITONAL_CONNECTION_FAILED_COUNTER))
+	if (s->IsRUDPSession && (s->Connection->AdditionalConnectionFailedCounter > MAX_ADDITIONAL_CONNECTION_FAILED_COUNTER))
 	{
 		// Not to make a large amount of repeated connection retry within a certain time in the case of R-UDP session
 		return;
@@ -1252,27 +1194,13 @@ void StopSessionEx(SESSION *s, bool no_wait)
 	// Event
 	Set(s->HaltEvent);
 
-	if (s->ServerMode == false)
+	// Server and client mode
+	if (s->Connection)
 	{
-		// Client mode
-		if (s->Connection)
-		{
-			CONNECTION *c = s->Connection;
-			AddRef(c->ref);
-			StopConnection(c, no_wait);
-			ReleaseConnection(c);
-		}
-	}
-	else
-	{
-		// Server mode
-		if (s->Connection)
-		{
-			CONNECTION *c = s->Connection;
-			AddRef(c->ref);
-			StopConnection(c, no_wait);
-			ReleaseConnection(c);
-		}
+		CONNECTION *c = s->Connection;
+		AddRef(c->ref);
+		StopConnection(c, no_wait);
+		ReleaseConnection(c);
 	}
 
 	// Wait until the stop
@@ -1322,6 +1250,9 @@ void CleanupSession(SESSION *s)
 	// Release the client connection options
 	if (s->ClientOption != NULL)
 	{
+#ifdef OS_UNIX
+		UnixVLanSetState(s->ClientOption->DeviceName, false);
+#endif
 		Free(s->ClientOption);
 	}
 
@@ -1398,7 +1329,6 @@ void CleanupSession(SESSION *s)
 	DeleteCounter(s->LoggingRecordCount);
 
 	ReleaseSharedBuffer(s->IpcSessionSharedBuffer);
-
 
 	Free(s);
 }
@@ -1528,7 +1458,9 @@ void ClientThread(THREAD *t, void *param)
 
 		CLog(s->Cedar->Client, "LC_CONNECT_ERROR", s->ClientOption->AccountName,
 			GetUniErrorStr(s->Err), s->Err);
-
+#ifdef OS_UNIX
+		UnixVLanSetState(s->ClientOption->DeviceName, false);
+#endif
 		if (s->LinkModeClient && s->Link != NULL)
 		{
 			HLog(s->Link->Hub, "LH_CONNECT_ERROR", s->ClientOption->AccountName,
@@ -1730,13 +1662,7 @@ void ClientThread(THREAD *t, void *param)
 				StrCpy(p.ServerName, sizeof(p.ServerName), s->ClientOption->Hostname);
 			}
 
-			if(s->CurrentRetryCount < s->ClientOption->NumRetry){
-				p.RetryIntervalSec = s->RetryInterval / 1000;
-			}else{
-				// Disable the retry timeout if retries exceeds the limit
-				p.RetryIntervalSec = 0;
-			}
-
+			p.RetryIntervalSec = s->RetryInterval / 1000;
 			p.Type = s->ClientAuth->AuthType;
 
 			// Display the password re-entry dialog
@@ -1853,23 +1779,6 @@ SKIP:
 	{
 		CiDecrementNumActiveSessions();
 	}
-}
-
-// Name comparison of sessions
-int CompareSession(void *p1, void *p2)
-{
-	SESSION *s1, *s2;
-	if (p1 == NULL || p2 == NULL)
-	{
-		return 0;
-	}
-	s1 = *(SESSION **)p1;
-	s2 = *(SESSION **)p2;
-	if (s1 == NULL || s2 == NULL)
-	{
-		return 0;
-	}
-	return StrCmpi(s1->Name, s2->Name);
 }
 
 // Create an RPC session
@@ -2031,12 +1940,6 @@ SESSION *NewClientSessionEx(CEDAR *cedar, CLIENT_OPTION *option, CLIENT_AUTH *au
 		s->VirtualHost = true;
 	}
 
-	if (OS_IS_WINDOWS_9X(GetOsInfo()->OsType))
-	{
-		// Prohibit the half-duplex mode in the case of Win9x
-		s->ClientOption->HalfConnection = false;
-	}
-
 	// Copy the client authentication data
 	s->ClientAuth = Malloc(sizeof(CLIENT_AUTH));
 	Copy(s->ClientAuth, auth, sizeof(CLIENT_AUTH));
@@ -2046,10 +1949,17 @@ SESSION *NewClientSessionEx(CEDAR *cedar, CLIENT_OPTION *option, CLIENT_AUTH *au
 	{
 		s->ClientAuth->ClientX = CloneX(s->ClientAuth->ClientX);
 	}
-	if (s->ClientAuth->ClientK != NULL)
-	{
-		s->ClientAuth->ClientK = CloneK(s->ClientAuth->ClientK);
-	}
+  if (s->ClientAuth->ClientK != NULL)
+  {
+    if (s->ClientAuth->AuthType != CLIENT_AUTHTYPE_OPENSSLENGINE)
+    {
+      s->ClientAuth->ClientK = CloneK(s->ClientAuth->ClientK);
+    }
+    else
+    {
+      s->ClientAuth->ClientK = OpensslEngineToK(s->ClientAuth->OpensslEnginePrivateKeyName, s->ClientAuth->OpensslEngineName);
+    }
+  }
 
 	if (StrCmpi(s->ClientOption->DeviceName, LINK_DEVICE_NAME) == 0)
 	{
@@ -2097,52 +2007,6 @@ SESSION *NewClientSessionEx(CEDAR *cedar, CLIENT_OPTION *option, CLIENT_AUTH *au
 SESSION *NewClientSession(CEDAR *cedar, CLIENT_OPTION *option, CLIENT_AUTH *auth, PACKET_ADAPTER *pa)
 {
 	return NewClientSessionEx(cedar, option, auth, pa, NULL);
-}
-
-// Get the session from the 32bit session key
-SESSION *GetSessionFromKey32(CEDAR *cedar, UINT key32)
-{
-	HUB *h;
-	UINT i, j;
-	// Validate arguments
-	if (cedar == NULL)
-	{
-		return NULL;
-	}
-
-	LockList(cedar->HubList);
-	{
-		for (i = 0;i < LIST_NUM(cedar->HubList);i++)
-		{
-			h = LIST_DATA(cedar->HubList, i);
-			LockList(h->SessionList);
-			{
-				for (j = 0;j < LIST_NUM(h->SessionList);j++)
-				{
-					SESSION *s = LIST_DATA(h->SessionList, j);
-					Lock(s->lock);
-					{
-						if (s->SessionKey32 == key32)
-						{
-							// Session found
-							AddRef(s->ref);
-
-							// Unlock
-							Unlock(s->lock);
-							UnlockList(h->SessionList);
-							UnlockList(cedar->HubList);
-							return s;
-						}
-					}
-					Unlock(s->lock);
-				}
-			}
-			UnlockList(h->SessionList);
-		}
-	}
-	UnlockList(cedar->HubList);
-
-	return NULL;
 }
 
 // Get the session from the session key
@@ -2354,7 +2218,7 @@ SESSION *NewServerSessionEx(CEDAR *cedar, CONNECTION *c, HUB *h, char *username,
 			StrUpper(tmp);
 			Trim(tmp);
 
-			Hash(hash, tmp, StrLen(tmp), true);
+			Sha0(hash, tmp, StrLen(tmp));
 
 			s->IpcMacAddress[0] = 0xCA;
 			s->IpcMacAddress[1] = hash[1];
@@ -2367,7 +2231,6 @@ SESSION *NewServerSessionEx(CEDAR *cedar, CONNECTION *c, HUB *h, char *username,
 			Debug("MAC Address for IPC: %s\n", tmp);
 		}
 	}
-
 
 	return s;
 }
@@ -2387,20 +2250,6 @@ bool IsIpcMacAddress(UCHAR *mac)
 	}
 
 	return false;
-}
-
-// Display the session key for debugging
-void DebugPrintSessionKey(UCHAR *session_key)
-{
-	char tmp[MAX_SIZE];
-	// Validate arguments
-	if (session_key == NULL)
-	{
-		return;
-	}
-
-	Bit160ToStr(tmp, session_key);
-	Debug("SessionKey: %s\n", tmp);
 }
 
 // Display the status on the client
@@ -2498,3 +2347,140 @@ void Notify(SESSION *s, UINT code)
 }
 
 
+UINT PrepareDHCPRequestForStaticIPv4(SESSION *s, BLOCK *b)
+{
+	PKT *pkt = NULL;
+	DHCPV4_HEADER *dhcp = NULL;
+	UCHAR *data = NULL;
+	UINT size = 0;
+	UINT dhcp_header_size = 0;
+	UINT dhcp_data_offset = 0;
+	UINT magic_cookie = Endian32(DHCP_MAGIC_COOKIE);
+	DHCP_OPTION_LIST *opt = NULL;
+	USER *user = NULL;
+	UINT ret_ip = 0;
+
+	if ((s->Username == NULL) || (StrLen(s->Username) == 0) || (StrCmpi(s->Username, SNAT_USER_NAME_PRINT) == 0) ||
+		(StrCmpi( s->Username, BRIDGE_USER_NAME_PRINT) == 0) || (StrCmpi(s->Username, LINK_USER_NAME_PRINT) == 0))
+	{
+		return ret_ip;
+	}
+
+	pkt = ParsePacket(b->Buf, b->Size);
+	if (pkt == NULL)
+	{
+		return ret_ip;
+	}
+
+	if (pkt->TypeL3 == L3_IPV4 && pkt->TypeL4 == L4_UDP && pkt->TypeL7 == L7_DHCPV4)
+	{
+		if (pkt->L7.DHCPv4Header->OpCode != 1)
+		{
+			goto CLEANUP_TP;
+		}
+
+		dhcp = pkt->L7.DHCPv4Header;
+		dhcp_header_size = sizeof(DHCPV4_HEADER);
+		dhcp_data_offset = (UINT)(((UCHAR *)pkt->L7.DHCPv4Header) - ((UCHAR *)pkt->MacHeader) + dhcp_header_size);
+		data = ((UCHAR *)dhcp) + dhcp_header_size;
+		size = pkt->PacketSize - dhcp_data_offset;
+
+		if (dhcp_header_size < 5)
+		{
+			goto CLEANUP_TP;
+		}
+
+		// Search for Magic Cookie
+		while (size >= 5)
+		{
+			if (Cmp(data, &magic_cookie, sizeof(magic_cookie)) == 0)
+			{
+				// Found
+				data += 4;
+				size -= 4;
+				opt = ParseDhcpOptionList(data, size);
+				break;
+			}
+
+			++data;
+			--size;
+		}
+
+		if (opt == NULL)
+		{
+			goto CLEANUP_TP;
+		}
+
+		if (opt->Opcode == DHCP_DISCOVER || opt->Opcode == DHCP_REQUEST)
+		{
+			if (s->Hub != NULL)
+			{
+				user = AcGetUser( s->Hub, s->Username );
+				if (user != NULL)
+				{
+					dhcp->ServerIP = GetUserIPv4AddressFromUserNote32(user->Note);
+					ReleaseUser(user);
+					if (s->Hub->SecureNAT != NULL && s->Hub->SecureNAT->Nat != NULL)
+					{
+						VH *v = s->Hub->SecureNAT->Nat->Virtual;
+						if (v != NULL && v->UseDhcp == true && v->DhcpLeaseList != NULL)
+						{
+							DHCP_LEASE *d = SearchDhcpLeaseByIp(v, dhcp->ServerIP);
+
+							// The given static IP address is not used - it's OK
+							if (d == NULL)
+							{
+								ret_ip = dhcp->ServerIP;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+CLEANUP_TP:
+	if (opt != NULL)
+	{
+		Free(opt);
+	}
+
+	if (pkt != NULL)
+	{
+		FreePacket(pkt);
+	}
+
+	return ret_ip;
+}
+
+void ClearDHCPLeaseRecordForIPv4(SESSION *s, UINT static_ip)
+{
+	if (s == NULL || static_ip == 0)
+	{
+		return;
+	}
+
+	if (s->Hub == NULL || s->Hub->SecureNAT == NULL || s->Hub->SecureNAT->Nat == NULL)
+	{
+		return;
+	}
+
+	VH *v = s->Hub->SecureNAT->Nat->Virtual;
+	if (v == NULL || v->DhcpLeaseList == NULL)
+	{
+		return;
+	}
+
+	DHCP_LEASE *d = SearchDhcpLeaseByIp(v, static_ip);
+	if (d == NULL)
+	{
+		return;
+	}
+
+	LockList(v->DhcpLeaseList);
+	{
+		FreeDhcpLease(d);
+		Delete(v->DhcpLeaseList, d);
+	}
+	UnlockList( v->DhcpLeaseList);
+}

@@ -1,119 +1,18 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Mayaqua Kernel
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Cfg.c
 // Configuration information manipulation module
 
-#include <GlobalConst.h>
+#include "Cfg.h"
 
-#define	CFG_C
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-#include <stdarg.h>
-#include <time.h>
-#include <errno.h>
-#include <Mayaqua/Mayaqua.h>
+#include "FileIO.h"
+#include "Internat.h"
+#include "Memory.h"
+#include "Network.h"
+#include "Object.h"
+#include "Str.h"
 
 // Create a backup of the configuration file
 void BackupCfgWEx(CFG_RW *rw, FOLDER *f, wchar_t *original, UINT revision_number)
@@ -130,12 +29,12 @@ void BackupCfgWEx(CFG_RW *rw, FOLDER *f, wchar_t *original, UINT revision_number
 	}
 
 	// Determine the directory name
-	UniFormat(dirname, sizeof(dirname), L"@backup.%s", original[0] == L'@' ? original + 1 : original);
+	UniFormat(dirname, sizeof(dirname), L"$backup.%s", original[0] == L'$' ? original + 1 : original);
 
 	// Determine the file name
 	LocalTime(&st);
 	UniFormat(datestr, sizeof(datestr), L"%04u%02u%02u%02u_%s",
-		st.wYear, st.wMonth, st.wDay, st.wHour, original[0] == L'@' ? original + 1 : original);
+		st.wYear, st.wMonth, st.wDay, st.wHour, original[0] == L'$' ? original + 1 : original);
 
 	if (revision_number == INFINITE)
 	{
@@ -144,7 +43,7 @@ void BackupCfgWEx(CFG_RW *rw, FOLDER *f, wchar_t *original, UINT revision_number
 	else
 	{
 		UniFormat(filename, sizeof(filename), L"%08u_%s",
-			revision_number, original[0] == L'@' ? original + 1 : original);
+			revision_number, original[0] == L'$' ? original + 1 : original);
 	}
 
 	// Don't save if the date and time has not been changed
@@ -235,10 +134,6 @@ CFG_RW *NewCfgRw(FOLDER **root, char *cfg_name)
 {
 	return NewCfgRwEx(root, cfg_name, false);
 }
-CFG_RW *NewCfgRwW(FOLDER **root, wchar_t *cfg_name)
-{
-	return NewCfgRwExW(root, cfg_name, false);
-}
 CFG_RW *NewCfgRwEx(FOLDER **root, char *cfg_name, bool dont_backup)
 {
 	wchar_t *cfg_name_w = CopyStrToUni(cfg_name);
@@ -287,7 +182,7 @@ CFG_RW *NewCfgRwEx2W(FOLDER **root, wchar_t *cfg_name, bool dont_backup, wchar_t
 			{
 				loaded_from_template = true;
 
-				goto LABEL_CONTIUNE;
+				goto LABEL_CONTINUE;
 			}
 		}
 
@@ -302,7 +197,7 @@ CFG_RW *NewCfgRwEx2W(FOLDER **root, wchar_t *cfg_name, bool dont_backup, wchar_t
 		return rw;
 	}
 
-LABEL_CONTIUNE:
+LABEL_CONTINUE:
 	rw = ZeroMalloc(sizeof(CFG_RW));
 	rw->FileNameW = CopyUniStr(cfg_name);
 	rw->FileName = CopyUniToStr(cfg_name);
@@ -457,7 +352,7 @@ bool CfgSaveExW3(CFG_RW *rw, FOLDER *f, wchar_t *name, UINT *written_size, bool 
 		return false;
 	}
 	// Hash the contents
-	Hash(hash, b->Buf, b->Size, true);
+	Sha0(hash, b->Buf, b->Size);
 
 	// Compare the contents to be written with the content which was written last
 	if (rw != NULL)
@@ -547,7 +442,6 @@ FOLDER *CfgReadW(wchar_t *name)
 	FOLDER *f;
 	bool delete_new = false;
 	bool binary_file = false;
-	bool invalid_file = false;
 	UCHAR header[8];
 	bool has_eof = false;
 	// Validate arguments
@@ -605,11 +499,6 @@ FOLDER *CfgReadW(wchar_t *name)
 		// Read the original file too if the size of temporary file is 0
 		if (FileSize(o) == 0)
 		{
-			invalid_file = true;
-		}
-
-		if (invalid_file)
-		{
 			FileClose(o);
 			o = FileOpenW(name, false);
 		}
@@ -652,12 +541,11 @@ FOLDER *CfgReadW(wchar_t *name)
 		// Check the hash 
 		ReadBuf(b, hash1, sizeof(hash1));
 
-		Hash(hash2, ((UCHAR *)b->Buf) + 8 + SHA1_SIZE, b->Size - 8 - SHA1_SIZE, true);
+		Sha0(hash2, ((UCHAR *)b->Buf) + 8 + SHA1_SIZE, b->Size - 8 - SHA1_SIZE);
 
 		if (Cmp(hash1, hash2, SHA1_SIZE) != 0)
 		{
 			// Corrupted file
-			invalid_file = true;
 			FreeBuf(b);
 			return NULL;
 		}
@@ -689,46 +577,6 @@ FOLDER *CfgReadW(wchar_t *name)
 	FileDeleteW(newfile);
 
 	return f;
-}
-
-// Test of Cfg
-void CfgTest2(FOLDER *f, UINT n)
-{
-}
-
-void CfgTest()
-{
-#if	0
-	FOLDER *root;
-	BUF *b;
-	Debug("\nCFG Test Begin\n");
-
-	root = CfgCreateFolder(NULL, TAG_ROOT);
-	CfgTest2(root, 5);
-
-	b = CfgFolderToBufText(root);
-	//Print("%s\n", b->Buf);
-	SeekBuf(b, 0, 0);
-
-	CfgDeleteFolder(root);
-
-	DumpBuf(b, "test1.config");
-
-	root = CfgBufTextToFolder(b);
-
-	FreeBuf(b);
-
-	b = CfgFolderToBufText(root);
-//	Print("%s\n", b->Buf);
-	DumpBuf(b, "test2.config");
-	FreeBuf(b);
-
-	CfgSave(root, "test.txt");
-
-	CfgDeleteFolder(root);
-
-	Debug("\nCFG Test End\n");
-#endif
 }
 
 // Read one line
@@ -1096,16 +944,12 @@ BUF *CfgFolderToBufBin(FOLDER *f)
 	CfgOutputFolderBin(b, f);
 
 	// Hash
-	Hash(((UCHAR *)b->Buf) + 8, ((UCHAR *)b->Buf) + 8 + SHA1_SIZE, b->Size - 8 - SHA1_SIZE, true);
+	Sha0(((UCHAR *)b->Buf) + 8, ((UCHAR *)b->Buf) + 8 + SHA1_SIZE, b->Size - 8 - SHA1_SIZE);
 
 	return b;
 }
 
 // Convert the folder to a stream text
-BUF *CfgFolderToBufText(FOLDER *f)
-{
-	return CfgFolderToBufTextEx(f, false);
-}
 BUF *CfgFolderToBufTextEx(FOLDER *f, bool no_banner)
 {
 	BUF *b;
@@ -1357,10 +1201,6 @@ void CfgAddItemText(BUF *b, ITEM *t, UINT depth)
 
 	// Memory release
 	Free(data);
-	if (sub != NULL)
-	{
-		Free(sub);
-	}
 }
 
 // Output the data line
@@ -1414,17 +1254,6 @@ void CfgAddData(BUF *b, UINT type, char *name, char *data, char *sub, UINT depth
 	}
 	CfgAddLine(b, tmp, depth);
 	Free(tmp);
-}
-
-// Convert the data type string to an integer value
-UINT CfgStrToType(char *str)
-{
-	if (!StrCmpi(str, TAG_INT)) return ITEM_TYPE_INT;
-	if (!StrCmpi(str, TAG_INT64)) return ITEM_TYPE_INT64;
-	if (!StrCmpi(str, TAG_BYTE)) return ITEM_TYPE_BYTE;
-	if (!StrCmpi(str, TAG_STRING)) return ITEM_TYPE_STRING;
-	if (!StrCmpi(str, TAG_BOOL)) return ITEM_TYPE_BOOL;
-	return 0;
 }
 
 // Convert the type of data to a string
@@ -1690,18 +1519,6 @@ bool CfgGetUniStr(FOLDER *f, char *name, wchar_t *str, UINT size)
 	}
 	UniStrCpy(str, size, t->Buf);
 	return true;
-}
-
-// Check for the existence of a folder
-bool CfgIsFolder(FOLDER *f, char *name)
-{
-	// Validate arguments
-	if (f == NULL || name == NULL)
-	{
-		return false;
-	}
-
-	return (CfgGetFolder(f, name) == NULL) ? false : true;
 }
 
 // Check for the existence of item
@@ -2108,14 +1925,12 @@ ITEM *CfgAddInt(FOLDER *f, char *name, UINT i)
 // Adding a bool type
 ITEM *CfgAddBool(FOLDER *f, char *name, bool b)
 {
-	bool v;
 	// Validate arguments
 	if (f == NULL || name == NULL)
 	{
 		return NULL;
 	}
 
-	v = b ? 1 : 0;
 	return CfgCreateItem(f, name, ITEM_TYPE_BOOL, &b, sizeof(bool));
 }
 
@@ -2329,25 +2144,36 @@ void CfgDeleteFolder(FOLDER *f)
 		return;
 	}
 
+	if(f->Folders == NULL)
+	{
+		return;
+	}
+
 	// Remove all subfolders
 	num = LIST_NUM(f->Folders);
-	ff = Malloc(sizeof(FOLDER *) * num);
-	Copy(ff, f->Folders->p, sizeof(FOLDER *) * num);
-	for (i = 0;i < num;i++)
+	if (num  != 0)
 	{
-		CfgDeleteFolder(ff[i]);
+		ff = Malloc(sizeof(FOLDER *) * num);
+		Copy(ff, f->Folders->p, sizeof(FOLDER *) * num);
+		for (i = 0;i < num;i++)
+		{
+			CfgDeleteFolder(ff[i]);
+		}
+		Free(ff);
 	}
-	Free(ff);
 
 	// Remove all items
 	num = LIST_NUM(f->Items);
-	tt = Malloc(sizeof(ITEM *) * num);
-	Copy(tt, f->Items->p, sizeof(ITEM *) * num);
-	for (i = 0;i < num;i++)
+	if (num != 0)
 	{
-		CfgDeleteItem(tt[i]);
+		tt = Malloc(sizeof(ITEM *) * num);
+		Copy(tt, f->Items->p, sizeof(ITEM *) * num);
+		for (i = 0;i < num;i++)
+		{
+			CfgDeleteItem(tt[i]);
+		}
+		Free(tt);
 	}
-	Free(tt);
 
 	// Memory release
 	Free(f->Name);

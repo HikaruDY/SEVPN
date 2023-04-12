@@ -1,147 +1,37 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Cedar Communication Module
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// Contributors:
-// - ELIN (https://github.com/el1n)
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // CM.c
 // VPN Client Connection Manager for Win32
 
-#include <GlobalConst.h>
+#ifdef OS_WIN32
 
-#ifdef	WIN32
+#define WINUI_C
+#define MICROSOFT_C
 
-#define	CM_C
-#define	SM_C
-#define	MICROSOFT_C
-
-#define	_WIN32_WINNT		0x0502
-#define	WINVER				0x0502
-#include <winsock2.h>
-#include <windows.h>
-#include <Iphlpapi.h>
-#include <tlhelp32.h>
-#include <shlobj.h>
-#include <commctrl.h>
-#include <Dbghelp.h>
-#include <setupapi.h>
-#include <regstr.h>
-#include <process.h>
-#include <psapi.h>
-#include <wtsapi32.h>
-#include <Ntsecapi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-#include <stdarg.h>
-#include <time.h>
-#include <errno.h>
-#include <Mayaqua/Mayaqua.h>
-#include <Cedar/Cedar.h>
 #include "CMInner.h"
+
+#include "Nat.h"
+#include "Protocol.h"
+#include "Remote.h"
 #include "SMInner.h"
-#include "NMInner.h"
-#include "EMInner.h"
+#include "UT.h"
+#include "Win32Com.h"
+#include "WinUi.h"
+
+#include "Mayaqua/FileIO.h"
+#include "Mayaqua/Internat.h"
+#include "Mayaqua/Microsoft.h"
+#include "Mayaqua/Memory.h"
+#include "Mayaqua/Object.h"
+#include "Mayaqua/Secure.h"
+#include "Mayaqua/Str.h"
+#include "Mayaqua/Win32.h"
+
 #include "../PenCore/resource.h"
 
+#include <shellapi.h>
 
 // Get the proxy server settings from the registry string of IE
 bool CmGetProxyServerNameAndPortFromIeProxyRegStr(char *name, UINT name_size, UINT *port, char *str, char *server_type)
@@ -211,6 +101,7 @@ void CmProxyDlgSet(HWND hWnd, CLIENT_OPTION *o, CM_INTERNET_SETTING *setting)
 	Check(hWnd, R_DIRECT_TCP,	setting->ProxyType == PROXY_DIRECT);
 	Check(hWnd, R_HTTPS,		setting->ProxyType == PROXY_HTTP);
 	Check(hWnd, R_SOCKS,		setting->ProxyType == PROXY_SOCKS);
+	Check(hWnd, R_SOCKS5,		setting->ProxyType == PROXY_SOCKS5);
 
 	// Proxy Settings
 	if(setting->ProxyType != PROXY_DIRECT)
@@ -328,14 +219,7 @@ UINT CmGetSecureBitmapId(char *dest_hostname)
 // Activate the window of UAC
 void CmSetUacWindowActive()
 {
-	HWND hWnd;
-
-	if (MsIsVista() == false)
-	{
-		return;
-	}
-	
-	hWnd = FindWindowA("$$$Secure UAP Dummy Window Class For Interim Dialog", NULL);
+	HWND hWnd = FindWindowA("$$$Secure UAP Dummy Window Class For Interim Dialog", NULL);
 	if (hWnd == NULL)
 	{
 		return;
@@ -526,7 +410,7 @@ void CmEasyDlgOnKey(HWND hWnd, CM_EASY_DLG *d, bool ctrl, bool alt, UINT key)
 			break;
 		case 'O':
 			// Option settings
-			Command(hWnd, CMD_OPTION);
+			Command(hWnd, CMD_TRAFFIC);
 			break;
 		case 'R':
 			// Certificate management
@@ -622,7 +506,7 @@ void CmRefreshEasy()
 	SendMessage(cm->hEasyWnd, WM_CM_EASY_REFRESH, 0, 0);
 }
 
-// Initialze the Simple Connect Manager
+// Initialize the Simple Connect Manager
 void CmEasyDlgInit(HWND hWnd, CM_EASY_DLG *d)
 {
 	HFONT hFontForList;
@@ -1155,7 +1039,7 @@ void CmSettingDlgUpdate(HWND hWnd, CM_SETTING_DLG *d)
 		bool password_ok = false;
 		UCHAR hash[SHA1_SIZE];
 
-		Hash(hash, tmp1, StrLen(tmp1), true);
+		Sha0(hash, tmp1, StrLen(tmp1));
 		if (Cmp(hash, d->HashedPassword, sizeof(hash)) == 0)
 		{
 			password_ok = true;
@@ -1210,7 +1094,7 @@ void CmSettingDlgOnOk(HWND hWnd, CM_SETTING_DLG *d)
 		{
 			if (StrLen(tmp1) >= 1)
 			{
-				Hash(a.HashedPassword, tmp1, StrLen(tmp1), true);
+				Sha0(a.HashedPassword, tmp1, StrLen(tmp1));
 			}
 		}
 	}
@@ -1382,7 +1266,7 @@ void *CmExecUiHelperMain()
 	HANDLE h;
 	wchar_t tmp[MAX_SIZE];
 
-	UniFormat(tmp, sizeof(tmp), L"%s\\%S", MsGetExeDirNameW(), CiGetVpnClientExeFileName());
+	UniFormat(tmp, sizeof(tmp), L"%s\\%S", MsGetExeDirNameW(), CLIENT_WIN32_EXE_FILENAME);
 
 	// Start
 	h = Win32RunExW(tmp, SVC_ARG_UIHELP_W, false);
@@ -1581,22 +1465,8 @@ void CmTrafficRunDlgAddStr(HWND hWnd, wchar_t *str)
 	UniReplaceStrEx(tmp, tmp_size, tmp, L"\r\n", L"\n", false);
 	UniReplaceStrEx(tmp, tmp_size, tmp, L"\n", L"\r\n", false);
 
-	if (MsIsNt())
-	{
-		SendMsg(hWnd, E_EDIT, EM_SETSEL, 0x7fffffff, 0x7fffffff);
-		SendMsg(hWnd, E_EDIT, EM_REPLACESEL, false, (LPARAM)tmp);
-	}
-	else
-	{
-		char *s = CopyUniToStr(tmp);
-		UINT len;
-
-		len = GetWindowTextLength(DlgItem(hWnd, E_EDIT));
-		SendMsg(hWnd, E_EDIT, EM_SETSEL, 0x7fffffff, 0x7fffffff);
-		SendMsg(hWnd, E_EDIT, EM_SETSEL, len, len);
-		SendMsg(hWnd, E_EDIT, EM_REPLACESEL, false, (LPARAM)s);
-		Free(s);
-	}
+	SendMsg(hWnd, E_EDIT, EM_SETSEL, 0x7fffffff, 0x7fffffff);
+	SendMsg(hWnd, E_EDIT, EM_REPLACESEL, false, (LPARAM)tmp);
 
 	Free(tmp);
 }
@@ -3664,11 +3534,6 @@ bool CmStopInstallVLan(HWND hWnd)
 		// There is no need to be prohibited if the client is an UNIX
 		return true;
 	}
-	if (cm->Client->Win9x)
-	{
-		// There is no need to prohibit if the client is a Win9x
-		return true;
-	}
 
 	return true;
 
@@ -4387,10 +4252,7 @@ UINT CmMainWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *p
 		switch (wParam)
 		{
 		case 1:
-			if (MsIsWindows11() == false)
-			{
-				CmSetForegroundProcessToCnService();
-			}
+			CmSetForegroundProcessToCnService();
 			break;
 		case 2:
 			CmPollingTray(hWnd);
@@ -4411,7 +4273,7 @@ UINT CmMainWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *p
 					if (CmGetNumConnected(hWnd) == 0)
 					{
 						cm->Update = InitUpdateUi(_UU("PRODUCT_NAME_VPN_CMGR"), NAME_OF_VPN_CLIENT_MANAGER, NULL,
-							GetCurrentBuildDate(), CEDAR_BUILD, CEDAR_VER, ((cm->Client == NULL) ? NULL : cm->Client->ClientId),
+							GetCurrentBuildDate(), CEDAR_VERSION_BUILD, GetCedarVersionNumber(), ((cm->Client == NULL) ? NULL : cm->Client->ClientId),
 							true);
 					}
 				}
@@ -4474,7 +4336,7 @@ UINT CmMainWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *p
 // Specify the notification service to the foreground process
 void CmSetForegroundProcessToCnService()
 {
-	if (cm->MenuPopuping)
+	if (cm->PopupMenuOpen)
 	{
 		return;
 	}
@@ -4495,9 +4357,6 @@ HMENU CmCreateRecentSubMenu(HWND hWnd, UINT start_id)
 	UINT i;
 	RPC_CLIENT_ENUM_ACCOUNT a;
 	LIST *o;
-	bool easy;
-
-	easy = cm->CmSetting.EasyMode;
 
 	Zero(&a, sizeof(a));
 
@@ -4525,7 +4384,6 @@ HMENU CmCreateRecentSubMenu(HWND hWnd, UINT start_id)
 			wchar_t tmp[MAX_PATH];
 			wchar_t *account_name;
 			char *server_name;
-			char *hub_name;
 			UINT pos;
 
 			if (h == NULL)
@@ -4535,7 +4393,6 @@ HMENU CmCreateRecentSubMenu(HWND hWnd, UINT start_id)
 
 			account_name = item->AccountName;
 			server_name = item->ServerName;
-			hub_name = item->HubName;
 
 			UniStrCpy(tmp, sizeof(tmp), account_name);
 
@@ -4577,7 +4434,6 @@ HMENU CmCreateTraySubMenu(HWND hWnd, bool flag, UINT start_id)
 		if (status_str != NULL)
 		{
 			bool b = false;
-			bool is_account = false;
 
 			if (UniStrCmpi(status_str, _UU("CM_ACCOUNT_OFFLINE")) == 0)
 			{
@@ -4585,8 +4441,6 @@ HMENU CmCreateTraySubMenu(HWND hWnd, bool flag, UINT start_id)
 				{
 					b = true;
 				}
-
-				is_account = true;
 			}
 
 			if (UniStrCmpi(status_str, _UU("CM_ACCOUNT_ONLINE")) == 0 ||
@@ -4596,8 +4450,6 @@ HMENU CmCreateTraySubMenu(HWND hWnd, bool flag, UINT start_id)
 				{
 					b = true;
 				}
-
-				is_account = true;
 			}
 
 			if (b)
@@ -4651,7 +4503,7 @@ void CmShowTrayMenu(HWND hWnd)
 		return;
 	}
 
-	cm->MenuPopuping = true;
+	cm->PopupMenuOpen = true;
 
 	locked = cm->CmSetting.LockMode;
 	easy = cm->CmSetting.EasyMode;
@@ -4780,7 +4632,7 @@ void CmShowTrayMenu(HWND hWnd)
 
 	DestroyMenu(h);
 
-	cm->MenuPopuping = false;
+	cm->PopupMenuOpen = false;
 }
 
 // Hide or show the main window
@@ -5167,7 +5019,7 @@ void CmOnKey(HWND hWnd, bool ctrl, bool alt, UINT key)
 			break;
 		case 'O':
 			// Option settings
-			Command(hWnd, CMD_OPTION);
+			Command(hWnd, CMD_TRAFFIC);
 			break;
 		case 'R':
 			// Certificate management
@@ -5583,27 +5435,12 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 		name = CmNewVLanDlg(hWnd);
 		if (name != NULL)
 		{
-			wchar_t tmp[MAX_SIZE];
 			void *helper = NULL;
 			RPC_CLIENT_CREATE_VLAN c;
 			Zero(&c, sizeof(c));
 			StrCpy(c.DeviceName, sizeof(c.DeviceName), name);
-			if (MsIsNt() == false)
-			{
-				// Change the title of the window
-				GetTxt(hWnd, 0, tmp, sizeof(tmp));
-				SetText(hWnd, 0, _UU("CM_VLAN_INSTALLING"));
-			}
-			// Minimize
-			if (MsIsVista() == false)
-			{
-				ShowWindow(hWnd, SW_SHOWMINIMIZED);
-			}
 
-			if (MsIsVista())
-			{
-				helper = CmStartUacHelper();
-			}
+			helper = CmStartUacHelper();
 
 			if (CALL(hWnd, CcCreateVLan(cm->Client, &c)))
 			{
@@ -5612,17 +5449,9 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 
 			CmStopUacHelper(helper);
 
-			if (MsIsNt() == false)
-			{
-				// Restore the title of the window
-				SetText(hWnd, 0, tmp);
-			}
-			// Restore
-			if (MsIsVista() == false)
-			{
-				ShowWindow(hWnd, SW_SHOWNORMAL);
-			}
 			Free(name);
+
+			CmRefresh(hWnd);
 		}
 		break;
 	case CMD_DELETE_VLAN:
@@ -5630,39 +5459,29 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 		index = LvGetSelected(hWnd, L_VLAN);
 		if (index != INFINITE)
 		{
-			if (cm->Client->Win9x == false)
+			// Windows 2000 or later
+			wchar_t *s = LvGetStr(hWnd, L_VLAN, index, 0);
+			if (s != NULL)
 			{
-				// Windows 2000 or later
-				wchar_t *s = LvGetStr(hWnd, L_VLAN, index, 0);
-				if (s != NULL)
+				RPC_CLIENT_CREATE_VLAN c;
+				char str[MAX_SIZE];
+				CmVoice("delete_vlan_1");
+				if (MsgBoxEx(hWnd, MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2, _UU("CM_DELETE_VLAN"), s) == IDYES)
 				{
-					RPC_CLIENT_CREATE_VLAN c;
-					char str[MAX_SIZE];
-					CmVoice("delete_vlan_1");
-					if (MsgBoxEx(hWnd, MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2, _UU("CM_DELETE_VLAN"), s) == IDYES)
+					Zero(&c, sizeof(c));
+					UniToStr(str, sizeof(str), s);
+					if (CmPrintNameToVLanName(c.DeviceName, sizeof(c.DeviceName), str))
 					{
-						Zero(&c, sizeof(c));
-						UniToStr(str, sizeof(str), s);
-						if (CmPrintNameToVLanName(c.DeviceName, sizeof(c.DeviceName), str))
+						if (CALL(hWnd, CcDeleteVLan(cm->Client, &c)))
 						{
-							if (CALL(hWnd, CcDeleteVLan(cm->Client, &c)))
-							{
-								CmVoice("delete_vlan_2");
-							}
+							CmVoice("delete_vlan_2");
 						}
 					}
-					Free(s);
 				}
+				Free(s);
 			}
-			else
-			{
-				// Windows 9x
-				if (MsgBox(hWnd, MB_ICONQUESTION | MB_YESNO, _UU("CM_9X_VLAN_UNINSTALL")) == IDYES)
-				{
-					Run("rundll32.exe", "shell32.dll,Control_RunDLL NETCPL.CPL",
-						false, false);
-				}
-			}
+
+			CmRefresh(hWnd);
 		}
 		break;
 	case CMD_ENABLE_VLAN:
@@ -5682,6 +5501,8 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 					CALL(hWnd, CcEnableVLan(cm->Client, &c));
 				}
 				Free(s);
+
+				CmRefresh(hWnd);
 			}
 		}
 		break;
@@ -5702,6 +5523,8 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 					CALL(hWnd, CcDisableVLan(cm->Client, &c));
 				}
 				Free(s);
+
+				CmRefresh(hWnd);
 			}
 		}
 		break;
@@ -5730,28 +5553,15 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 				UniToStr(str, sizeof(str), s);
 				if (CmPrintNameToVLanName(c.DeviceName, sizeof(c.DeviceName), str))
 				{
-					void *helper = NULL;
-
-					if (MsIsVista() == false)
-					{
-						ShowWindow(hWnd, SW_SHOWMINIMIZED);
-					}
-
-					if (MsIsVista())
-					{
-						helper = CmStartUacHelper();
-					}
+					void *helper = CmStartUacHelper();
 
 					CALL(hWnd, CcUpgradeVLan(cm->Client, &c));
 
 					CmStopUacHelper(helper);
-
-					if (MsIsVista() == false)
-					{
-						ShowWindow(hWnd, SW_SHOWNORMAL);
-					}
 				}
 				Free(s);
+
+				CmRefresh(hWnd);
 			}
 		}
 		break;
@@ -5819,11 +5629,7 @@ void CmMainWindowOnCommandEx(HWND hWnd, WPARAM wParam, LPARAM lParam, bool easy)
 		break;
 	case CMD_MMCSS:
 		// Optimization utility for Windows Vista
-		if (MsIsVista() == false)
-		{
-			MsgBox(hWnd, MB_ICONINFORMATION, _UU("VISTA_MMCSS_MSG_4"));
-		}
-		else
+		if (true)
 		{
 			if (MsIsAdmin() == false)
 			{
@@ -5891,7 +5697,6 @@ void CmConfigDlgInit(HWND hWnd)
 {
 	bool use_alpha;
 	UINT alpha_value;
-	UINT os;
 	CLIENT_CONFIG c;
 	// Validate arguments
 	if (hWnd == NULL)
@@ -5926,15 +5731,7 @@ void CmConfigDlgInit(HWND hWnd)
 	SetInt(hWnd, E_ALPHA_VALUE, alpha_value == 0 ? 50 : alpha_value);
 	Check(hWnd, R_ALPHA, use_alpha);
 
-	os = GetOsInfo()->OsType;
-	if (OS_IS_WINDOWS_NT(os) && GET_KETA(os, 100) >= 2)
-	{
-		Enable(hWnd, R_ALPHA);
-	}
-	else
-	{
-		Disable(hWnd, R_ALPHA);
-	}
+	Enable(hWnd, R_ALPHA);
 
 	CmConfigDlgRefresh(hWnd);
 }
@@ -6234,6 +6031,7 @@ void CmExportAccount(HWND hWnd, wchar_t *account_name)
 		t.ClientAuth = a->ClientAuth;
 		t.StartupAccount = a->Startup;
 		t.CheckServerCert = a->CheckServerCert;
+		t.RetryOnServerCert = a->RetryOnServerCert;
 		t.ServerCert = a->ServerCert;
 		t.ClientOption->FromAdminPack = false;
 
@@ -6364,7 +6162,6 @@ void CmImportAccountMainEx(HWND hWnd, wchar_t *filename, bool overwrite)
 					t->ClientOption->RequireMonitorMode = old_option->RequireMonitorMode;
 					t->ClientOption->RequireBridgeRoutingMode = old_option->RequireBridgeRoutingMode;
 					t->ClientOption->DisableQoS = old_option->DisableQoS;
-					t->ClientOption->NoTls1 = old_option->NoTls1;
 
 					// Inherit the authentication data
 					CiFreeClientAuth(t->ClientAuth);
@@ -6373,6 +6170,7 @@ void CmImportAccountMainEx(HWND hWnd, wchar_t *filename, bool overwrite)
 					// Other Settings
 					t->StartupAccount = get.StartupAccount;
 					t->CheckServerCert = get.CheckServerCert;
+					t->RetryOnServerCert = get.RetryOnServerCert;
 					if (t->ServerCert != NULL)
 					{
 						FreeX(t->ServerCert);
@@ -6481,6 +6279,7 @@ void CmCopyAccount(HWND hWnd, wchar_t *account_name)
 		c.ServerCert = CloneX(a->ServerCert);
 	}
 	c.CheckServerCert = a->CheckServerCert;
+	c.RetryOnServerCert = a->RetryOnServerCert;
 	c.StartupAccount = false;		// Don't copy the startup attribute
 
 	CALL(hWnd, CcCreateAccount(cm->Client, &c));
@@ -6534,8 +6333,8 @@ UINT CmNewVLanDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *p
 	switch (msg)
 	{
 	case WM_INITDIALOG:
-		LimitText(hWnd, E_NAME, cm->Client->Win9x ? MAX_DEVICE_NAME_LEN_9X : MAX_DEVICE_NAME_LEN);
-		FormatText(hWnd, S_INFO, cm->Client->Win9x ? MAX_DEVICE_NAME_LEN_9X : MAX_DEVICE_NAME_LEN);
+		LimitText(hWnd, E_NAME, MAX_DEVICE_NAME_LEN);
+		FormatText(hWnd, S_INFO, MAX_DEVICE_NAME_LEN);
 
 		Zero(&ver, sizeof(ver));
 
@@ -6560,15 +6359,7 @@ UINT CmNewVLanDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *p
 		switch (wParam)
 		{
 		case IDOK:
-			if (cm->Client->Win9x)
-			{
-				// For Windows 9x, show a confirmation message
-				if (MsgBox(hWnd, MB_ICONQUESTION | MB_OKCANCEL, _UU("CM_9X_VLAN_INSTALL")) == IDCANCEL)
-				{
-					break;
-				}
-			}
-			GetTxtA(hWnd, E_NAME, tmp, (cm->Client->Win9x ? MAX_DEVICE_NAME_LEN_9X : MAX_DEVICE_NAME_LEN) + 1);
+			GetTxtA(hWnd, E_NAME, tmp, MAX_DEVICE_NAME_LEN + 1);
 			Trim(tmp);
 
 			if (CcGetClientVersion(cm->Client, &ver) == ERR_NO_ERROR)
@@ -6896,6 +6687,10 @@ void CmEditAccountDlgUpdate(HWND hWnd, CM_ACCOUNT *a)
 	{
 		a->ClientOption->ProxyType = PROXY_SOCKS;
 	}
+	if (IsChecked(hWnd, R_SOCKS5))
+	{
+		a->ClientOption->ProxyType = PROXY_SOCKS5;
+	}
 
 	// To validate the server certificate
 	a->CheckServerCert = IsChecked(hWnd, R_CHECK_CERT);
@@ -6975,8 +6770,6 @@ void CmEditAccountDlgUpdate(HWND hWnd, CM_ACCOUNT *a)
 		}
 	}
 	a->ClientOption->RetryInterval = GetInt(hWnd, E_RETRY_SPAN);
-
-	a->ClientOption->NoTls1 = IsChecked(hWnd, R_NOTLS1);
 
 	// Information determining
 	if (UniStrLen(a->ClientOption->AccountName) == 0 && a->NatMode == false)
@@ -7336,6 +7129,7 @@ void CmEditAccountDlgInit(HWND hWnd, CM_ACCOUNT *a)
 	Check(hWnd, R_DIRECT_TCP, a->ClientOption->ProxyType == PROXY_DIRECT);
 	Check(hWnd, R_HTTPS, a->ClientOption->ProxyType == PROXY_HTTP);
 	Check(hWnd, R_SOCKS, a->ClientOption->ProxyType == PROXY_SOCKS);
+	Check(hWnd, R_SOCKS5, a->ClientOption->ProxyType == PROXY_SOCKS5);
 
 	// Verify the server certificate
 	Check(hWnd, R_CHECK_CERT, a->CheckServerCert);
@@ -7430,8 +7224,6 @@ void CmEditAccountDlgInit(HWND hWnd, CM_ACCOUNT *a)
 		}
 	}
 	SetIntEx(hWnd, E_RETRY_SPAN, a->ClientOption->RetryInterval);
-
-	Check(hWnd, R_NOTLS1, a->ClientOption->NoTls1);
 
 	// Title
 	if (a->NatMode == false)
@@ -7818,6 +7610,290 @@ UINT CmEditAccountDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, voi
 	return 0;
 }
 
+// Update the custom proxy HTTP header dialog
+void CmProxyHttpHeaderDlgUpdate(HWND hWnd)
+{
+	UINT i = 0;
+	bool ok = true;
+	LIST *names_list;
+	// Validate arguments
+	if (hWnd == NULL)
+	{
+		return;
+	}
+
+	names_list = NewList(NULL);
+
+	for (; i < LvNum(hWnd, L_VALUES_LIST); i++)
+	{
+		wchar_t *str = LvGetStr(hWnd, L_VALUES_LIST, i, 0);
+		UniTrim(str);
+		if (IsEmptyUniStr(str) || IsInListUniStr(names_list, str))
+		{
+			Free(str);
+			ok = false;
+			break;
+		}
+
+		Add(names_list, str);
+	}
+
+	FreeStrList(names_list);
+	SetEnable(hWnd, IDOK, ok);
+}
+
+// Update the custom proxy HTTP header dialog content
+void CmProxyHttpHeaderDlgRefresh(HWND hWnd, CM_PROXY_HTTP_HEADER_DLG *d)
+{
+	UINT i = 0;
+	LIST *list;
+	LVB *b;
+	CLIENT_OPTION *a;
+	// Validate arguments
+	if (hWnd == NULL || d == NULL)
+	{
+		return;
+	}
+
+	a = (CLIENT_OPTION *)d->ClientOption;
+
+	list = NewEntryList(a->CustomHttpHeader, "\r\n", ":");
+
+	b = LvInsertStart();
+
+	for (; i < LIST_NUM(list); i++)
+	{
+		INI_ENTRY *e = LIST_DATA(list, i);
+		wchar_t *name = CopyStrToUni(e->Key);
+		wchar_t *value = CopyStrToUni(e->Value);
+		UniTrimLeft(value);
+
+		LvInsertAdd(b, 0, NULL, 2, name, value);
+
+		Free(name);
+		Free(value);
+	}
+
+	LvInsertEnd(b, hWnd, L_VALUES_LIST);
+	FreeEntryList(list);
+}
+
+// Initialize the custom proxy HTTP header dialog
+void CmProxyHttpHeaderDlgInit(HWND hWnd, CM_PROXY_HTTP_HEADER_DLG *d)
+{
+	// Validate arguments
+	if (hWnd == NULL || d == NULL)
+	{
+		return;
+	}
+	
+	LvSetEnhanced(hWnd, L_VALUES_LIST, true);
+	LvInitEx(hWnd, L_VALUES_LIST, true);
+	LvInsertColumn(hWnd, L_VALUES_LIST, 0, _UU("CM_HTTP_HEADER_COLUMN_0"), 150);
+	LvInsertColumn(hWnd, L_VALUES_LIST, 1, _UU("CM_HTTP_HEADER_COLUMN_1"), 150);
+
+	LvSetStyle(hWnd, L_VALUES_LIST, LVS_EX_GRIDLINES);
+
+	CmProxyHttpHeaderDlgRefresh(hWnd, d);
+}
+
+// Custom proxy HTTP header dialog control
+UINT CmProxyHttpHeaderDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *param)
+{
+	CM_PROXY_HTTP_HEADER_DLG *d = (CM_PROXY_HTTP_HEADER_DLG *)param;
+	CLIENT_OPTION *a = (d == NULL ? NULL : d->ClientOption);
+	UINT i = INFINITE;
+	// Validate arguments
+	if (hWnd == NULL || d == NULL || a == NULL)
+	{
+		return 0;
+	}
+
+	switch (msg)
+	{
+	case WM_INITDIALOG:
+		CmProxyHttpHeaderDlgInit(hWnd, d);
+		break;
+	case WM_CLOSE:
+		EndDialog(hWnd, false);
+		break;
+	case WM_NOTIFY:
+	{
+		switch (((LPNMHDR)lParam)->code)
+		{
+		// Header divider being dragged (resizing columns)
+		case HDN_ITEMCHANGINGA:
+		case HDN_ITEMCHANGINGW:
+			if (d->EditBox != NULL)
+			{
+				RECT rect;
+				ListView_GetSubItemRect(DlgItem(hWnd, L_VALUES_LIST), d->CurrentItem, d->CurrentSubItem, LVIR_LABEL, &rect);
+				MoveWindow(d->EditBox, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, true);
+				RedrawWindow(d->EditBox, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+			}
+			break;
+		case LVN_ITEMCHANGED:
+			if (((LPNMHDR)lParam)->idFrom == L_VALUES_LIST)
+			{
+				CmProxyHttpHeaderDlgUpdate(hWnd);
+			}
+			break;
+		case NM_DBLCLK:
+		{
+			RECT rect;
+			LPNMLISTVIEW list_view = (LPNMLISTVIEW)lParam;
+			wchar_t *str;
+
+			d->CurrentItem = list_view->iItem;
+			d->CurrentSubItem = list_view->iSubItem;
+			str = LvGetStr(DlgItem(hWnd, L_VALUES_LIST), 0, d->CurrentItem, d->CurrentSubItem);
+			ListView_GetSubItemRect(DlgItem(hWnd, L_VALUES_LIST), d->CurrentItem, d->CurrentSubItem, LVIR_LABEL, &rect);
+
+			d->EditBox = CreateWindowExW(0, L"EDIT", str, WS_BORDER | WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_LEFT | ES_MULTILINE | ES_WANTRETURN, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, DlgItem(hWnd, L_VALUES_LIST), NULL, GetModuleHandle(NULL), NULL);
+			Free(str);
+
+			DlgFont(d->EditBox, 0, 8, false);
+			EditBoxSetEnhanced(d->EditBox, 0, true);
+			FocusEx(d->EditBox, 0);
+			break;
+		}
+		case NM_CLICK:
+		case NM_RETURN:
+			if (d->EditBox != NULL)
+			{
+				wchar_t *new_name = GetText(d->EditBox, 0);
+				wchar_t *old_name = LvGetStr(hWnd, L_VALUES_LIST, d->CurrentItem, d->CurrentSubItem);
+
+				if (old_name != NULL)
+				{
+					if (UniStrCmp(new_name, old_name) != 0)
+					{
+						LvSetItem(hWnd, L_VALUES_LIST, d->CurrentItem, d->CurrentSubItem, new_name);
+					}
+
+					Free(old_name);
+				}
+
+				Free(new_name);
+
+				DestroyWindow(d->EditBox);
+				d->EditBox = NULL;
+			}
+		}
+		break;
+	}
+	case WM_COMMAND:
+		switch (wParam)
+		{
+		case B_NEW:
+			{
+				NMLISTVIEW lv;
+
+				if (d->EditBox != NULL)
+				{
+					DestroyWindow(d->EditBox);
+				}
+
+				i = LvInsertItem(hWnd, L_VALUES_LIST, 0, NULL, L"");
+				LvSelect(hWnd, L_VALUES_LIST, i);
+
+				Zero(&lv, sizeof(lv));
+				lv.hdr.code = NM_DBLCLK;
+				lv.iItem = i;
+				lv.iSubItem = 0;
+
+				SendMsg(hWnd, 0, WM_NOTIFY, 0, (LPARAM)&lv);
+			}
+			break;
+		case B_DELETE:
+			if (d->EditBox != NULL)
+			{
+				DestroyWindow(d->EditBox);
+			}
+
+			i = LvGetSelected(hWnd, L_VALUES_LIST);
+			if (i != INFINITE)
+			{
+				LvDeleteItem(hWnd, L_VALUES_LIST, i);
+			}
+			CmProxyHttpHeaderDlgUpdate(hWnd);
+			break;
+		case B_CLEAR:
+			if (d->EditBox != NULL)
+			{
+				DestroyWindow(d->EditBox);
+			}
+
+			LvReset(hWnd, L_VALUES_LIST);
+			CmProxyHttpHeaderDlgUpdate(hWnd);
+			break;
+		case IDOK:
+		{
+			UINT index = 0;
+			char *name = NULL;
+			char *value = NULL;
+			char http_header[HTTP_CUSTOM_HEADER_MAX_SIZE];
+
+			Zero(http_header, sizeof(http_header));
+			i = LvNum(hWnd, L_VALUES_LIST);
+
+			for (; index < i; index++)
+			{
+				char str[HTTP_CUSTOM_HEADER_MAX_SIZE];
+				name = LvGetStrA(hWnd, L_VALUES_LIST, index, 0);
+				value = LvGetStrA(hWnd, L_VALUES_LIST, index, 1);
+
+				Trim(name);
+				TrimLeft(value);
+
+				Format(str, sizeof(str), "%s: %s\r\n", name, value);
+				EnSafeHttpHeaderValueStr(str, ' ');
+
+				Free(name);
+				Free(value);
+
+				if ((StrLen(http_header) + StrLen(str)) < sizeof(a->CustomHttpHeader))
+				{
+					StrCat(http_header, sizeof(str), str);
+				}
+				else
+				{
+					MsgBox(hWnd, MB_ICONEXCLAMATION | MB_OK, _E(ERR_TOO_MANT_ITEMS));
+					return 1;
+				}
+			}
+
+			Zero(a->CustomHttpHeader, sizeof(a->CustomHttpHeader));
+			StrCpy(a->CustomHttpHeader, sizeof(a->CustomHttpHeader), http_header);
+
+			EndDialog(hWnd, true);
+			break;
+		}
+		case IDCANCEL:
+			Close(hWnd);
+		}
+	}
+
+	return 0;
+}
+
+// Custom proxy HTTP header dialog
+bool CmProxyHttpHeaderDlg(HWND hWnd, CLIENT_OPTION *a)
+{
+	CM_PROXY_HTTP_HEADER_DLG d;
+	// Validate arguments
+	if (a == NULL)
+	{
+		return false;
+	}
+
+	Zero(&d, sizeof(d));
+
+	d.ClientOption = a;
+
+	return Dialog(hWnd, D_CM_PROXY_HTTP_HEADER, CmProxyHttpHeaderDlgProc, &d);
+}
+
 // Update the proxy server settings
 void CmProxyDlgUpdate(HWND hWnd, CLIENT_OPTION *a)
 {
@@ -7827,6 +7903,8 @@ void CmProxyDlgUpdate(HWND hWnd, CLIENT_OPTION *a)
 	{
 		return;
 	}
+
+	SetEnable(hWnd, B_HTTP_HEADER, a->ProxyType == PROXY_HTTP);
 
 	if (IsEmpty(hWnd, E_HOSTNAME))
 	{
@@ -7891,6 +7969,9 @@ UINT CmProxyDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, void *par
 
 		switch (wParam)
 		{
+		case B_HTTP_HEADER:
+			CmProxyHttpHeaderDlg(hWnd, a);
+			break;
 		case IDOK:
 			GetTxtA(hWnd, E_HOSTNAME, a->ProxyName, sizeof(a->ProxyName));
 			GetTxtA(hWnd, E_USERNAME, a->ProxyUsername, sizeof(a->ProxyUsername));
@@ -8241,10 +8322,6 @@ bool CmLoadXExW(HWND hWnd, X **x, wchar_t *filename, UINT size)
 }
 
 // Read the secret key
-bool CmLoadK(HWND hWnd, K **k)
-{
-	return CmLoadKEx(hWnd, k, NULL, 0);
-}
 bool CmLoadKEx(HWND hWnd, K **k, char *filename, UINT size)
 {
 	wchar_t *filename_w = CopyStrToUni(filename);
@@ -8614,6 +8691,10 @@ void CmEditAccountDlgStartEnumHub(HWND hWnd, CM_ACCOUNT *a)
 	{
 		a->ClientOption->ProxyType = PROXY_SOCKS;
 	}
+	if (IsChecked(hWnd, R_SOCKS5))
+	{
+		a->ClientOption->ProxyType = PROXY_SOCKS5;
+	}
 
 	CmEnumHubStart(hWnd, a->ClientOption);
 
@@ -8891,6 +8972,7 @@ CM_ACCOUNT *CmGetExistAccountObject(HWND hWnd, wchar_t *account_name)
 	a = ZeroMalloc(sizeof(CM_ACCOUNT));
 	a->EditMode = true;
 	a->CheckServerCert = c.CheckServerCert;
+	a->RetryOnServerCert = c.RetryOnServerCert;
 	a->Startup = c.StartupAccount;
 	if (c.ServerCert != NULL)
 	{
@@ -8920,6 +9002,7 @@ CM_ACCOUNT *CmCreateNewAccountObject(HWND hWnd)
 	a = ZeroMalloc(sizeof(CM_ACCOUNT));
 	a->EditMode = false;
 	a->CheckServerCert = false;
+	a->RetryOnServerCert = false;
 	a->Startup = false;
 	a->ClientOption = ZeroMalloc(sizeof(CLIENT_OPTION));
 
@@ -9394,6 +9477,7 @@ void CmPrintStatusToListViewEx(LVB *b, RPC_CLIENT_GET_CONNECTION_STATUS *s, bool
 	GetDateTimeStrEx64(tmp, sizeof(tmp), SystemToLocal64(s->StartTime), NULL);
 	LvInsertAdd(b, 0, NULL, 2, _UU("CM_ST_START_TIME"), tmp);
 	GetDateTimeStrEx64(tmp, sizeof(tmp), SystemToLocal64(s->FirstConnectionEstablisiedTime), NULL);
+	/* !!! Do not correct the spelling to keep the backward protocol compatibility !!!  */
 	LvInsertAdd(b, 0, NULL, 2, _UU("CM_ST_FIRST_ESTAB_TIME"), s->FirstConnectionEstablisiedTime == 0 ? _UU("CM_ST_NONE") : tmp);
 
 	if (s->Connected)
@@ -9404,7 +9488,7 @@ void CmPrintStatusToListViewEx(LVB *b, RPC_CLIENT_GET_CONNECTION_STATUS *s, bool
 
 	if (server_mode == false)
 	{
-		UniFormat(tmp, sizeof(tmp), _UU("CM_ST_NUM_STR"), s->NumConnectionsEatablished);
+		UniFormat(tmp, sizeof(tmp), _UU("CM_ST_NUM_STR"), s->NumConnectionsEstablished);
 		LvInsertAdd(b, 0, NULL, 2, _UU("CM_ST_NUM_ESTABLISHED"), tmp);
 	}
 
@@ -9737,30 +9821,6 @@ void CmConnect(HWND hWnd, wchar_t *account_name)
 		return;
 	}
 
-	if (hWnd == cm->hMainWnd)
-	{
-		if (LvNum(hWnd, L_VLAN) == 0 && cm->Client->Win9x)
-		{
-			if (MsgBox(hWnd, MB_ICONINFORMATION | MB_YESNO, _UU("CM_NO_VLAN_2")) == IDNO)
-			{
-				return;
-			}
-			else
-			{
-				if (cm->server_name == NULL || cm->Client->Unix)
-				{
-					Command(hWnd, CMD_NEW_VLAN);
-					return;
-				}
-				else
-				{
-					MsgBox(hWnd, MB_ICONINFORMATION, _UU("CM_VLAN_REMOTE_ERROR"));
-				}
-				return;
-			}
-		}
-	}
-
 	// (If necessary) display a warning
 	if (CmWarningDesktop(hWnd, account_name) == false)
 	{
@@ -9899,7 +9959,7 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 	switch (id)
 	{
 	case CMD_LANGUAGE:
-		return MsIsNt();
+		return true;
 	case CMD_SHOWPORT:
 	case CMD_GRID:
 		if (cm->IconView)
@@ -9908,7 +9968,7 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		}
 		return true;
 	case CMD_MMCSS:
-		if (MsIsVista() == false || IsEmptyStr(cm->server_name) == false)
+		if (IsEmptyStr(cm->server_name) == false)
 		{
 			return false;
 		}
@@ -9919,12 +9979,7 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		return true;
 	case CMD_TRAYICON:
 	case CMD_TRAFFIC:
-		return (cm->server_name == NULL);
 	case CMD_NETIF:
-		if (MsIsNt() == false)
-		{
-			return false;
-		}
 		return (cm->server_name == NULL);
 	case CMD_CM_SETTING:
 		return cm->CmSettingSupported;
@@ -9986,7 +10041,7 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		}
 	case CMD_SHORTCUT:
 		// Create a shortcut
-		if (cm->Client->Rpc->Sock->RemoteIP.addr[0] != 127)
+		if (IsLocalHostIP(&cm->Client->Rpc->Sock->RemoteIP) == false)
 		{
 			return false;
 		}
@@ -10061,21 +10116,11 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		}
 		break;
 	case CMD_NEW_VLAN:
-		if (cm->Client->Unix == false && cm->Client->Win9x == false)
+		if (cm->Client->Unix == false && cm->server_name != NULL)
 		{
-			if (cm->server_name != NULL)
-			{
-				return false;
-			}
+			return false;
 		}
-		if (cm->Client->Win9x)
-		{
-			if (LvNum(hWnd, L_VLAN) >= 1)
-			{
-				// You can not install two or more virtual LAN cards in Win9x
-				return false;
-			}
-		}
+
 		break;
 	case CMD_PROPERTY:
 		name = LvGetSelectedStr(hWnd, L_ACCOUNT, 0);
@@ -10100,10 +10145,6 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		}
 		return LvIsSelected(hWnd, L_VLAN);
 	case CMD_ENABLE_VLAN:
-		if (cm->Client->Win9x)
-		{
-			return false;
-		}
 		if (LvIsMultiMasked(hWnd, L_VLAN))
 		{
 			return false;
@@ -10129,10 +10170,6 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		}
 		break;
 	case CMD_DISABLE_VLAN:
-		if (cm->Client->Win9x)
-		{
-			return false;
-		}
 		if (LvIsMultiMasked(hWnd, L_VLAN))
 		{
 			return false;
@@ -10162,7 +10199,7 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		{
 			return false;
 		}
-		if (cm->Client->Win9x || cm->Client->Unix)
+		if (cm->Client->Unix)
 		{
 			// Upgrading the virtual LAN card on a UNIX system or Win9x is unavailable
 			return false;
@@ -10173,24 +10210,7 @@ bool CmIsEnabled(HWND hWnd, UINT id)
 		}
 		return LvIsSelected(hWnd, L_VLAN);
 	case CMD_WINNET:
-		{
-			UINT os_type = GetOsInfo()->OsType;
-
-			if (OS_IS_WINDOWS_NT(os_type) && GET_KETA(os_type, 100) >= 2)
-			{
-				if (cm->server_name != NULL)
-				{
-					return false;
-				}
-
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		break;
+		return (cm->server_name == NULL);
 	case CMD_EXIT:
 		return cm->TrayInited;
 	}
@@ -10392,7 +10412,7 @@ void CmRefreshAccountListEx2(HWND hWnd, bool easy, bool style_changed)
 	UINT num_connecting = 0, num_connected = 0;
 	wchar_t tmp[MAX_SIZE];
 	wchar_t new_inserted_item[MAX_ACCOUNT_NAME_LEN + 1];
-	bool select_new_insteted_item = true;
+	bool select_new_inserted_item = true;
 	// Validate arguments
 	if (hWnd == NULL)
 	{
@@ -10441,7 +10461,7 @@ void CmRefreshAccountListEx2(HWND hWnd, bool easy, bool style_changed)
 
 	if (LvNum(hWnd, L_ACCOUNT) == 0)
 	{
-		select_new_insteted_item = false;
+		select_new_inserted_item = false;
 	}
 
 	// Enumerate the account list
@@ -10579,7 +10599,7 @@ void CmRefreshAccountListEx2(HWND hWnd, bool easy, bool style_changed)
 
 		CiFreeClientEnumAccount(&a);
 
-		if (select_new_insteted_item)
+		if (select_new_inserted_item)
 		{
 			if (UniStrLen(new_inserted_item) >= 1)
 			{
@@ -11078,7 +11098,7 @@ void CmMainWindowOnInit(HWND hWnd)
 	}
 	else
 	{
-		cm->VistaStyle = MsIsVista();
+		cm->VistaStyle = true;
 	}
 
 	if (MsRegIsValue(REG_CURRENT_USER, CM_REG_KEY, "ShowPort"))
@@ -11169,7 +11189,7 @@ void CmMainWindowOnInit(HWND hWnd)
 
 	UniStrCpy(cm->StatudBar1, sizeof(cm->StatudBar1), _UU("CM_TITLE"));
 	UniStrCpy(cm->StatudBar2, sizeof(cm->StatudBar2), _UU("CM_CONN_NO"));
-	UniFormat(cm->StatudBar3, sizeof(cm->StatudBar3), _UU("CM_PRODUCT_NAME"), CEDAR_BUILD);
+	UniFormat(cm->StatudBar3, sizeof(cm->StatudBar3), _UU("CM_PRODUCT_NAME"), CEDAR_VERSION_BUILD);
 
 	cm->Icon2 = LoadSmallIcon(ICO_SERVER_OFFLINE);
 	cm->Icon3 = LoadSmallIcon(ICO_VPN);
@@ -11187,10 +11207,7 @@ void CmMainWindowOnInit(HWND hWnd)
 	CmInitNotifyClientThread();
 
 	// Timer setting
-	if (MsIsWindows11() == false)
-	{
-		SetTimer(hWnd, 1, 128, NULL);
-	}
+	SetTimer(hWnd, 1, 128, NULL);
 	SetTimer(hWnd, 6, 5000, NULL);
 
 	// Initialize the task tray
@@ -11885,10 +11902,6 @@ RETRY:
 	{
 		cm->CmSettingSupported = true;
 		cm->CmEasyModeSupported = true;
-		if (OS_IS_WINDOWS_9X(a.OsType))
-		{
-			cm->CmEasyModeSupported = false;
-		}
 	}
 
 	return true;

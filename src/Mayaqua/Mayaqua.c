@@ -1,118 +1,29 @@
-// SoftEther VPN Source Code - Stable Edition Repository
+// SoftEther VPN Source Code - Developer Edition Master Branch
 // Mayaqua Kernel
-// 
-// SoftEther VPN Server, Client and Bridge are free software under the Apache License, Version 2.0.
-// 
-// Copyright (c) Daiyuu Nobori.
-// Copyright (c) SoftEther VPN Project, University of Tsukuba, Japan.
-// Copyright (c) SoftEther Corporation.
-// Copyright (c) all contributors on SoftEther VPN project in GitHub.
-// 
-// All Rights Reserved.
-// 
-// http://www.softether.org/
-// 
-// This stable branch is officially managed by Daiyuu Nobori, the owner of SoftEther VPN Project.
-// Pull requests should be sent to the Developer Edition Master Repository on https://github.com/SoftEtherVPN/SoftEtherVPN
-// 
-// License: The Apache License, Version 2.0
-// https://www.apache.org/licenses/LICENSE-2.0
-// 
-// DISCLAIMER
-// ==========
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// 
-// THIS SOFTWARE IS DEVELOPED IN JAPAN, AND DISTRIBUTED FROM JAPAN, UNDER
-// JAPANESE LAWS. YOU MUST AGREE IN ADVANCE TO USE, COPY, MODIFY, MERGE, PUBLISH,
-// DISTRIBUTE, SUBLICENSE, AND/OR SELL COPIES OF THIS SOFTWARE, THAT ANY
-// JURIDICAL DISPUTES WHICH ARE CONCERNED TO THIS SOFTWARE OR ITS CONTENTS,
-// AGAINST US (SOFTETHER PROJECT, SOFTETHER CORPORATION, DAIYUU NOBORI OR OTHER
-// SUPPLIERS), OR ANY JURIDICAL DISPUTES AGAINST US WHICH ARE CAUSED BY ANY KIND
-// OF USING, COPYING, MODIFYING, MERGING, PUBLISHING, DISTRIBUTING, SUBLICENSING,
-// AND/OR SELLING COPIES OF THIS SOFTWARE SHALL BE REGARDED AS BE CONSTRUED AND
-// CONTROLLED BY JAPANESE LAWS, AND YOU MUST FURTHER CONSENT TO EXCLUSIVE
-// JURISDICTION AND VENUE IN THE COURTS SITTING IN TOKYO, JAPAN. YOU MUST WAIVE
-// ALL DEFENSES OF LACK OF PERSONAL JURISDICTION AND FORUM NON CONVENIENS.
-// PROCESS MAY BE SERVED ON EITHER PARTY IN THE MANNER AUTHORIZED BY APPLICABLE
-// LAW OR COURT RULE.
-// 
-// USE ONLY IN JAPAN. DO NOT USE THIS SOFTWARE IN ANOTHER COUNTRY UNLESS YOU HAVE
-// A CONFIRMATION THAT THIS SOFTWARE DOES NOT VIOLATE ANY CRIMINAL LAWS OR CIVIL
-// RIGHTS IN THAT PARTICULAR COUNTRY. USING THIS SOFTWARE IN OTHER COUNTRIES IS
-// COMPLETELY AT YOUR OWN RISK. THE SOFTETHER VPN PROJECT HAS DEVELOPED AND
-// DISTRIBUTED THIS SOFTWARE TO COMPLY ONLY WITH THE JAPANESE LAWS AND EXISTING
-// CIVIL RIGHTS INCLUDING PATENTS WHICH ARE SUBJECTS APPLY IN JAPAN. OTHER
-// COUNTRIES' LAWS OR CIVIL RIGHTS ARE NONE OF OUR CONCERNS NOR RESPONSIBILITIES.
-// WE HAVE NEVER INVESTIGATED ANY CRIMINAL REGULATIONS, CIVIL LAWS OR
-// INTELLECTUAL PROPERTY RIGHTS INCLUDING PATENTS IN ANY OF OTHER 200+ COUNTRIES
-// AND TERRITORIES. BY NATURE, THERE ARE 200+ REGIONS IN THE WORLD, WITH
-// DIFFERENT LAWS. IT IS IMPOSSIBLE TO VERIFY EVERY COUNTRIES' LAWS, REGULATIONS
-// AND CIVIL RIGHTS TO MAKE THE SOFTWARE COMPLY WITH ALL COUNTRIES' LAWS BY THE
-// PROJECT. EVEN IF YOU WILL BE SUED BY A PRIVATE ENTITY OR BE DAMAGED BY A
-// PUBLIC SERVANT IN YOUR COUNTRY, THE DEVELOPERS OF THIS SOFTWARE WILL NEVER BE
-// LIABLE TO RECOVER OR COMPENSATE SUCH DAMAGES, CRIMINAL OR CIVIL
-// RESPONSIBILITIES. NOTE THAT THIS LINE IS NOT LICENSE RESTRICTION BUT JUST A
-// STATEMENT FOR WARNING AND DISCLAIMER.
-// 
-// READ AND UNDERSTAND THE 'WARNING.TXT' FILE BEFORE USING THIS SOFTWARE.
-// SOME SOFTWARE PROGRAMS FROM THIRD PARTIES ARE INCLUDED ON THIS SOFTWARE WITH
-// LICENSE CONDITIONS WHICH ARE DESCRIBED ON THE 'THIRD_PARTY.TXT' FILE.
-// 
-// 
-// SOURCE CODE CONTRIBUTION
-// ------------------------
-// 
-// Your contribution to SoftEther VPN Project is much appreciated.
-// Please send patches to us through GitHub.
-// Read the SoftEther VPN Patch Acceptance Policy in advance:
-// http://www.softether.org/5-download/src/9.patch
-// 
-// 
-// DEAR SECURITY EXPERTS
-// ---------------------
-// 
-// If you find a bug or a security vulnerability please kindly inform us
-// about the problem immediately so that we can fix the security problem
-// to protect a lot of users around the world as soon as possible.
-// 
-// Our e-mail address for security reports is:
-// softether-vpn-security [at] softether.org
-// 
-// Please note that the above e-mail address is not a technical support
-// inquiry address. If you need technical assistance, please visit
-// http://www.softether.org/ and ask your question on the users forum.
-// 
-// Thank you for your cooperation.
-// 
-// 
-// NO MEMORY OR RESOURCE LEAKS
-// ---------------------------
-// 
-// The memory-leaks and resource-leaks verification under the stress
-// test has been passed before release this source code.
 
 
 // Mayaqua.c
 // Mayaqua Kernel program
 
-#include <GlobalConst.h>
+#include "Mayaqua.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
-#include <stdarg.h>
+#include "Encrypt.h"
+#include "FileIO.h"
+#include "GlobalConst.h"
+#include "Internat.h"
+#include "Memory.h"
+#include "Microsoft.h"
+#include "Network.h"
+#include "Object.h"
+#include "OS.h"
+#include "Secure.h"
+#include "Str.h"
+#include "Table.h"
+#include "Tick64.h"
+#include "Tracking.h"
+
 #include <locale.h>
-#include <time.h>
-#include <errno.h>
-#include <Mayaqua/Mayaqua.h>
+#include <stdlib.h>
 
 // Global variable
 bool g_memcheck;								// Enable memory check
@@ -120,10 +31,11 @@ bool g_debug;									// Debug mode
 UINT64 kernel_status[NUM_KERNEL_STATUS];		// Kernel state
 UINT64 kernel_status_max[NUM_KERNEL_STATUS];	// Kernel state (maximum value)
 LOCK *kernel_status_lock[NUM_KERNEL_STATUS];	// Kernel state lock
-BOOL kernel_status_inited = false;				// Kernel state initialization flag
+bool kernel_status_inited = false;				// Kernel state initialization flag
 bool g_little_endian = true;
 char *cmdline = NULL;							// Command line
 wchar_t *uni_cmdline = NULL;					// Unicode command line
+bool g_foreground = false;					// Execute service in foreground mode
 
 // Static variable
 static char *exename = NULL;						// EXE file name (ANSI)
@@ -145,22 +57,16 @@ static UINT64 probe_start = 0;
 static UINT64 probe_last = 0;
 static bool probe_enabled = false;
 
-
-
 // The function which should be called once as soon as possible after the process is started
 static bool init_proc_once_flag = false;
 void InitProcessCallOnce()
-{
-	InitProcessCallOnceEx(false);
-}
-void InitProcessCallOnceEx(int restricted_mode)
 {
 	if (init_proc_once_flag == false)
 	{
 		init_proc_once_flag = true;
 
 #ifdef	OS_WIN32
-		MsInitProcessCallOnce(restricted_mode);
+		MsInitProcessCallOnce();
 #endif	// OS_WIN32
 	}
 }
@@ -430,12 +336,6 @@ bool Is32()
 	return Is64() ? false : true;
 }
 
-// .NET mode
-void MayaquaDotNetMode()
-{
-	dot_net_mode = true;
-}
-
 // Acquisition whether in .NET mode
 bool MayaquaIsDotNetMode()
 {
@@ -476,18 +376,6 @@ bool IsNt()
 	return is_nt;
 }
 
-// Whether the Unicode is supported
-bool IsUnicode()
-{
-#ifdef	OS_WIN32
-	// Windows
-	return IsNt();
-#else	// OS_WIN32
-	// UNIX
-	return true;
-#endif	// OS_WIN32
-}
-
 // Initialization of Mayaqua library
 void InitMayaqua(bool memcheck, bool debug, int argc, char **argv)
 {
@@ -509,6 +397,12 @@ void InitMayaqua(bool memcheck, bool debug, int argc, char **argv)
 		// Fail this for some reason when this is called this in .NET mode
 		setbuf(stdout, NULL);
 	}
+
+#ifdef OS_UNIX
+	g_foreground = (argc >= 3 && StrCmpi(argv[2], UNIX_SVC_ARG_FOREGROUND) == 0);
+#else
+	g_foreground = false;
+#endif // OS_UNIX
 
 	// Acquisition whether NT
 #ifdef	OS_WIN32
@@ -542,8 +436,11 @@ void InitMayaqua(bool memcheck, bool debug, int argc, char **argv)
 	// Initialize the Kernel status
 	InitKernelStatus();
 
-	// Initialize the tracking
-	InitTracking();
+	if (IsTrackingEnabled())
+	{
+		// Initialize the tracking
+		InitTracking();
+	}
 
 	// Initialization of thread pool
 	InitThreading();
@@ -563,7 +460,7 @@ void InitMayaqua(bool memcheck, bool debug, int argc, char **argv)
 	// Initialize the network communication module
 	InitNetwork();
 
-	// Initialization of the aquisition of the EXE file name
+	// Initialization of the acquisition of the EXE file name
 	InitGetExeName(argc >= 1 ? argv[0] : NULL);
 
 	// Initialization of the command line string
@@ -583,6 +480,14 @@ void InitMayaqua(bool memcheck, bool debug, int argc, char **argv)
 	if (OSIsSupportedOs() == false)
 	{
 		// Abort
+		exit(0);
+	}
+
+	// RSA Check
+	if (RsaCheckEx() == false)
+	{
+		// Abort
+		Alert("OpenSSL Library Init Failed. (too old?)\nPlease install the latest version of OpenSSL.\n\n", "RsaCheck()");
 		exit(0);
 	}
 
@@ -669,31 +574,32 @@ void FreeMayaqua()
 	// Release of real-time clock
 	FreeTick64();
 
-	// Release of crypt library
-	FreeCryptLibrary();
-
 	// Release of the string library
 	FreeStringLibrary();
 
 	// Release of thread pool
 	FreeThreading();
 
-#ifndef	VPN_SPEED
-	// Show the kernel status
-	if (g_debug)
-	{
-		PrintKernelStatus();
-	}
+	// Release of crypt library
+	FreeCryptLibrary();
 
-	// Display the debug information
-	if (g_memcheck)
+	if (IsTrackingEnabled())
 	{
-		PrintDebugInformation();
-	}
-#endif	// VPN_SPEED
+		// Show the kernel status
+		if (g_debug)
+		{
+			PrintKernelStatus();
+		}
 
-	// Release the tracking
-	FreeTracking();
+		// Display the debug information
+		if (g_memcheck)
+		{
+			PrintDebugInformation();
+		}
+
+		// Release the tracking
+		FreeTracking();
+	}
 
 	// Release of the kernel status
 	FreeKernelStatus();
@@ -728,7 +634,6 @@ void CheckUnixTempDir()
 			{
 				Print("Unable to use /tmp.\n\n");
 				exit(0);
-				return;
 			}
 		}
 
@@ -746,53 +651,6 @@ void Alert(char *msg, char *caption)
 void AlertW(wchar_t *msg, wchar_t *caption)
 {
 	OSAlertW(msg, caption);
-}
-
-// Display of OS information
-void PrintOsInfo(OS_INFO *info)
-{
-	// Validate arguments
-	if (info == NULL)
-	{
-		return;
-	}
-
-	Print(
-		"OS Type          : %u\n"
-		"OS Service Pack  : %u\n"
-		"os_is_windows    : %s\n"
-		"os_is_windows_nt : %s\n"
-		"OS System Name   : %s\n"
-		"OS Product Name  : %s\n"
-		"OS Vendor Name   : %s\n"
-		"OS Version       : %s\n"
-		"Kernel Name      : %s\n"
-		"Kernel Version   : %s\n",
-		info->OsType,
-		info->OsServicePack,
-		OS_IS_WINDOWS(info->OsType) ? "true" : "false",
-		OS_IS_WINDOWS_NT(info->OsType) ? "true" : "false",
-		info->OsSystemName,
-		info->OsProductName,
-		info->OsVendorName,
-		info->OsVersion,
-		info->KernelName,
-		info->KernelVersion);
-
-#ifdef	OS_WIN32
-	{
-		char *exe, *dir;
-		exe = MsGetExeFileName();
-		dir = MsGetExeDirName();
-
-		Print(
-			"EXE File Path    : %s\n"
-			"EXE Dir Path     : %s\n"
-			"Process Id       : %u\n"
-			"Process Handle   : 0x%X\n",
-			exe, dir, MsGetCurrentProcessId(), MsGetCurrentProcess());
-	}
-#endif	// OS_WIN32
 }
 
 // Get the OS type
@@ -1133,6 +991,11 @@ void PrintKernelStatus()
 		Print("      !!! MEMORY LEAKS DETECTED !!!\n\n");
 		if (g_memcheck == false)
 		{
+			if (IsHamMode())
+			{
+				Print("    Enable /memcheck startup option to see the leaking memory heap.\n");
+				Print("    Press Enter key to exit the process.\n");
+			}
 			GetLine(NULL, 0);
 		}
 	}
