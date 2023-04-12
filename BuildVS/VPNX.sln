@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mayaqua", "Mayaqua.vcxproj", "{F18DB391-9631-7DF7-A954-C53F350D381A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cedar", "Cedar.vcxproj", "{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}"
@@ -23,17 +25,61 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUIResources", "GUIResource
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|ARM = Release|ARM
+		Release|ARM64 = Release|ARM64
+		Release|Itanium = Release|Itanium
+		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|ARM.ActiveCfg = Release|ARM
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|ARM.Build.0 = Release|ARM
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|ARM64.ActiveCfg = Release|ARM64
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|ARM64.Build.0 = Release|ARM64
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|Itanium.ActiveCfg = Release|Itanium
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|Itanium.Build.0 = Release|Itanium
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|x64.ActiveCfg = Release|x64
+		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|x64.Build.0 = Release|x64
 		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|x86.ActiveCfg = Release|Win32
 		{F18DB391-9631-7DF7-A954-C53F350D381A}.Release|x86.Build.0 = Release|Win32
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|ARM.ActiveCfg = Release|ARM
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|ARM.Build.0 = Release|ARM
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|ARM64.ActiveCfg = Release|ARM64
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|ARM64.Build.0 = Release|ARM64
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|Itanium.ActiveCfg = Release|Itanium
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|Itanium.Build.0 = Release|Itanium
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|x64.ActiveCfg = Release|x64
+		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|x64.Build.0 = Release|x64
 		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|x86.ActiveCfg = Release|Win32
 		{A235C5A3-61A6-E59A-7734-3B6C721A5C5A}.Release|x86.Build.0 = Release|Win32
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|ARM.ActiveCfg = Release|ARM
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|ARM.Build.0 = Release|ARM
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|ARM64.ActiveCfg = Release|ARM64
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|ARM64.Build.0 = Release|ARM64
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|Itanium.ActiveCfg = Release|Itanium
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|Itanium.Build.0 = Release|Itanium
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|x64.ActiveCfg = Release|x64
+		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|x64.Build.0 = Release|x64
 		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|x86.ActiveCfg = Release|Win32
 		{ACB993EF-6064-27BD-728F-CE3FA03D9B1F}.Release|x86.Build.0 = Release|Win32
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|ARM.ActiveCfg = Release|ARM
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|ARM.Build.0 = Release|ARM
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|ARM64.ActiveCfg = Release|ARM64
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|ARM64.Build.0 = Release|ARM64
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|Itanium.ActiveCfg = Release|Itanium
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|Itanium.Build.0 = Release|Itanium
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|x64.ActiveCfg = Release|x64
+		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|x64.Build.0 = Release|x64
 		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|x86.ActiveCfg = Release|Win32
 		{C539F285-4BB4-19DB-A550-CDE6502B5397}.Release|x86.Build.0 = Release|Win32
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|ARM.ActiveCfg = Release|ARM
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|ARM.Build.0 = Release|ARM
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|ARM64.ActiveCfg = Release|ARM64
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|ARM64.Build.0 = Release|ARM64
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|Itanium.ActiveCfg = Release|Itanium
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|Itanium.Build.0 = Release|Itanium
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|x64.ActiveCfg = Release|x64
+		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|x64.Build.0 = Release|x64
 		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|x86.ActiveCfg = Release|Win32
 		{277533DC-073E-16B4-91D7-3D1E4BA0718C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
