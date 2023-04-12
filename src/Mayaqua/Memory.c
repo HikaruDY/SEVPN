@@ -111,6 +111,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <errno.h>
+#define ZLIB_WINAPI //***
 #include <zlib/zlib.h>
 #include <Mayaqua/Mayaqua.h>
 
