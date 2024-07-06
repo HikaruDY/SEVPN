@@ -2253,11 +2253,12 @@ void SiInitListenerList(SERVER *s)
 	SiLockListenerList(s);
 	{
 		{
-			// Register the 4 ports (994,  1194, 5555) as the default port
-//***			SiAddListener(s, SERVER_DEF_PORTS_1, true);
-			SiAddListener(s, SERVER_DEF_PORTS_2, true);
-			SiAddListener(s, SERVER_DEF_PORTS_3, true);
-			SiAddListener(s, SERVER_DEF_PORTS_4, true);
+			// Register the default ports
+			//*** DESLinux uses tcp:443 for HTTPS, tcp:992 for telnets.
+			SiAddListener(s, SERVER_DEF_PORTS_1, true);
+//***			SiAddListener(s, SERVER_DEF_PORTS_2, true);
+//***			SiAddListener(s, SERVER_DEF_PORTS_3, true);
+//***			SiAddListener(s, SERVER_DEF_PORTS_4, true);
 		}
 	}
 	SiUnlockListenerList(s);
