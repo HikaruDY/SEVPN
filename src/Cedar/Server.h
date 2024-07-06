@@ -106,10 +106,10 @@
 #define	SERVER_H
 
 // Default ports
-#define	SERVER_DEF_PORTS_1				0
-#define	SERVER_DEF_PORTS_2				994
-#define	SERVER_DEF_PORTS_3				1194
-#define	SERVER_DEF_PORTS_4				GC_DEFAULT_PORT
+#define	SERVER_DEF_PORTS_1				1194
+#define	SERVER_DEF_PORTS_2				0 //*** Disabled
+#define	SERVER_DEF_PORTS_3				0 //*** Disabled
+#define	SERVER_DEF_PORTS_4				GC_DEFAULT_PORT //*** 5555 in GlobalConst.h
 
 #define	SERVER_DEF_PORTS_INCLIENT_1		995
 #define	SERVER_DEF_PORTS_INCLIENT_2		465
